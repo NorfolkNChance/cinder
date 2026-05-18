@@ -1,0 +1,75 @@
+import { resolve } from 'path';
+import type { Plugin } from 'vite';
+import { defineConfig, externalizeDepsPlugin } from 'electron-vite';
+import react from '@vitejs/plugin-react';
+
+/**
+ * Force-externalise specific IDs by returning `{ external: true }` from
+ * resolveId. Used for the @mapbox/node-pre-gyp chain (a transitive native
+ * loader pulled in by @journeyapps/sqlcipher) and its optional test-only
+ * deps (mock-aws-s3, aws-sdk, nock) which node-pre-gyp lazy-requires inside
+ * a `process.env.node_pre_gyp_mock_s3` guard never set in production.
+ *
+ * These must stay as runtime require() calls — native modules use
+ * __dirname / require.resolve at load time to find their .node binaries
+ * and package.json, which breaks the moment Rollup inlines them.
+ */
+function forceExternal(ids: readonly string[]): Plugin {
+  const set = new Set(ids);
+  return {
+    name: 'force-external',
+    enforce: 'pre',
+    resolveId(id) {
+      if (set.has(id)) return { id, external: true };
+      for (const target of set) {
+        if (id === target || id.startsWith(target + '/')) {
+          return { id, external: true };
+        }
+      }
+      return null;
+    },
+  };
+}
+
+export default defineConfig({
+  main: {
+    plugins: [
+      forceExternal(['@mapbox/node-pre-gyp', 'mock-aws-s3', 'aws-sdk', 'nock']),
+      externalizeDepsPlugin(),
+    ],
+    build: {
+      rollupOptions: {
+        input: {
+          index: resolve(__dirname, 'src/main/index.ts'),
+        },
+      },
+    },
+  },
+  preload: {
+    plugins: [externalizeDepsPlugin()],
+    build: {
+      rollupOptions: {
+        input: {
+          index: resolve(__dirname, 'src/preload/index.ts'),
+        },
+      },
+    },
+  },
+  renderer: {
+    root: resolve(__dirname, 'src/renderer'),
+    build: {
+      rollupOptions: {
+        input: {
+          index: resolve(__dirname, 'src/renderer/index.html'),
+        },
+      },
+    },
+    plugins: [react()],
+    resolve: {
+      alias: {
+        '@renderer': resolve(__dirname, 'src/renderer/src'),
+        '@shared': resolve(__dirname, 'src/shared'),
+      },
+    },
+  },
+});

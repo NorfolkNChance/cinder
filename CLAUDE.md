@@ -16,6 +16,8 @@ npm run lint         # eslint flat config
 npm run test         # vitest unit tests
 ```
 
+> **Bundler config filename gotcha:** electron-vite looks for `electron.vite.config.ts` (dot, not dash). A file named `electron-vite.config.ts` is silently ignored and defaults are used — leading to massive bundles (~20MB) with native modules incorrectly inlined. If the main-process bundle size is suspicious, that's the first thing to check.
+
 ---
 
 ## Process model
