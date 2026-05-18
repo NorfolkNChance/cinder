@@ -4,6 +4,8 @@ import { is } from '@electron-toolkit/utils';
 import { installCSP } from './security/csp';
 import { openExternalSafe } from './security/open-external-safe';
 import { initDb } from './db/index';
+import { runMigrations } from './db/migrate';
+import { initDrizzle } from './db/drizzle';
 import { registerAppHandlers } from './ipc/app';
 
 // Harden the app against remote module usage and navigation exploits
@@ -88,9 +90,12 @@ app.whenReady().then(async () => {
   // Install CSP headers before any content loads
   installCSP();
 
-  // Initialise the encrypted database — must complete before IPC handlers
-  // start fielding requests that touch the DB.
+  // Initialise the encrypted database, apply any pending schema migrations,
+  // and wire the Drizzle query layer. All three must complete before IPC
+  // handlers start fielding requests that touch the DB.
   await initDb();
+  await runMigrations();
+  initDrizzle();
 
   // Register IPC handlers
   registerAppHandlers();
