@@ -42,12 +42,12 @@
     "@typescript-eslint/parser": "^8.11.0",
     "autoprefixer": "^10.4.20",
     "@vitejs/plugin-react": "^4.3.4",
-    "electron-vite": "^2.3.0",
+    "electron-vite": "^5.0.0",
     "eslint": "^9.11.0",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.2",
-    "vite": "^5.4.11",
-    "vitest": "^2.1.8"
+    "vite": "^8.0.13",
+    "vitest": "^4.1.6"
   }
 }
