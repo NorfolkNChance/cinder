@@ -1,0 +1,22 @@
+appId: com.cinder.app
+productName: Cinder
+directories:
+  output: dist
+
+files:
+  - out/**/*
+  - package.json
+
+mac:
+  category: public.app-category.productivity
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  target:
+    - target: dmg
+      arch:
+        - arm64
+        - x64
+
+afterSign: scripts/notarize.js

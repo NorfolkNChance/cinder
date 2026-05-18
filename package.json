@@ -1,0 +1,53 @@
+{
+  "name": "cinder",
+  "version": "0.1.0",
+  "description": "Cinder — hardened Electron + React macOS application",
+  "main": "./out/main/index.js",
+  "type": "module",
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "postinstall": "electron-rebuild",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.node.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@journeyapps/sqlcipher": "^5.3.1",
+    "electron": "41.6.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "uuid": "^9.0.1",
+    "zod": "^3.23.8"
+  },
+  "overrides": {
+    "tar": "^7.5.15"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^3.7.1",
+    "@electron-toolkit/preload": "^3.0.1",
+    "@electron-toolkit/utils": "^3.0.0",
+    "@types/sqlite3": "^3.1.11",
+    "@types/node": "^20.17.10",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@types/uuid": "^9.0.8",
+    "@typescript-eslint/eslint-plugin": "^8.11.0",
+    "@typescript-eslint/parser": "^8.11.0",
+    "autoprefixer": "^10.4.20",
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron-vite": "^2.3.0",
+    "eslint": "^9.11.0",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.2",
+    "vite": "^5.4.11",
+    "vitest": "^2.1.8"
+  }
+}
