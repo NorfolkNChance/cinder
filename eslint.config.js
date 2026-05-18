@@ -1,9 +1,9 @@
 // @ts-check
-import tsParser from '@typescript-eslint/parser';
-import tsPlugin from '@typescript-eslint/eslint-plugin';
+const tsParser = require('@typescript-eslint/parser');
+const tsPlugin = require('@typescript-eslint/eslint-plugin');
 
 /** @type {import('eslint').Linter.FlatConfig[]} */
-export default [
+module.exports = [
   // ── Global ignores ──────────────────────────────────────────────────────────
   {
     ignores: ['out/**', 'dist/**', 'node_modules/**'],
@@ -16,7 +16,7 @@ export default [
       parser: tsParser,
       parserOptions: {
         project: ['./tsconfig.node.json', './tsconfig.web.json'],
-        tsconfigRootDir: import.meta.dirname,
+        tsconfigRootDir: __dirname,
       },
     },
     plugins: {

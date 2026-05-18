@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "description": "Cinder — hardened Electron + React macOS application",
   "main": "./out/main/index.js",
-  "type": "module",
   "author": "",
   "license": "MIT",
   "engines": {
