@@ -1,9 +1,10 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useUI } from '../../state/ui';
 import { useCreateTask, useProjectsList, useTasksList } from './queries';
 import { TaskItem } from './TaskItem';
 import { formatDueDate, localDateString } from '../../lib/dates';
 import { parseQuickAdd, type ParsedQuickAdd } from './quickAdd';
+import { useTaskShortcuts } from './useTaskShortcuts';
 import type { TaskCreateInput } from '../../../../shared/schemas/tasks';
 
 /**
@@ -43,8 +44,32 @@ export function TaskList(): JSX.Element {
     }
   }, [taskScope, projects]);
 
-  // ── Quick-add input ──────────────────────────────────────────────────────
+  // ── Quick-add input + keyboard shortcuts ────────────────────────────────
   const [draft, setDraft] = useState('');
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const quickAddRef = useRef<HTMLInputElement>(null);
+
+  // Reset selection when the scope changes — the previously selected
+  // task is almost certainly not in the new view.
+  useEffect(() => {
+    setSelectedTaskId(null);
+  }, [taskScope]);
+
+  // Drop selection if the selected task disappears from the visible list
+  // (completed, deleted, moved to another scope, etc).
+  useEffect(() => {
+    if (selectedTaskId === null) return;
+    if (!tasks?.some((t) => t.id === selectedTaskId)) {
+      setSelectedTaskId(null);
+    }
+  }, [tasks, selectedTaskId]);
+
+  useTaskShortcuts({
+    tasks: tasks ?? [],
+    selectedTaskId,
+    setSelectedTaskId,
+    focusQuickAdd: () => quickAddRef.current?.focus(),
+  });
 
   // Live parse on every keystroke. Cheap — the parser is pure JS on a
   // short string — but memoise on the draft+projects identity so we
@@ -86,13 +111,17 @@ export function TaskList(): JSX.Element {
 
       <div className="border-b border-gray-800 px-5 py-3">
         <input
+          ref={quickAddRef}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter') void submitNewTask();
-            else if (e.key === 'Escape') setDraft('');
+            else if (e.key === 'Escape') {
+              setDraft('');
+              quickAddRef.current?.blur();
+            }
           }}
-          placeholder="Add a task — try “tomorrow at 5pm p1 #work”…"
+          placeholder="Press q to focus — try “tomorrow at 5pm p1 #work”…"
           aria-label="New task quick-add"
           className="w-full rounded-md bg-gray-900 px-3 py-2 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
         />
@@ -111,12 +140,53 @@ export function TaskList(): JSX.Element {
         ) : (
           <ul>
             {tasks.map((task) => (
-              <TaskItem key={task.id} task={task} />
+              <TaskItem
+                key={task.id}
+                task={task}
+                isSelected={task.id === selectedTaskId}
+                onSelect={setSelectedTaskId}
+              />
             ))}
           </ul>
         )}
       </div>
+
+      <ShortcutHint />
     </div>
+  );
+}
+
+/**
+ * Persistent small footer documenting the keyboard shortcuts. Mostly
+ * for discoverability — there's no separate help overlay yet.
+ */
+function ShortcutHint(): JSX.Element {
+  return (
+    <footer className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-gray-800 px-5 py-2 text-[11px] text-gray-600">
+      <Hint label="q">quick-add</Hint>
+      <Hint label="↑↓">navigate</Hint>
+      <Hint label="1-4">priority</Hint>
+      <Hint label="space">complete</Hint>
+      <Hint label="del">delete</Hint>
+      <Hint label="esc">deselect</Hint>
+    </footer>
+  );
+}
+
+function Hint({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}): JSX.Element {
+  return (
+    <span className="inline-flex items-center gap-1">
+      <kbd className="rounded border border-gray-700 bg-gray-900 px-1 font-mono text-[10px] text-gray-400">
+        {label}
+      </kbd>
+      <span>{children}</span>
+    </span>
   );
 }
 

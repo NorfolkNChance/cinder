@@ -9,6 +9,8 @@ import { formatDueDate, isOverdue } from '../../lib/dates';
 
 interface TaskItemProps {
   task: Task;
+  isSelected?: boolean;
+  onSelect?: (id: string) => void;
 }
 
 /**
@@ -27,7 +29,11 @@ interface TaskItemProps {
  * Note on title: still plain text in v1 — inline editing ships with
  * quick-add NLP in 2.4.
  */
-export function TaskItem({ task }: TaskItemProps): JSX.Element {
+export function TaskItem({
+  task,
+  isSelected = false,
+  onSelect,
+}: TaskItemProps): JSX.Element {
   const completeTask = useCompleteTask();
   const deleteTask = useDeleteTask();
   const updateTask = useUpdateTask();
@@ -64,8 +70,23 @@ export function TaskItem({ task }: TaskItemProps): JSX.Element {
   const dueDateInputValue =
     task.dueDate === null ? '' : task.dueDate.slice(0, 10);
 
+  // Click anywhere on the row (except interactive children) to select.
+  // The interactive children stop propagation themselves, so this is
+  // safe to bind on the <li>.
+  const onRowClick = (): void => {
+    onSelect?.(task.id);
+  };
+
   return (
-    <li className="group flex items-center gap-3 border-b border-gray-900 px-5 py-2.5 transition hover:bg-gray-900/40">
+    <li
+      onClick={onRowClick}
+      className={clsx(
+        'group flex cursor-default items-center gap-3 border-b border-gray-900 px-5 py-2.5 transition',
+        isSelected
+          ? 'bg-emerald-900/30 ring-1 ring-inset ring-emerald-700'
+          : 'hover:bg-gray-900/40',
+      )}
+    >
       <button
         onClick={toggleComplete}
         role="checkbox"
