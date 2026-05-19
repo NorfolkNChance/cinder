@@ -1,0 +1,112 @@
+import { z } from 'zod';
+
+/**
+ * Zod schemas for the tasks domain. Tasks are the central entity in the
+ * todo system — see §6.2 for the feature surface and §7 for the storage
+ * conventions used here.
+ *
+ * Field semantics:
+ *   - priority: 1 (highest) – 4 (lowest), Todoist convention
+ *   - due_date: ISO-8601 string. Either date-only ('2026-05-20') or
+ *     datetime with offset ('2026-05-20T15:00:00Z'). Both forms are
+ *     accepted; the renderer formats according to which form was set.
+ *   - due_recurrence: RRULE string per RFC 5545. Phase 2 stores the
+ *     column but defers the recurrence engine to Phase 3.
+ *   - completed_at: setting it to a timestamp marks the task done;
+ *     clearing it reopens.
+ */
+
+const ISO_8601 = z.string().datetime({ offset: false });
+const Uuid = z.string().uuid();
+
+// Either a date-only string or a full ISO-8601 timestamp.
+// Anchored — must match the full string, not just a prefix.
+const DateOrDateTime = z
+  .string()
+  .regex(
+    /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})?)?$/,
+    { message: 'must be ISO-8601 date or datetime' },
+  );
+
+const Priority = z.number().int().min(1).max(4);
+
+export const Task = z.object({
+  id: Uuid,
+  projectId: Uuid.nullable(),
+  sectionId: Uuid.nullable(),
+  parentTaskId: Uuid.nullable(),
+  title: z.string(),
+  description: z.string(),
+  dueDate: z.string().nullable(),
+  dueRecurrence: z.string().nullable(),
+  priority: Priority,
+  order: z.number().int(),
+  completedAt: ISO_8601.nullable(),
+  createdAt: ISO_8601,
+  updatedAt: ISO_8601,
+  deletedAt: ISO_8601.nullable(),
+});
+export type Task = z.infer<typeof Task>;
+
+export const TaskCreateInput = z.object({
+  // Title is required. Empty string is allowed but very-long titles are
+  // not — same lower-bound philosophy as notes (empty title = draft state).
+  title: z.string().max(500),
+  description: z.string().max(10_000).optional(),
+  projectId: Uuid.nullable().optional(),
+  sectionId: Uuid.nullable().optional(),
+  parentTaskId: Uuid.nullable().optional(),
+  dueDate: DateOrDateTime.nullable().optional(),
+  dueRecurrence: z.string().max(500).nullable().optional(),
+  priority: Priority.optional(),
+});
+export type TaskCreateInput = z.infer<typeof TaskCreateInput>;
+
+export const TaskGetInput = z.object({ id: Uuid });
+export type TaskGetInput = z.infer<typeof TaskGetInput>;
+
+export const TaskListInput = z.object({
+  // Filter by scope. Mutually exclusive in spirit but checked at the
+  // service layer rather than via discriminated union — keeps the
+  // schema flat and the renderer composable.
+  projectId: Uuid.nullable().optional(),
+  sectionId: Uuid.optional(),
+  parentTaskId: Uuid.nullable().optional(),
+  // Date predicates for the Today / Upcoming views. Inclusive bounds.
+  dueBefore: DateOrDateTime.optional(),
+  dueOnOrAfter: DateOrDateTime.optional(),
+  // By default we hide completed and soft-deleted; flip these to include them.
+  includeCompleted: z.boolean().optional(),
+  includeDeleted: z.boolean().optional(),
+  limit: z.number().int().min(1).max(1000).optional(),
+});
+export type TaskListInput = z.infer<typeof TaskListInput>;
+
+export const TaskUpdateInput = z.object({
+  id: Uuid,
+  patch: z
+    .object({
+      title: z.string().max(500).optional(),
+      description: z.string().max(10_000).optional(),
+      projectId: Uuid.nullable().optional(),
+      sectionId: Uuid.nullable().optional(),
+      parentTaskId: Uuid.nullable().optional(),
+      dueDate: DateOrDateTime.nullable().optional(),
+      dueRecurrence: z.string().max(500).nullable().optional(),
+      priority: Priority.optional(),
+      order: z.number().int().optional(),
+    })
+    .strict(),
+});
+export type TaskUpdateInput = z.infer<typeof TaskUpdateInput>;
+
+export const TaskCompleteInput = z.object({
+  id: Uuid,
+  // True = mark complete (stamps completed_at = now); false = reopen
+  // (clears completed_at).
+  completed: z.boolean(),
+});
+export type TaskCompleteInput = z.infer<typeof TaskCompleteInput>;
+
+export const TaskDeleteInput = z.object({ id: Uuid });
+export type TaskDeleteInput = z.infer<typeof TaskDeleteInput>;

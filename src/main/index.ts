@@ -9,6 +9,9 @@ import { initDrizzle } from './db/drizzle';
 import { registerAppHandlers } from './ipc/app';
 import { registerNotesHandlers } from './ipc/notes';
 import { registerAttachmentsHandlers } from './ipc/attachments';
+import { registerProjectsHandlers } from './ipc/projects';
+import { registerSectionsHandlers } from './ipc/sections';
+import { registerTasksHandlers } from './ipc/tasks';
 import {
   registerAttachmentProtocol,
   registerAttachmentSchemePrivileges,
@@ -114,6 +117,9 @@ app.whenReady().then(async () => {
   registerAppHandlers();
   registerNotesHandlers();
   registerAttachmentsHandlers();
+  registerProjectsHandlers();
+  registerSectionsHandlers();
+  registerTasksHandlers();
 
   createWindow();
 

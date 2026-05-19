@@ -18,3 +18,26 @@ export const NOTES_SEARCH = 'notes:search' as const;
 
 // ── Attachments ──────────────────────────────────────────────────────────────
 export const ATTACHMENTS_SAVE = 'attachments:save' as const;
+
+// ── Projects ─────────────────────────────────────────────────────────────────
+export const PROJECTS_CREATE = 'projects:create' as const;
+export const PROJECTS_GET = 'projects:get' as const;
+export const PROJECTS_LIST = 'projects:list' as const;
+export const PROJECTS_UPDATE = 'projects:update' as const;
+export const PROJECTS_ARCHIVE = 'projects:archive' as const;
+export const PROJECTS_DELETE = 'projects:delete' as const;
+
+// ── Sections ─────────────────────────────────────────────────────────────────
+export const SECTIONS_CREATE = 'sections:create' as const;
+export const SECTIONS_GET = 'sections:get' as const;
+export const SECTIONS_LIST = 'sections:list' as const;
+export const SECTIONS_UPDATE = 'sections:update' as const;
+export const SECTIONS_DELETE = 'sections:delete' as const;
+
+// ── Tasks ────────────────────────────────────────────────────────────────────
+export const TASKS_CREATE = 'tasks:create' as const;
+export const TASKS_GET = 'tasks:get' as const;
+export const TASKS_LIST = 'tasks:list' as const;
+export const TASKS_UPDATE = 'tasks:update' as const;
+export const TASKS_COMPLETE = 'tasks:complete' as const;
+export const TASKS_DELETE = 'tasks:delete' as const;

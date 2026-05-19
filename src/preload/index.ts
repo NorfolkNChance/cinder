@@ -8,6 +8,23 @@ import {
   NOTES_LIST,
   NOTES_SEARCH,
   NOTES_UPDATE,
+  PROJECTS_ARCHIVE,
+  PROJECTS_CREATE,
+  PROJECTS_DELETE,
+  PROJECTS_GET,
+  PROJECTS_LIST,
+  PROJECTS_UPDATE,
+  SECTIONS_CREATE,
+  SECTIONS_DELETE,
+  SECTIONS_GET,
+  SECTIONS_LIST,
+  SECTIONS_UPDATE,
+  TASKS_COMPLETE,
+  TASKS_CREATE,
+  TASKS_DELETE,
+  TASKS_GET,
+  TASKS_LIST,
+  TASKS_UPDATE,
 } from '../shared/ipc/channels';
 import type {
   Note,
@@ -22,6 +39,31 @@ import type {
   AttachmentSaveInput,
   AttachmentSaveResult,
 } from '../shared/schemas/attachments';
+import type {
+  Project,
+  ProjectArchiveInput,
+  ProjectCreateInput,
+  ProjectDeleteInput,
+  ProjectGetInput,
+  ProjectListInput,
+  ProjectUpdateInput,
+} from '../shared/schemas/projects';
+import type {
+  Section,
+  SectionCreateInput,
+  SectionDeleteInput,
+  SectionListInput,
+  SectionUpdateInput,
+} from '../shared/schemas/sections';
+import type {
+  Task,
+  TaskCompleteInput,
+  TaskCreateInput,
+  TaskDeleteInput,
+  TaskGetInput,
+  TaskListInput,
+  TaskUpdateInput,
+} from '../shared/schemas/tasks';
 
 /**
  * Preload — the only path from the sandboxed renderer to the main process.
@@ -50,5 +92,45 @@ contextBridge.exposeInMainWorld('api', {
   attachments: {
     save: (input: AttachmentSaveInput): Promise<AttachmentSaveResult> =>
       ipcRenderer.invoke(ATTACHMENTS_SAVE, input),
+  },
+  projects: {
+    create: (input: ProjectCreateInput): Promise<Project> =>
+      ipcRenderer.invoke(PROJECTS_CREATE, input),
+    get: (input: ProjectGetInput): Promise<Project | null> =>
+      ipcRenderer.invoke(PROJECTS_GET, input),
+    list: (input: ProjectListInput): Promise<readonly Project[]> =>
+      ipcRenderer.invoke(PROJECTS_LIST, input),
+    update: (input: ProjectUpdateInput): Promise<Project | null> =>
+      ipcRenderer.invoke(PROJECTS_UPDATE, input),
+    archive: (input: ProjectArchiveInput): Promise<Project | null> =>
+      ipcRenderer.invoke(PROJECTS_ARCHIVE, input),
+    delete: (input: ProjectDeleteInput): Promise<void> =>
+      ipcRenderer.invoke(PROJECTS_DELETE, input),
+  },
+  sections: {
+    create: (input: SectionCreateInput): Promise<Section> =>
+      ipcRenderer.invoke(SECTIONS_CREATE, input),
+    get: (input: SectionDeleteInput): Promise<Section | null> =>
+      ipcRenderer.invoke(SECTIONS_GET, input),
+    list: (input: SectionListInput): Promise<readonly Section[]> =>
+      ipcRenderer.invoke(SECTIONS_LIST, input),
+    update: (input: SectionUpdateInput): Promise<Section | null> =>
+      ipcRenderer.invoke(SECTIONS_UPDATE, input),
+    delete: (input: SectionDeleteInput): Promise<void> =>
+      ipcRenderer.invoke(SECTIONS_DELETE, input),
+  },
+  tasks: {
+    create: (input: TaskCreateInput): Promise<Task> =>
+      ipcRenderer.invoke(TASKS_CREATE, input),
+    get: (input: TaskGetInput): Promise<Task | null> =>
+      ipcRenderer.invoke(TASKS_GET, input),
+    list: (input: TaskListInput): Promise<readonly Task[]> =>
+      ipcRenderer.invoke(TASKS_LIST, input),
+    update: (input: TaskUpdateInput): Promise<Task | null> =>
+      ipcRenderer.invoke(TASKS_UPDATE, input),
+    complete: (input: TaskCompleteInput): Promise<Task | null> =>
+      ipcRenderer.invoke(TASKS_COMPLETE, input),
+    delete: (input: TaskDeleteInput): Promise<void> =>
+      ipcRenderer.invoke(TASKS_DELETE, input),
   },
 });
