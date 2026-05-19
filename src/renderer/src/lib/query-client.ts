@@ -20,11 +20,31 @@ export const queryClient = new QueryClient({
   },
 });
 
-/** Query keys — all notes queries hang off this so invalidation is trivial. */
+/**
+ * Query keys — typed factories so invalidations and lookups can't drift.
+ *
+ * Convention: each domain has an `all` prefix that covers every cached
+ * query in that domain, plus specific sub-keys for the operations the
+ * domain exposes. Invalidating with the `all` array marks every key
+ * sharing that prefix as stale.
+ */
 export const queryKeys = {
   notes: {
     all: ['notes'] as const,
     list: () => [...queryKeys.notes.all, 'list'] as const,
     detail: (id: string) => [...queryKeys.notes.all, 'detail', id] as const,
+  },
+  projects: {
+    all: ['projects'] as const,
+    list: () => [...queryKeys.projects.all, 'list'] as const,
+    detail: (id: string) =>
+      [...queryKeys.projects.all, 'detail', id] as const,
+  },
+  tasks: {
+    all: ['tasks'] as const,
+    // Scope-keyed: structurally-equal scope objects map to the same cache
+    // entry, so re-selecting the same project re-uses the cached list.
+    list: (scope: object) => [...queryKeys.tasks.all, 'list', scope] as const,
+    detail: (id: string) => [...queryKeys.tasks.all, 'detail', id] as const,
   },
 } as const;

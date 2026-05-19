@@ -60,8 +60,10 @@ export function NoteList(): JSX.Element {
     await deleteNote.mutateAsync(id);
   };
 
+  // The outer <aside> wrapper is provided by App.tsx so the same shell
+  // works for both NoteList and TasksSidebar.
   return (
-    <aside className="flex h-full w-72 flex-col border-r border-gray-800 bg-gray-950">
+    <>
       <div className="flex items-center justify-between border-b border-gray-800 px-4 py-3">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-400">
           Notes
@@ -137,6 +139,6 @@ export function NoteList(): JSX.Element {
           </ul>
         )}
       </div>
-    </aside>
+    </>
   );
 }
