@@ -7,6 +7,7 @@ import { initDb } from './db/index';
 import { runMigrations } from './db/migrate';
 import { initDrizzle } from './db/drizzle';
 import { registerAppHandlers } from './ipc/app';
+import { registerNotesHandlers } from './ipc/notes';
 
 // Harden the app against remote module usage and navigation exploits
 app.on('web-contents-created', (_event, contents) => {
@@ -99,6 +100,7 @@ app.whenReady().then(async () => {
 
   // Register IPC handlers
   registerAppHandlers();
+  registerNotesHandlers();
 
   createWindow();
 
