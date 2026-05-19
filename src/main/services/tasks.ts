@@ -2,6 +2,7 @@ import { v7 as uuidv7 } from 'uuid';
 import { and, asc, eq, gte, isNull, lt, type SQL } from 'drizzle-orm';
 import { getDrizzle } from '../db/drizzle';
 import { tasks } from '../db/schema';
+import { computeNextOccurrence } from '../../shared/recurrence';
 import type {
   Task,
   TaskCompleteInput,
@@ -142,11 +143,39 @@ export const tasksService = {
 
   async complete(input: TaskCompleteInput): Promise<Task | null> {
     const db = getDrizzle();
+    const now = nowIso();
+
+    // Recurring tasks (§6.2): completing one advances its due_date to the
+    // next occurrence instead of stamping completed_at. The task keeps
+    // rolling forward until the rule has no more occurrences (which is
+    // when we fall through to the normal completion path).
+    //
+    // Reopening (completed:false) skips this branch entirely — that's a
+    // direct undo of a prior completion, not a recurrence event.
+    if (input.completed) {
+      const task = await getById(input.id);
+      if (
+        task !== null &&
+        task.dueRecurrence !== null &&
+        task.dueDate !== null
+      ) {
+        const next = computeNextOccurrence(task.dueRecurrence, task.dueDate);
+        if (next !== null) {
+          await db
+            .update(tasks)
+            .set({ dueDate: next, updatedAt: now })
+            .where(eq(tasks.id, input.id));
+          return getById(input.id);
+        }
+        // No further occurrences — fall through and mark complete normally.
+      }
+    }
+
     await db
       .update(tasks)
       .set({
-        completedAt: input.completed ? nowIso() : null,
-        updatedAt: nowIso(),
+        completedAt: input.completed ? now : null,
+        updatedAt: now,
       })
       .where(eq(tasks.id, input.id));
     return getById(input.id);

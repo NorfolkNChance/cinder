@@ -6,6 +6,7 @@ import {
   useUpdateTask,
 } from './queries';
 import { formatDueDate, isOverdue } from '../../lib/dates';
+import { describeRecurrence } from '../../../../shared/recurrence';
 
 interface TaskItemProps {
   task: Task;
@@ -111,6 +112,16 @@ export function TaskItem({
       >
         {task.title || <span className="italic text-gray-600">Untitled</span>}
       </span>
+
+      {task.dueRecurrence !== null && (
+        <span
+          aria-label="Recurring task"
+          title={describeRecurrence(task.dueRecurrence)}
+          className="shrink-0 text-xs text-purple-400"
+        >
+          ↻
+        </span>
+      )}
 
       <DueDateChip
         inputValue={dueDateInputValue}

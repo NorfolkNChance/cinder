@@ -1,4 +1,8 @@
 import * as chrono from 'chrono-node';
+import {
+  computeFirstOccurrence,
+  naturalToRrule,
+} from '../../../../shared/recurrence';
 
 /**
  * Quick-add NLP parser.
@@ -48,12 +52,14 @@ export interface ParsedQuickAdd {
   readonly priority: 1 | 2 | 3 | 4 | null;
   /** Resolved project id or null. */
   readonly projectId: string | null;
+  /** RFC 5545 RRULE string or null. */
+  readonly recurrence: string | null;
   /** Matched spans into the *original* input, in input order. For UI highlight. */
   readonly matches: readonly Match[];
 }
 
 export interface Match {
-  readonly type: 'date' | 'priority' | 'project';
+  readonly type: 'date' | 'priority' | 'project' | 'recurrence';
   readonly text: string;
   /** Start offset (inclusive) into the original input. */
   readonly start: number;
@@ -104,9 +110,32 @@ export function parseQuickAdd(
     });
   }
 
+  // ── Recurrence — must run BEFORE chrono so phrases like "every monday"
+  //    aren't first claimed as a one-off date by chrono. The match is then
+  //    excised from the string we feed to chrono so the priority/project
+  //    matches don't have to compete with chrono's leftover indices.
+  const recurrenceMatch = recogniseRecurrence(input);
+  let recurrence: string | null = null;
+  let chronoInput = input;
+  if (recurrenceMatch !== null) {
+    recurrence = recurrenceMatch.rrule;
+    matches.push({
+      type: 'recurrence',
+      text: recurrenceMatch.text,
+      start: recurrenceMatch.start,
+      end: recurrenceMatch.end,
+    });
+    // Replace the recurrence phrase with spaces (same length) so chrono's
+    // indices below still line up against the original input string.
+    chronoInput =
+      input.slice(0, recurrenceMatch.start) +
+      ' '.repeat(recurrenceMatch.end - recurrenceMatch.start) +
+      input.slice(recurrenceMatch.end);
+  }
+
   // ── Date — chrono-node, first match wins ───────────────────────────────
   let dueDate: string | null = null;
-  const chronoResults = chrono.parse(input, now, { forwardDate: true });
+  const chronoResults = chrono.parse(chronoInput, now, { forwardDate: true });
   const firstChrono = chronoResults[0];
   if (firstChrono !== undefined) {
     const date = firstChrono.start.date();
@@ -135,13 +164,73 @@ export function parseQuickAdd(
   }
   const title = collapseWhitespace(titleBuf);
 
+  // If we recognised a recurrence but the user didn't also give us an
+  // explicit date, anchor the first occurrence at "today" so the task
+  // surfaces somewhere — otherwise it would be invisible until edited.
+  let finalDueDate = dueDate;
+  if (recurrence !== null && finalDueDate === null) {
+    finalDueDate = computeFirstOccurrence(recurrence, now);
+  }
+
   return {
     title,
-    dueDate,
+    dueDate: finalDueDate,
     priority,
     projectId,
+    recurrence,
     matches: matches.sort((a, b) => a.start - b.start),
   };
+}
+
+/**
+ * Recognise a natural-language recurrence phrase in the input.
+ *
+ * Two strategies:
+ *   1. Short keywords: `daily | weekly | monthly | yearly | annually`
+ *      — instantly map to their canonical RRULEs.
+ *   2. "every X" phrases — capture the phrase, hand it to rrule's
+ *      `fromText` natural-language parser, accept if a valid FREQ is
+ *      produced.
+ *
+ * Returns null if nothing useful is found. First successful match wins.
+ */
+function recogniseRecurrence(input: string): {
+  text: string;
+  start: number;
+  end: number;
+  rrule: string;
+} | null {
+  // 1. Single-word keywords.
+  const simple = /\b(daily|weekly|monthly|yearly|annually)\b/i.exec(input);
+  if (simple !== null && simple.index !== undefined) {
+    const rrule = naturalToRrule(simple[0]);
+    if (rrule !== null) {
+      return {
+        text: simple[0],
+        start: simple.index,
+        end: simple.index + simple[0].length,
+        rrule,
+      };
+    }
+  }
+
+  // 2. "every X" phrases. We capture a generous span — up to four words
+  //    after "every" — and let rrule.fromText decide if it's coherent.
+  //    The greedy pattern handles "every 2 weeks on monday" cleanly.
+  const every = /\bevery(?:\s+\w+){1,4}\b/i.exec(input);
+  if (every !== null && every.index !== undefined) {
+    const rrule = naturalToRrule(every[0]);
+    if (rrule !== null) {
+      return {
+        text: every[0],
+        start: every.index,
+        end: every.index + every[0].length,
+        rrule,
+      };
+    }
+  }
+
+  return null;
 }
 
 function isoDateOnly(d: Date): string {

@@ -4,6 +4,7 @@ import { useCreateTask, useProjectsList, useTasksList } from './queries';
 import { TaskItem } from './TaskItem';
 import { formatDueDate, localDateString } from '../../lib/dates';
 import { parseQuickAdd, type ParsedQuickAdd } from './quickAdd';
+import { describeRecurrence } from '../../../../shared/recurrence';
 import { useTaskShortcuts } from './useTaskShortcuts';
 import type { TaskCreateInput } from '../../../../shared/schemas/tasks';
 
@@ -225,6 +226,9 @@ function buildCreateInput(
     ...(projectId !== null ? { projectId } : {}),
     ...(dueDate !== null ? { dueDate } : {}),
     ...(parsed.priority !== null ? { priority: parsed.priority } : {}),
+    ...(parsed.recurrence !== null
+      ? { dueRecurrence: parsed.recurrence }
+      : {}),
   };
 }
 
@@ -250,6 +254,9 @@ function QuickAddPreview({
         <Chip color={priorityColor(parsed.priority)}>P{parsed.priority}</Chip>
       )}
       {projectName !== undefined && <Chip color="indigo">#{projectName}</Chip>}
+      {parsed.recurrence !== null && (
+        <Chip color="purple">↻ {describeRecurrence(parsed.recurrence)}</Chip>
+      )}
     </div>
   );
 }
@@ -258,7 +265,7 @@ function Chip({
   color,
   children,
 }: {
-  color: 'emerald' | 'red' | 'orange' | 'blue' | 'gray' | 'indigo';
+  color: 'emerald' | 'red' | 'orange' | 'blue' | 'gray' | 'indigo' | 'purple';
   children: React.ReactNode;
 }): JSX.Element {
   const palette: Record<typeof color, string> = {
@@ -268,6 +275,7 @@ function Chip({
     blue: 'border-blue-700 text-blue-300',
     gray: 'border-gray-700 text-gray-300',
     indigo: 'border-indigo-700 text-indigo-300',
+    purple: 'border-purple-700 text-purple-300',
   };
   return (
     <span

@@ -172,6 +172,58 @@ describe('parseQuickAdd — combined', () => {
   });
 });
 
+describe('parseQuickAdd — recurrence', () => {
+  it('recognises "daily" and sets recurrence + default first-due', () => {
+    const r = parse('exercise daily');
+    expect(r.recurrence).not.toBeNull();
+    expect(r.recurrence).toContain('FREQ=DAILY');
+    expect(r.title).toBe('exercise');
+    // First occurrence defaults to today (anchored at `now`).
+    expect(r.dueDate).toBe('2026-05-19');
+  });
+
+  it('recognises "every monday"', () => {
+    const r = parse('standup every monday');
+    expect(r.recurrence).toContain('FREQ=WEEKLY');
+    expect(r.recurrence).toContain('BYDAY=MO');
+    expect(r.title).toBe('standup');
+    // Anchored Tue 5/19, next Monday is 5/25.
+    expect(r.dueDate).toBe('2026-05-25');
+  });
+
+  it('recognises "every 2 weeks"', () => {
+    const r = parse('1-on-1 every 2 weeks');
+    expect(r.recurrence).toContain('FREQ=WEEKLY');
+    expect(r.recurrence).toContain('INTERVAL=2');
+    expect(r.title).toBe('1-on-1');
+  });
+
+  it('"every monday" should NOT also be claimed by chrono as a one-off date', () => {
+    // Pre-fix this test would surface as a bug: chrono would parse
+    // "monday" as a one-off date, the recurrence phrase would still
+    // be claimed too, and the title would lose "monday" twice in
+    // weird ways. We mask the recurrence span before running chrono.
+    const r = parse('standup every monday p1');
+    // Title is just "standup" + the priority is stripped.
+    expect(r.title).toBe('standup');
+    expect(r.priority).toBe(1);
+  });
+
+  it('strips the recurrence span from the title', () => {
+    const r = parse('drink water every day');
+    expect(r.title).toBe('drink water');
+  });
+
+  it('keeps an explicit date next to a recurrence (date wins for dueDate)', () => {
+    // The user wrote both: "tomorrow" + "every week" — we honour the
+    // explicit one-off date, not the first-occurrence default.
+    const r = parse('water plants tomorrow every week');
+    expect(r.dueDate).toBe('2026-05-20'); // chrono's "tomorrow"
+    expect(r.recurrence).toContain('FREQ=WEEKLY');
+    expect(r.title).toBe('water plants');
+  });
+});
+
 describe('parseQuickAdd — adversarial inputs', () => {
   it('only-priority input → empty title + priority', () => {
     const r = parse('p1');
