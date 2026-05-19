@@ -1,5 +1,5 @@
 import { v7 as uuidv7 } from 'uuid';
-import { and, asc, eq, gte, isNull, lte, type SQL } from 'drizzle-orm';
+import { and, asc, eq, gte, isNull, lt, type SQL } from 'drizzle-orm';
 import { getDrizzle } from '../db/drizzle';
 import { tasks } from '../db/schema';
 import type {
@@ -104,8 +104,14 @@ export const tasksService = {
     // ordering of ISO-8601 strings here (valid because the format is
     // year-first, fixed-width). Tasks without a due_date are NEVER
     // included by these predicates — IS NULL won't match a comparison.
+    //
+    // dueBefore is a *strict* upper bound — important for date-only vs
+    // datetime comparisons: lexicographically '2026-05-19' < '2026-05-19T15:00Z',
+    // so an inclusive bound on '2026-05-19' would miss every datetime
+    // that same day. Callers pass the start of the next day to mean
+    // "everything on this day".
     if (input.dueBefore !== undefined) {
-      conditions.push(lte(tasks.dueDate, input.dueBefore));
+      conditions.push(lt(tasks.dueDate, input.dueBefore));
     }
     if (input.dueOnOrAfter !== undefined) {
       conditions.push(gte(tasks.dueDate, input.dueOnOrAfter));

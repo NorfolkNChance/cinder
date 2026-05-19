@@ -16,12 +16,20 @@ import { create } from 'zustand';
 export type Mode = 'notes' | 'tasks';
 
 /**
- * The scope a Tasks-mode view is showing. The Inbox view is tasks with
- * no project (project_id IS NULL — see services/tasks.ts). Today /
- * Upcoming smart views are added in milestone 2.3.
+ * The scope a Tasks-mode view is showing.
+ *   - inbox: tasks with no project (project_id IS NULL)
+ *   - today: tasks due on or before today (overdue + today, any project)
+ *   - upcoming: tasks due tomorrow or later (any project)
+ *   - project: all active tasks in a specific project
+ *
+ * Each scope maps to a TaskListInput filter — see features/tasks/queries.ts
+ * for the translation. The renderer never encodes these conventions
+ * directly.
  */
 export type TaskScope =
   | { kind: 'inbox' }
+  | { kind: 'today' }
+  | { kind: 'upcoming' }
   | { kind: 'project'; id: string };
 
 interface UIState {

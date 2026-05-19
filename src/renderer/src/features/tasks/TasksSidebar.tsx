@@ -60,6 +60,16 @@ export function TasksSidebar(): JSX.Element {
         active={taskScope.kind === 'inbox'}
         onClick={() => setTaskScope({ kind: 'inbox' })}
       />
+      <SmartItem
+        label="Today"
+        active={taskScope.kind === 'today'}
+        onClick={() => setTaskScope({ kind: 'today' })}
+      />
+      <SmartItem
+        label="Upcoming"
+        active={taskScope.kind === 'upcoming'}
+        onClick={() => setTaskScope({ kind: 'upcoming' })}
+      />
 
       <SectionHeader
         label="Projects"

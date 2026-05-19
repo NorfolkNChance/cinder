@@ -9,8 +9,10 @@ import type {
   TaskCompleteInput,
   TaskCreateInput,
   TaskListInput,
+  TaskUpdateInput,
 } from '../../../../shared/schemas/tasks';
 import type { TaskScope } from '../../state/ui';
+import { addDays, localDateString } from '../../lib/dates';
 
 /**
  * TanStack Query hooks for the tasks and projects domains.
@@ -64,12 +66,29 @@ export function useDeleteProject(): ReturnType<
 /**
  * Translate a UI-level TaskScope into the service-level filter args.
  * Kept in this module so the renderer never has to know that "Inbox"
- * means projectId:null.
+ * means projectId:null or that "Today" is a half-open dueBefore window
+ * computed in local time.
+ *
+ * Today window: due_date < start-of-tomorrow (strict — see services/
+ * tasks.ts comment) catches every task whose date or datetime falls
+ * on today or earlier.
+ *
+ * Upcoming window: due_date >= start-of-tomorrow (everything after
+ * today). No upper bound for v1 — tasks far in the future are rare
+ * enough that capping at, say, 30 days doesn't earn its complexity.
  */
 function scopeToFilter(scope: TaskScope): TaskListInput {
   switch (scope.kind) {
     case 'inbox':
       return { projectId: null };
+    case 'today': {
+      const tomorrow = localDateString(addDays(new Date(), 1));
+      return { dueBefore: tomorrow };
+    }
+    case 'upcoming': {
+      const tomorrow = localDateString(addDays(new Date(), 1));
+      return { dueOnOrAfter: tomorrow };
+    }
     case 'project':
       return { projectId: scope.id };
   }
@@ -91,6 +110,22 @@ export function useCreateTask(): ReturnType<
   return useMutation({
     mutationFn: (input: TaskCreateInput) => window.api.tasks.create(input),
     onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.tasks.all });
+    },
+  });
+}
+
+export function useUpdateTask(): ReturnType<
+  typeof useMutation<Task | null, Error, TaskUpdateInput>
+> {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: TaskUpdateInput) => window.api.tasks.update(input),
+    onSuccess: () => {
+      // Changing dueDate or projectId moves a task across cached scopes
+      // (e.g. setting today's date pulls it into the Today list). Wipe
+      // all task caches rather than tracking which scopes the patch
+      // affected — list volumes are small enough that this is cheap.
       void qc.invalidateQueries({ queryKey: queryKeys.tasks.all });
     },
   });

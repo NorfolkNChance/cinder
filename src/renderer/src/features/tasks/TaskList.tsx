@@ -2,6 +2,8 @@ import { useState, useCallback, useMemo } from 'react';
 import { useUI } from '../../state/ui';
 import { useCreateTask, useProjectsList, useTasksList } from './queries';
 import { TaskItem } from './TaskItem';
+import { localDateString } from '../../lib/dates';
+import type { TaskCreateInput } from '../../../../shared/schemas/tasks';
 
 /**
  * Tasks main pane. Header shows the current scope's name; below it,
@@ -19,9 +21,18 @@ export function TaskList(): JSX.Element {
   const createTask = useCreateTask();
 
   const headerLabel = useMemo(() => {
-    if (taskScope.kind === 'inbox') return 'Inbox';
-    const project = projects?.find((p) => p.id === taskScope.id);
-    return project?.name ?? 'Project';
+    switch (taskScope.kind) {
+      case 'inbox':
+        return 'Inbox';
+      case 'today':
+        return 'Today';
+      case 'upcoming':
+        return 'Upcoming';
+      case 'project': {
+        const project = projects?.find((p) => p.id === taskScope.id);
+        return project?.name ?? 'Project';
+      }
+    }
   }, [taskScope, projects]);
 
   // ── Inline new-task input ────────────────────────────────────────────────
@@ -30,11 +41,17 @@ export function TaskList(): JSX.Element {
   const submitNewTask = useCallback(async () => {
     const title = draftTitle.trim();
     if (title.length === 0) return;
-    await createTask.mutateAsync({
+
+    // Scope-aware defaults for the new task. Today scope defaults the
+    // due date to today so the task lands in the view that created it.
+    // Upcoming has no obvious default day (which day in the next 7?),
+    // so we leave the due date null — user picks it via the chip.
+    const input: TaskCreateInput = {
       title,
-      // New tasks land in the current scope. Inbox = no project.
       ...(taskScope.kind === 'project' ? { projectId: taskScope.id } : {}),
-    });
+      ...(taskScope.kind === 'today' ? { dueDate: localDateString() } : {}),
+    };
+    await createTask.mutateAsync(input);
     setDraftTitle('');
   }, [draftTitle, createTask, taskScope]);
 
