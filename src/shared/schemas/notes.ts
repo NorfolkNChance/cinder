@@ -31,7 +31,10 @@ export type Note = z.infer<typeof Note>;
 // ── Inputs ──────────────────────────────────────────────────────────────────
 
 export const NoteCreateInput = z.object({
-  title: z.string().min(1).max(500),
+  // Empty title is permitted — the UI shows "Untitled" as a placeholder
+  // and the user fills it in once they have a working title in mind. The
+  // 500-char upper bound is the meaningful safety constraint.
+  title: z.string().max(500),
   // The body upper bound (1MB chars) matches §3.4 worked example. The default
   // empty string is applied by the service so an explicit "" is unambiguous.
   body: z.string().max(1_000_000).optional(),
@@ -59,7 +62,7 @@ export const NoteUpdateInput = z.object({
   // (but still bumps updated_at so it can serve as a "touch").
   patch: z
     .object({
-      title: z.string().min(1).max(500).optional(),
+      title: z.string().max(500).optional(),
       body: z.string().max(1_000_000).optional(),
       folderId: FolderId.optional(),
     })

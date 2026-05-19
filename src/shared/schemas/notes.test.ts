@@ -25,8 +25,10 @@ describe('NoteCreateInput', () => {
     expect(NoteCreateInput.parse({ title: 'x', folderId: null }).folderId).toBeNull();
   });
 
-  it('rejects empty title', () => {
-    expect(() => NoteCreateInput.parse({ title: '' })).toThrow();
+  it('accepts empty title (UX: draft / untitled notes)', () => {
+    // The UI creates new notes with title:'' and shows "Untitled" as a
+    // placeholder until the user types one. The schema must allow this.
+    expect(NoteCreateInput.parse({ title: '' })).toEqual({ title: '' });
   });
 
   it('rejects title > 500 chars', () => {
@@ -57,6 +59,14 @@ describe('NoteUpdateInput', () => {
 
   it('accepts an empty patch (touch)', () => {
     expect(() => NoteUpdateInput.parse({ id: VALID_UUID, patch: {} })).not.toThrow();
+  });
+
+  it('accepts an empty-string title (clearing the title)', () => {
+    // Symmetry with NoteCreateInput — must allow the user to delete all
+    // characters from the title input without rejecting the save.
+    expect(() =>
+      NoteUpdateInput.parse({ id: VALID_UUID, patch: { title: '' } }),
+    ).not.toThrow();
   });
 
   it('rejects unknown patch fields (strict)', () => {
