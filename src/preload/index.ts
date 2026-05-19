@@ -6,6 +6,7 @@ import {
   NOTES_DELETE,
   NOTES_GET,
   NOTES_LIST,
+  NOTES_SEARCH,
   NOTES_UPDATE,
 } from '../shared/ipc/channels';
 import type {
@@ -14,6 +15,7 @@ import type {
   NoteDeleteInput,
   NoteGetInput,
   NoteListInput,
+  NoteSearchInput,
   NoteUpdateInput,
 } from '../shared/schemas/notes';
 import type {
@@ -42,6 +44,8 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke(NOTES_UPDATE, input),
     delete: (input: NoteDeleteInput): Promise<void> =>
       ipcRenderer.invoke(NOTES_DELETE, input),
+    search: (input: NoteSearchInput): Promise<readonly Note[]> =>
+      ipcRenderer.invoke(NOTES_SEARCH, input),
   },
   attachments: {
     save: (input: AttachmentSaveInput): Promise<AttachmentSaveResult> =>

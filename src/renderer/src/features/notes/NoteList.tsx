@@ -1,7 +1,13 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import clsx from 'clsx';
-import { useCreateNote, useDeleteNote, useNotesList } from './queries';
+import {
+  useCreateNote,
+  useDeleteNote,
+  useNotesList,
+  useNotesSearch,
+} from './queries';
 import { useUI } from '../../state/ui';
+import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 
 /**
  * Note list sidebar.
@@ -10,12 +16,25 @@ import { useUI } from '../../state/ui';
  * default). Click selects; ⌘N creates and selects a new untitled note;
  * trash button soft-deletes.
  */
+const SEARCH_DEBOUNCE_MS = 200;
+
 export function NoteList(): JSX.Element {
-  const { data: notes, isLoading } = useNotesList();
   const createNote = useCreateNote();
   const deleteNote = useDeleteNote();
   const selectedNoteId = useUI((s) => s.selectedNoteId);
   const setSelectedNoteId = useUI((s) => s.setSelectedNoteId);
+
+  // Search query state — debounced before being sent to the IPC so we
+  // don't fire an FTS5 query per keystroke. When the debounced query is
+  // non-empty, the list source switches from useNotesList to useNotesSearch.
+  const [searchInput, setSearchInput] = useState('');
+  const debouncedQuery = useDebouncedValue(searchInput, SEARCH_DEBOUNCE_MS);
+  const isSearching = debouncedQuery.trim().length > 0;
+
+  const listQuery = useNotesList();
+  const searchQuery = useNotesSearch(debouncedQuery);
+  const notes = isSearching ? searchQuery.data : listQuery.data;
+  const isLoading = isSearching ? searchQuery.isLoading : listQuery.isLoading;
 
   const createNew = useCallback(async (): Promise<void> => {
     const created = await createNote.mutateAsync({ title: '' });
@@ -55,12 +74,27 @@ export function NoteList(): JSX.Element {
           + New
         </button>
       </div>
+      <div className="border-b border-gray-800 px-3 py-2">
+        <input
+          type="search"
+          aria-label="Search notes"
+          placeholder="Search…"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') setSearchInput('');
+          }}
+          className="w-full rounded-md bg-gray-900 px-3 py-1.5 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        />
+      </div>
       <div className="flex-1 overflow-y-auto">
         {isLoading ? (
           <p className="px-4 py-3 text-sm text-gray-500">Loading…</p>
         ) : notes === undefined || notes.length === 0 ? (
           <p className="px-4 py-3 text-sm text-gray-500">
-            No notes yet. Press ⌘N to create one.
+            {isSearching
+              ? `No results for "${debouncedQuery.trim()}".`
+              : 'No notes yet. Press ⌘N to create one.'}
           </p>
         ) : (
           <ul className="divide-y divide-gray-900">

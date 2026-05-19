@@ -21,6 +21,24 @@ export function useNotesList(): ReturnType<typeof useQuery<readonly Note[]>> {
   });
 }
 
+/**
+ * FTS5 search over note titles and bodies.
+ *
+ * Disabled (no query fired) for empty queries — the caller should be
+ * passing a debounced value so we don't hammer the IPC. Results are
+ * cached per-query so re-typing the same query is instant.
+ */
+export function useNotesSearch(
+  query: string,
+): ReturnType<typeof useQuery<readonly Note[]>> {
+  const trimmed = query.trim();
+  return useQuery({
+    queryKey: [...queryKeys.notes.all, 'search', trimmed] as const,
+    queryFn: () => window.api.notes.search({ query: trimmed }),
+    enabled: trimmed.length > 0,
+  });
+}
+
 export function useNote(
   id: string | null,
 ): ReturnType<typeof useQuery<Note | null>> {
@@ -50,12 +68,14 @@ export function useUpdateNote(): ReturnType<
   return useMutation({
     mutationFn: (input: NoteUpdateInput) => window.api.notes.update(input),
     onSuccess: (note, vars) => {
-      // Optimistic-ish: write the fresh note into the detail cache and
-      // invalidate the list so updated_at ordering refreshes.
+      // Optimistic-ish: write the fresh note into the detail cache so the
+      // currently-open editor doesn't refetch. Then invalidate everything
+      // under notes (list, search, other details) so list ordering and
+      // search results pick up the changed title/body.
       if (note) {
         qc.setQueryData(queryKeys.notes.detail(vars.id), note);
       }
-      void qc.invalidateQueries({ queryKey: queryKeys.notes.list() });
+      void qc.invalidateQueries({ queryKey: queryKeys.notes.all });
     },
   });
 }

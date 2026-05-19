@@ -4,6 +4,7 @@ import type {
   NoteDeleteInput,
   NoteGetInput,
   NoteListInput,
+  NoteSearchInput,
   NoteUpdateInput,
 } from '../shared/schemas/notes';
 import type {
@@ -29,6 +30,7 @@ declare global {
         list: (input: NoteListInput) => Promise<readonly Note[]>;
         update: (input: NoteUpdateInput) => Promise<Note | null>;
         delete: (input: NoteDeleteInput) => Promise<void>;
+        search: (input: NoteSearchInput) => Promise<readonly Note[]>;
       };
       attachments: {
         save: (input: AttachmentSaveInput) => Promise<AttachmentSaveResult>;

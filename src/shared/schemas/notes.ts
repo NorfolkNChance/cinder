@@ -74,3 +74,12 @@ export const NoteDeleteInput = z.object({
   id: NoteId,
 });
 export type NoteDeleteInput = z.infer<typeof NoteDeleteInput>;
+
+export const NoteSearchInput = z.object({
+  // Free-text query. The service sanitises this into a safe FTS5 MATCH
+  // expression (prefix-match for clean tokens, phrase-match for tokens
+  // with punctuation) — callers must not pre-compose FTS5 syntax.
+  query: z.string().max(500),
+  limit: z.number().int().min(1).max(200).optional(),
+});
+export type NoteSearchInput = z.infer<typeof NoteSearchInput>;

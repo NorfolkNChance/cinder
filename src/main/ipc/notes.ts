@@ -5,6 +5,7 @@ import {
   NoteDeleteInput,
   NoteGetInput,
   NoteListInput,
+  NoteSearchInput,
   NoteUpdateInput,
 } from '../../shared/schemas/notes';
 import {
@@ -12,6 +13,7 @@ import {
   NOTES_DELETE,
   NOTES_GET,
   NOTES_LIST,
+  NOTES_SEARCH,
   NOTES_UPDATE,
 } from '../../shared/ipc/channels';
 import { notesService } from '../services/notes';
@@ -57,5 +59,11 @@ export function registerNotesHandlers(): void {
     assertMainFrame(event);
     const input = NoteDeleteInput.parse(raw);
     await notesService.delete(input.id);
+  });
+
+  ipcMain.handle(NOTES_SEARCH, async (event, raw) => {
+    assertMainFrame(event);
+    const input = NoteSearchInput.parse(raw);
+    return notesService.search(input);
   });
 }
