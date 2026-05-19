@@ -1,8 +1,11 @@
 import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import { useEffect, useRef } from 'react';
-import { serialize, deserialize } from '../../../../shared/markdown';
+import {
+  serialize,
+  deserialize,
+  editorExtensions,
+} from '../../../../shared/markdown';
 
 interface TipTapEditorProps {
   /** Markdown body to load. Editor is recreated when `noteId` changes. */
@@ -11,6 +14,21 @@ interface TipTapEditorProps {
   noteId: string;
   /** Fired on every editor update with the current markdown serialisation. */
   onChange: (markdown: string) => void;
+}
+
+/**
+ * Pull the first image File out of a ClipboardEvent or DragEvent's
+ * DataTransfer. Returns null if no image is present.
+ */
+function firstImageFile(data: DataTransfer | null): File | null {
+  if (!data) return null;
+  for (const item of Array.from(data.items)) {
+    if (item.kind === 'file' && item.type.startsWith('image/')) {
+      const file = item.getAsFile();
+      if (file) return file;
+    }
+  }
+  return null;
 }
 
 /**
@@ -36,18 +54,21 @@ export function TipTapEditor({
   // we call setContent during a note switch.
   const isHydratingRef = useRef(false);
 
+  // Keep noteId in a ref so the editor's pasteHandler (registered once on
+  // construction) always sees the current id without rebuilding the editor.
+  const noteIdRef = useRef(noteId);
+  useEffect(() => {
+    noteIdRef.current = noteId;
+  }, [noteId]);
+
   const editor = useEditor({
+    // Schema-affecting extensions come from the shared module so the
+    // editor and the markdown serde always agree on the document shape.
+    // Placeholder is purely cosmetic (no schema impact) so it's added
+    // here only.
     extensions: [
-      StarterKit.configure({
-        // Heading levels — default is 1-6, leave open.
-        heading: { levels: [1, 2, 3, 4, 5, 6] },
-        // CodeBlock uses StarterKit's lowlight-less variant for now;
-        // syntax highlighting comes in a later milestone.
-        codeBlock: { HTMLAttributes: { class: 'cinder-codeblock' } },
-      }),
-      Placeholder.configure({
-        placeholder: 'Start writing…',
-      }),
+      ...editorExtensions,
+      Placeholder.configure({ placeholder: 'Start writing…' }),
     ],
     content: deserialize(markdown).toJSON(),
     editorProps: {
@@ -55,6 +76,63 @@ export function TipTapEditor({
         // The .ProseMirror class (added by TipTap automatically) is styled
         // in index.css. Adding only layout-affecting utilities here.
         class: 'focus:outline-none min-h-[60vh] px-1',
+      },
+      // Intercept a clipboard paste containing an image — bytes get
+      // saved through the attachments IPC and the resulting URL is
+      // inserted as an image node at the cursor. Returning true cancels
+      // ProseMirror's default paste handling.
+      handlePaste: (view, event) => {
+        const file = firstImageFile(event.clipboardData);
+        if (file === null) return false;
+        event.preventDefault();
+        void (async () => {
+          const buffer = new Uint8Array(await file.arrayBuffer());
+          const result = await window.api.attachments.save({
+            noteId: noteIdRef.current,
+            data: buffer,
+            originalFilename: file.name,
+            mimeType: file.type,
+          });
+          const imageNode = view.state.schema.nodes['image']?.create({
+            src: result.url,
+            alt: '',
+            title: null,
+          });
+          if (imageNode) {
+            view.dispatch(view.state.tr.replaceSelectionWith(imageNode));
+          }
+        })();
+        return true;
+      },
+      // Same flow for drag-and-drop of an image file from Finder.
+      handleDrop: (view, event) => {
+        const file = firstImageFile(event.dataTransfer);
+        if (file === null) return false;
+        event.preventDefault();
+        void (async () => {
+          const buffer = new Uint8Array(await file.arrayBuffer());
+          const result = await window.api.attachments.save({
+            noteId: noteIdRef.current,
+            data: buffer,
+            originalFilename: file.name,
+            mimeType: file.type,
+          });
+          const imageNode = view.state.schema.nodes['image']?.create({
+            src: result.url,
+            alt: '',
+            title: null,
+          });
+          // Insert at the drop coordinates (where the user actually dropped),
+          // not the current selection.
+          const coords = view.posAtCoords({
+            left: event.clientX,
+            top: event.clientY,
+          });
+          if (imageNode && coords) {
+            view.dispatch(view.state.tr.insert(coords.pos, imageNode));
+          }
+        })();
+        return true;
       },
     },
     onUpdate: ({ editor: e }) => {

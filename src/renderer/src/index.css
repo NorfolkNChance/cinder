@@ -88,6 +88,13 @@
   border-top: 1px solid rgb(55 65 81); /* gray-700 */
   margin: 1.5em 0;
 }
+.ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.375rem;
+  display: inline-block;
+  vertical-align: middle;
+}
 
 /* TipTap placeholder for empty docs */
 .ProseMirror p.is-editor-empty:first-child::before {

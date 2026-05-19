@@ -261,6 +261,98 @@ describe('serde — unit cases', () => {
     });
     expectRoundTrip(doc);
   });
+
+  // ── Images ────────────────────────────────────────────────────────────────
+
+  it('image with attachment:// src and alt text', () => {
+    const doc = docFromJson({
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            {
+              type: 'image',
+              attrs: {
+                src: 'attachment://01911e0a-7e6e-7d4a-9e2f-1234567890ab/photo.png',
+                alt: 'my photo',
+                title: null,
+              },
+            },
+          ],
+        },
+      ],
+    });
+    expectRoundTrip(doc);
+  });
+
+  it('image with empty alt', () => {
+    const doc = docFromJson({
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            {
+              type: 'image',
+              attrs: {
+                src: 'attachment://01911e0a-7e6e-7d4a-9e2f-1234567890ab/x.png',
+                alt: '',
+                title: null,
+              },
+            },
+          ],
+        },
+      ],
+    });
+    expectRoundTrip(doc);
+  });
+
+  it('image with a title', () => {
+    const doc = docFromJson({
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            {
+              type: 'image',
+              attrs: {
+                src: 'attachment://01911e0a-7e6e-7d4a-9e2f-1234567890ab/x.png',
+                alt: 'alt',
+                title: 'a caption',
+              },
+            },
+          ],
+        },
+      ],
+    });
+    expectRoundTrip(doc);
+  });
+
+  it('image mixed with surrounding text in same paragraph', () => {
+    const doc = docFromJson({
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            { type: 'text', text: 'before ' },
+            {
+              type: 'image',
+              attrs: {
+                src: 'attachment://01911e0a-7e6e-7d4a-9e2f-1234567890ab/x.png',
+                alt: 'inline',
+                title: null,
+              },
+            },
+            { type: 'text', text: ' after' },
+          ],
+        },
+      ],
+    });
+    expectRoundTrip(doc);
+  });
 });
 
 // ── fast-check property tests ───────────────────────────────────────────────

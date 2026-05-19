@@ -14,3 +14,6 @@ export const NOTES_GET = 'notes:get' as const;
 export const NOTES_LIST = 'notes:list' as const;
 export const NOTES_UPDATE = 'notes:update' as const;
 export const NOTES_DELETE = 'notes:delete' as const;
+
+// ── Attachments ──────────────────────────────────────────────────────────────
+export const ATTACHMENTS_SAVE = 'attachments:save' as const;

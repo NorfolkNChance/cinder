@@ -8,6 +8,15 @@ import { runMigrations } from './db/migrate';
 import { initDrizzle } from './db/drizzle';
 import { registerAppHandlers } from './ipc/app';
 import { registerNotesHandlers } from './ipc/notes';
+import { registerAttachmentsHandlers } from './ipc/attachments';
+import {
+  registerAttachmentProtocol,
+  registerAttachmentSchemePrivileges,
+} from './protocol/attachment';
+
+// Scheme privileges must be set BEFORE app.whenReady — Electron rejects
+// late changes. See protocol/attachment.ts for the rationale.
+registerAttachmentSchemePrivileges();
 
 // Harden the app against remote module usage and navigation exploits
 app.on('web-contents-created', (_event, contents) => {
@@ -91,6 +100,9 @@ app.whenReady().then(async () => {
   // Install CSP headers before any content loads
   installCSP();
 
+  // Wire the attachment:// file-serving handler now that the app is ready.
+  registerAttachmentProtocol();
+
   // Initialise the encrypted database, apply any pending schema migrations,
   // and wire the Drizzle query layer. All three must complete before IPC
   // handlers start fielding requests that touch the DB.
@@ -101,6 +113,7 @@ app.whenReady().then(async () => {
   // Register IPC handlers
   registerAppHandlers();
   registerNotesHandlers();
+  registerAttachmentsHandlers();
 
   createWindow();
 

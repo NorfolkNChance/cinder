@@ -46,6 +46,7 @@ interface InlineNode {
   type: string;
   text?: string;
   marks?: Array<{ type: string }>;
+  attrs?: Record<string, unknown>;
 }
 
 /**
@@ -108,6 +109,24 @@ function renderInline(tokens: readonly Token[], schema: Schema): InlineNode[] {
       case 'hardbreak':
         out.push({ type: 'hardBreak' });
         break;
+
+      case 'image': {
+        // markdown-it stores attrs as [[name, value], ...].
+        const attrPairs = (tok.attrs ?? []) as Array<[string, string]>;
+        const attrs: Record<string, string> = {};
+        for (const [k, v] of attrPairs) attrs[k] = v;
+        const src = attrs['src'] ?? '';
+        // `tok.content` is the rendered alt text. We prefer it over the
+        // raw attrs['alt'] because markdown-it normalises escape
+        // sequences in the content but leaves them raw in attrs['alt'].
+        const alt = tok.content ?? attrs['alt'] ?? '';
+        const titleAttr = attrs['title'];
+        out.push({
+          type: 'image',
+          attrs: { src, alt, title: titleAttr ?? null },
+        });
+        break;
+      }
 
       default:
         // Unknown inline token — skip silently.

@@ -115,7 +115,23 @@ function applyMarks(text: string, marks: readonly Mark[]): string {
   return result;
 }
 
-/** Render inline content (text + hardBreak nodes with marks). */
+/**
+ * Escape the contents of an image alt-text per CommonMark §6.4. Inside
+ * `[...]` only `]` and `\` need escaping; other markdown delimiters are
+ * already deactivated by the bracket context.
+ */
+function escapeImageAlt(text: string): string {
+  return text.replace(/([\\\]])/g, '\\$1');
+}
+
+/**
+ * Render inline content (text + hardBreak + image with marks).
+ *
+ * Image is an inline node per the schema configuration; emit it using
+ * CommonMark's `![alt](src "title")` syntax. The URL is wrapped in
+ * angle brackets so any URL — including those with parentheses or
+ * spaces — is safe without per-character escaping.
+ */
 function renderInline(node: Node): string {
   let out = '';
   node.forEach((child) => {
@@ -125,6 +141,16 @@ function renderInline(node: Node): string {
     } else if (child.type.name === 'hardBreak') {
       // CommonMark: two trailing spaces before a newline is a hard break.
       out += '  \n';
+    } else if (child.type.name === 'image') {
+      const src = (child.attrs['src'] as string | undefined) ?? '';
+      const alt = (child.attrs['alt'] as string | null | undefined) ?? '';
+      const title = child.attrs['title'] as string | null | undefined;
+      const altPart = escapeImageAlt(alt);
+      const titlePart =
+        title !== null && title !== undefined && title.length > 0
+          ? ` "${title.replace(/"/g, '\\"')}"`
+          : '';
+      out += `![${altPart}](<${src}>${titlePart})`;
     }
   });
   return out;

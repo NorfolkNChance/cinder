@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import {
   APP_GET_VERSION,
+  ATTACHMENTS_SAVE,
   NOTES_CREATE,
   NOTES_DELETE,
   NOTES_GET,
@@ -15,6 +16,10 @@ import type {
   NoteListInput,
   NoteUpdateInput,
 } from '../shared/schemas/notes';
+import type {
+  AttachmentSaveInput,
+  AttachmentSaveResult,
+} from '../shared/schemas/attachments';
 
 /**
  * Preload — the only path from the sandboxed renderer to the main process.
@@ -37,5 +42,9 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke(NOTES_UPDATE, input),
     delete: (input: NoteDeleteInput): Promise<void> =>
       ipcRenderer.invoke(NOTES_DELETE, input),
+  },
+  attachments: {
+    save: (input: AttachmentSaveInput): Promise<AttachmentSaveResult> =>
+      ipcRenderer.invoke(ATTACHMENTS_SAVE, input),
   },
 });

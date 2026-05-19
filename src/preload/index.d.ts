@@ -6,6 +6,10 @@ import type {
   NoteListInput,
   NoteUpdateInput,
 } from '../shared/schemas/notes';
+import type {
+  AttachmentSaveInput,
+  AttachmentSaveResult,
+} from '../shared/schemas/attachments';
 
 export {};
 
@@ -25,6 +29,9 @@ declare global {
         list: (input: NoteListInput) => Promise<readonly Note[]>;
         update: (input: NoteUpdateInput) => Promise<Note | null>;
         delete: (input: NoteDeleteInput) => Promise<void>;
+      };
+      attachments: {
+        save: (input: AttachmentSaveInput) => Promise<AttachmentSaveResult>;
       };
     };
   }
