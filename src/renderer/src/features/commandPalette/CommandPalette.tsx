@@ -85,6 +85,7 @@ export function CommandPalette(): JSX.Element | null {
   const setMode = useUI((s) => s.setMode);
   const setTaskScope = useUI((s) => s.setTaskScope);
   const setSelectedNoteId = useUI((s) => s.setSelectedNoteId);
+  const openHelp = useUI((s) => s.openHelp);
 
   const { data: projects } = useProjectsList();
   const { data: labels } = useLabelsList();
@@ -250,6 +251,17 @@ export function CommandPalette(): JSX.Element | null {
       },
     });
     cmds.push({
+      id: 'action:help',
+      group: 'Actions',
+      label: 'Help & documentation',
+      hint: '⌘/',
+      icon: '?',
+      execute: () => {
+        close();
+        openHelp();
+      },
+    });
+    cmds.push({
       id: 'action:quick-add',
       group: 'Actions',
       label: 'Add task',
@@ -269,7 +281,7 @@ export function CommandPalette(): JSX.Element | null {
     });
 
     return cmds;
-  }, [projects, labels, savedFilters, setMode, setTaskScope, setSelectedNoteId, close]);
+  }, [projects, labels, savedFilters, setMode, setTaskScope, setSelectedNoteId, openHelp, close]);
 
   // Filter + rank against the current query.
   const filtered = useMemo<Command[]>(() => {

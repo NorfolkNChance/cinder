@@ -7,6 +7,7 @@ import { TaskList } from './features/tasks/TaskList';
 import { MatrixSidebar } from './features/matrix/MatrixSidebar';
 import { MatrixView } from './features/matrix/MatrixView';
 import { CommandPalette } from './features/commandPalette/CommandPalette';
+import { HelpModal } from './features/help/HelpModal';
 import { useUI, type Mode } from './state/ui';
 
 /**
@@ -27,18 +28,42 @@ import { useUI, type Mode } from './state/ui';
 export default function App(): JSX.Element {
   const mode = useUI((s) => s.mode);
   const openCommandPalette = useUI((s) => s.openCommandPalette);
+  const openHelp = useUI((s) => s.openHelp);
+  const helpOpen = useUI((s) => s.helpOpen);
 
-  // Global ⌘K shortcut — opens the command palette from anywhere.
+  // Global shortcuts — ⌘K for command palette, ⌘/ or ? for help.
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent): void {
+      // ⌘K — command palette (always, even in editable context)
       if (e.key === 'k' && e.metaKey && !e.shiftKey && !e.altKey) {
         e.preventDefault();
         openCommandPalette();
+        return;
+      }
+      // ⌘/ — help (always)
+      if (e.key === '/' && e.metaKey) {
+        e.preventDefault();
+        openHelp();
+        return;
+      }
+      // ? — help (only when not typing; skip if help is already open)
+      if (e.key === '?' && !e.metaKey && !e.ctrlKey && !e.altKey && !helpOpen) {
+        const target = e.target as HTMLElement | null;
+        const tag = target?.tagName ?? '';
+        if (
+          tag !== 'INPUT' &&
+          tag !== 'TEXTAREA' &&
+          tag !== 'SELECT' &&
+          !target?.isContentEditable
+        ) {
+          e.preventDefault();
+          openHelp();
+        }
       }
     }
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [openCommandPalette]);
+  }, [openCommandPalette, openHelp, helpOpen]);
 
   return (
     <div className="flex h-screen flex-col bg-gray-950 text-white">
@@ -63,8 +88,9 @@ export default function App(): JSX.Element {
           )}
         </main>
       </div>
-      {/* Command palette portal — always mounted, shown when open */}
+      {/* Global overlays — always mounted, shown when open */}
       <CommandPalette />
+      <HelpModal />
     </div>
   );
 }
@@ -75,6 +101,7 @@ function TopBar(): JSX.Element {
   const mode = useUI((s) => s.mode);
   const setMode = useUI((s) => s.setMode);
   const openCommandPalette = useUI((s) => s.openCommandPalette);
+  const openHelp = useUI((s) => s.openHelp);
 
   return (
     <header className="flex items-center gap-1 border-b border-gray-800 px-3 py-1.5">
@@ -91,9 +118,16 @@ function TopBar(): JSX.Element {
       <button
         onClick={openCommandPalette}
         title="Command palette (⌘K)"
-        className="flex items-center gap-1.5 rounded-md border border-gray-700 bg-gray-900 px-2 py-1 text-xs text-gray-500 hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        className="flex items-center rounded-md border border-gray-700 bg-gray-900 px-2 py-1 text-xs text-gray-500 hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
       >
-        <span>⌘K</span>
+        ⌘K
+      </button>
+      <button
+        onClick={openHelp}
+        title="Help (⌘/)"
+        className="flex items-center rounded-md border border-gray-700 bg-gray-900 px-2 py-1 text-xs text-gray-500 hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+      >
+        ?
       </button>
     </header>
   );

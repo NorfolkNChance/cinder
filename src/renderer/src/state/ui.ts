@@ -60,6 +60,11 @@ interface UIState {
   commandPaletteOpen: boolean;
   openCommandPalette: () => void;
   closeCommandPalette: () => void;
+
+  /** Whether the help documentation overlay is open. */
+  helpOpen: boolean;
+  openHelp: () => void;
+  closeHelp: () => void;
 }
 
 export const useUI = create<UIState>((set) => ({
@@ -83,4 +88,8 @@ export const useUI = create<UIState>((set) => ({
   commandPaletteOpen: false,
   openCommandPalette: () => set({ commandPaletteOpen: true }),
   closeCommandPalette: () => set({ commandPaletteOpen: false }),
+
+  helpOpen: false,
+  openHelp: () => set({ helpOpen: true }),
+  closeHelp: () => set({ helpOpen: false }),
 }));
