@@ -1,8 +1,10 @@
 import { v7 as uuidv7 } from 'uuid';
 import { and, asc, eq, exists, gte, isNull, lt, type SQL } from 'drizzle-orm';
+import { getDb } from '../db/index';
 import { getDrizzle } from '../db/drizzle';
 import { tasks, taskLabels } from '../db/schema';
 import { computeNextOccurrence } from '../../shared/recurrence';
+import { filterToSql } from '../../shared/filter';
 import { getLabelsForTaskIds } from './labels';
 import type {
   Task,
@@ -89,6 +91,16 @@ export const tasksService = {
   },
 
   async list(input: TaskListInput): Promise<readonly TaskWithLabels[]> {
+    // Filter-DSL path: when the renderer passes a filter expression, the
+    // compiled SQL fragment owns the WHERE clause. We still AND in the
+    // baseline soft-delete filter and (unless the filter mentions
+    // completion) the active-tasks default. Drizzle's query builder
+    // doesn't handle raw user-defined fragments cleanly, so this branch
+    // drops to the underlying connection — same pattern as FTS search.
+    if (input.filter !== undefined && input.filter.trim().length > 0) {
+      return listByFilter(input);
+    }
+
     const db = getDrizzle();
 
     const conditions: SQL[] = [];
@@ -239,3 +251,57 @@ export const tasksService = {
       .where(eq(tasks.id, id));
   },
 } as const;
+
+/**
+ * Filter-DSL list path. Drops out of Drizzle because the compiled SQL
+ * fragment is a raw string; mixing it back into a Drizzle query builder
+ * would require building a `sql` template tagged literal for the
+ * fragment, which is awkward and offers no real benefit.
+ */
+async function listByFilter(
+  input: TaskListInput,
+): Promise<readonly TaskWithLabels[]> {
+  if (input.filter === undefined) return [];
+
+  // Compile — throws FilterSyntaxError for bad input; the handler
+  // surfaces the message to the renderer as a rejected promise.
+  const compiled = filterToSql(input.filter);
+  const baseConditions: string[] = ['deleted_at IS NULL'];
+  // Suppress the default "active tasks only" filter if the user
+  // explicitly mentioned completion status anywhere in the expression
+  // (e.g. `completed & today`, `!completed`).
+  if (!compiled.mentionsCompleted && !input.includeCompleted) {
+    baseConditions.push('completed_at IS NULL');
+  }
+  baseConditions.push(compiled.fragment.sql);
+  const where = baseConditions.join(' AND ');
+  const limit = input.limit ?? 500;
+
+  const sql = `SELECT id, project_id AS projectId, section_id AS sectionId,
+                      parent_task_id AS parentTaskId,
+                      title, description,
+                      due_date AS dueDate, due_recurrence AS dueRecurrence,
+                      priority, "order" AS "order",
+                      completed_at AS completedAt,
+                      created_at AS createdAt, updated_at AS updatedAt,
+                      deleted_at AS deletedAt
+                 FROM tasks
+                WHERE ${where}
+                ORDER BY "order" ASC, created_at ASC
+                LIMIT ?`;
+  const params = [...compiled.fragment.params, limit];
+
+  const db = getDb();
+  const rows: Task[] = await new Promise((resolve, reject) => {
+    db.all(sql, params, (err: Error | null, result: unknown[]) => {
+      if (err) reject(err);
+      else resolve(result as Task[]);
+    });
+  });
+
+  const labelsByTask = await getLabelsForTaskIds(rows.map((t) => t.id));
+  return rows.map((t) => ({
+    ...t,
+    labels: [...(labelsByTask.get(t.id) ?? [])],
+  }));
+}

@@ -91,6 +91,14 @@ export const TaskListInput = z.object({
   parentTaskId: Uuid.nullable().optional(),
   /** Per-label view filter — matches tasks with this label attached. */
   labelId: Uuid.optional(),
+  /**
+   * Filter DSL expression — compiled to a SQL fragment at the service
+   * layer. See src/shared/filter/. When set, this REPLACES the simple
+   * scope filters above (projectId/labelId/etc.) — the renderer should
+   * use one or the other, not mix. Length-capped so a pathological
+   * input can't blow up the lexer.
+   */
+  filter: z.string().max(500).optional(),
   // Date predicates for the Today / Upcoming views. Inclusive bounds.
   dueBefore: DateOrDateTime.optional(),
   dueOnOrAfter: DateOrDateTime.optional(),
