@@ -43,6 +43,11 @@ interface UIState {
 
   taskScope: TaskScope;
   setTaskScope: (s: TaskScope) => void;
+
+  /** Whether the ⌘K command palette is open. */
+  commandPaletteOpen: boolean;
+  openCommandPalette: () => void;
+  closeCommandPalette: () => void;
 }
 
 export const useUI = create<UIState>((set) => ({
@@ -54,4 +59,8 @@ export const useUI = create<UIState>((set) => ({
 
   taskScope: { kind: 'inbox' },
   setTaskScope: (s) => set({ taskScope: s }),
+
+  commandPaletteOpen: false,
+  openCommandPalette: () => set({ commandPaletteOpen: true }),
+  closeCommandPalette: () => set({ commandPaletteOpen: false }),
 }));

@@ -1,8 +1,10 @@
+import { useEffect } from 'react';
 import clsx from 'clsx';
 import { NoteList } from './features/notes/NoteList';
 import { NoteEditor } from './features/notes/NoteEditor';
 import { TasksSidebar } from './features/tasks/TasksSidebar';
 import { TaskList } from './features/tasks/TaskList';
+import { CommandPalette } from './features/commandPalette/CommandPalette';
 import { useUI, type Mode } from './state/ui';
 
 /**
@@ -22,6 +24,19 @@ import { useUI, type Mode } from './state/ui';
  */
 export default function App(): JSX.Element {
   const mode = useUI((s) => s.mode);
+  const openCommandPalette = useUI((s) => s.openCommandPalette);
+
+  // Global ⌘K shortcut — opens the command palette from anywhere.
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent): void {
+      if (e.key === 'k' && e.metaKey && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        openCommandPalette();
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [openCommandPalette]);
 
   return (
     <div className="flex h-screen flex-col bg-gray-950 text-white">
@@ -34,6 +49,8 @@ export default function App(): JSX.Element {
           {mode === 'notes' ? <NotesMainPane /> : <TaskList />}
         </main>
       </div>
+      {/* Command palette portal — always mounted, shown when open */}
+      <CommandPalette />
     </div>
   );
 }
@@ -43,6 +60,7 @@ export default function App(): JSX.Element {
 function TopBar(): JSX.Element {
   const mode = useUI((s) => s.mode);
   const setMode = useUI((s) => s.setMode);
+  const openCommandPalette = useUI((s) => s.openCommandPalette);
 
   return (
     <header className="flex items-center gap-1 border-b border-gray-800 px-3 py-1.5">
@@ -52,6 +70,14 @@ function TopBar(): JSX.Element {
       <ModeButton active={mode === 'tasks'} onClick={() => setMode('tasks')}>
         Tasks
       </ModeButton>
+      <div className="flex-1" />
+      <button
+        onClick={openCommandPalette}
+        title="Command palette (⌘K)"
+        className="flex items-center gap-1.5 rounded-md border border-gray-700 bg-gray-900 px-2 py-1 text-xs text-gray-500 hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+      >
+        <span>⌘K</span>
+      </button>
     </header>
   );
 }
