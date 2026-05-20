@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import type { Task } from '../../../../shared/schemas/tasks';
+import type { TaskWithLabels } from '../../../../shared/schemas/tasks';
 import {
   useCompleteTask,
   useDeleteTask,
@@ -27,7 +27,7 @@ import {
  */
 
 interface Args {
-  readonly tasks: readonly Task[];
+  readonly tasks: readonly TaskWithLabels[];
   readonly selectedTaskId: string | null;
   readonly setSelectedTaskId: (id: string | null) => void;
   readonly focusQuickAdd: () => void;

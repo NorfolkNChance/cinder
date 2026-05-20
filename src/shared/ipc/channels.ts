@@ -41,3 +41,11 @@ export const TASKS_LIST = 'tasks:list' as const;
 export const TASKS_UPDATE = 'tasks:update' as const;
 export const TASKS_COMPLETE = 'tasks:complete' as const;
 export const TASKS_DELETE = 'tasks:delete' as const;
+
+// ── Labels ───────────────────────────────────────────────────────────────────
+export const LABELS_CREATE = 'labels:create' as const;
+export const LABELS_GET = 'labels:get' as const;
+export const LABELS_LIST = 'labels:list' as const;
+export const LABELS_UPDATE = 'labels:update' as const;
+export const LABELS_DELETE = 'labels:delete' as const;
+export const LABELS_SET_FOR_TASK = 'labels:setForTask' as const;

@@ -1,14 +1,16 @@
 import { v7 as uuidv7 } from 'uuid';
-import { and, asc, eq, gte, isNull, lt, type SQL } from 'drizzle-orm';
+import { and, asc, eq, exists, gte, isNull, lt, type SQL } from 'drizzle-orm';
 import { getDrizzle } from '../db/drizzle';
-import { tasks } from '../db/schema';
+import { tasks, taskLabels } from '../db/schema';
 import { computeNextOccurrence } from '../../shared/recurrence';
+import { getLabelsForTaskIds } from './labels';
 import type {
   Task,
   TaskCompleteInput,
   TaskCreateInput,
   TaskListInput,
   TaskUpdateInput,
+  TaskWithLabels,
 } from '../../shared/schemas/tasks';
 
 /**
@@ -65,6 +67,20 @@ export const tasksService = {
       deletedAt: null,
     };
     await db.insert(tasks).values(row);
+
+    // Attach any labels the caller specified. Atomic-by-IPC-call: if a
+    // label insert fails the create has already happened, but the
+    // renderer treats label attachment as best-effort so a partial
+    // failure here surfaces as "task created without all labels" — not
+    // worth a transaction wrapper for v1.
+    if (input.labelIds !== undefined && input.labelIds.length > 0) {
+      await db
+        .insert(taskLabels)
+        .values(
+          input.labelIds.map((labelId) => ({ taskId: row.id, labelId })),
+        );
+    }
+
     return row;
   },
 
@@ -72,7 +88,7 @@ export const tasksService = {
     return getById(id);
   },
 
-  async list(input: TaskListInput): Promise<readonly Task[]> {
+  async list(input: TaskListInput): Promise<readonly TaskWithLabels[]> {
     const db = getDrizzle();
 
     const conditions: SQL[] = [];
@@ -98,6 +114,26 @@ export const tasksService = {
         input.parentTaskId === null
           ? isNull(tasks.parentTaskId)
           : eq(tasks.parentTaskId, input.parentTaskId),
+      );
+    }
+
+    // Per-label filter: an EXISTS subquery over task_labels keeps the
+    // outer SELECT simple (no JOIN/GROUP gymnastics) and plays well
+    // with the other conditions.
+    if (input.labelId !== undefined) {
+      const labelId = input.labelId;
+      conditions.push(
+        exists(
+          db
+            .select({ x: taskLabels.taskId })
+            .from(taskLabels)
+            .where(
+              and(
+                eq(taskLabels.taskId, tasks.id),
+                eq(taskLabels.labelId, labelId),
+              ),
+            ),
+        ),
       );
     }
 
@@ -131,7 +167,17 @@ export const tasksService = {
       .where(where)
       .orderBy(asc(tasks.order), asc(tasks.createdAt))
       .limit(limit);
-    return rows as Task[];
+
+    const taskRows = rows as Task[];
+    // Attach labels in a single follow-up query rather than per-task
+    // round-trips. See getLabelsForTaskIds for the join.
+    const labelsByTask = await getLabelsForTaskIds(
+      taskRows.map((t) => t.id),
+    );
+    return taskRows.map((t) => ({
+      ...t,
+      labels: [...(labelsByTask.get(t.id) ?? [])],
+    }));
   },
 
   async update(input: TaskUpdateInput): Promise<Task | null> {

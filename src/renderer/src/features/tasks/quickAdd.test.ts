@@ -13,6 +13,12 @@ const PROJECTS = [
   { id: 'p-personal', name: 'Personal' },
 ];
 
+const LABELS = [
+  { id: 'l-urgent', name: 'urgent' },
+  { id: 'l-followup', name: 'followup' },
+  { id: 'l-bug', name: 'bug' },
+];
+
 beforeEach(() => {
   vi.useFakeTimers();
   vi.setSystemTime(FIXED_NOW);
@@ -23,7 +29,11 @@ afterEach(() => {
 });
 
 function parse(input: string) {
-  return parseQuickAdd(input, { projects: PROJECTS, now: FIXED_NOW });
+  return parseQuickAdd(input, {
+    projects: PROJECTS,
+    labels: LABELS,
+    now: FIXED_NOW,
+  });
 }
 
 describe('parseQuickAdd — basic cases', () => {
@@ -224,6 +234,41 @@ describe('parseQuickAdd — recurrence', () => {
   });
 });
 
+describe('parseQuickAdd — labels', () => {
+  it('resolves a known @label (case-insensitive)', () => {
+    const r = parse('triage @urgent');
+    expect(r.labelIds).toEqual(['l-urgent']);
+    expect(r.title).toBe('triage');
+  });
+
+  it('attaches multiple distinct labels', () => {
+    const r = parse('triage @urgent @bug');
+    expect(r.labelIds).toEqual(['l-urgent', 'l-bug']);
+    expect(r.title).toBe('triage');
+  });
+
+  it('dedups duplicate label references but strips the duplicate tag', () => {
+    const r = parse('triage @urgent @URGENT');
+    expect(r.labelIds).toEqual(['l-urgent']);
+    expect(r.title).toBe('triage');
+  });
+
+  it('leaves unknown @tags in the title verbatim', () => {
+    const r = parse('email @sarah about it');
+    expect(r.labelIds).toEqual([]);
+    expect(r.title).toContain('@sarah');
+  });
+
+  it('combines labels with project + date + priority', () => {
+    const r = parse('Fix bug tomorrow p1 #work @urgent @bug');
+    expect(r.title).toBe('Fix bug');
+    expect(r.priority).toBe(1);
+    expect(r.projectId).toBe('p-work');
+    expect(r.labelIds).toEqual(['l-urgent', 'l-bug']);
+    expect(r.dueDate).toBe('2026-05-20');
+  });
+});
+
 describe('parseQuickAdd — adversarial inputs', () => {
   it('only-priority input → empty title + priority', () => {
     const r = parse('p1');
@@ -235,12 +280,6 @@ describe('parseQuickAdd — adversarial inputs', () => {
     const r = parse('#work');
     expect(r.title).toBe('');
     expect(r.projectId).toBe('p-work');
-  });
-
-  it('does not strip @label tags (Phase 3)', () => {
-    // Labels come in Phase 3; @work should currently stay in the title.
-    const r = parse('email @sarah about it');
-    expect(r.title).toContain('@sarah');
   });
 
   it("returns title without leading/trailing whitespace after stripping", () => {

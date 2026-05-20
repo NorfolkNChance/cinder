@@ -39,6 +39,8 @@ import {
 export interface QuickAddContext {
   /** Projects available for `#tag` resolution. Only id + name needed. */
   readonly projects: readonly { id: string; name: string }[];
+  /** Labels available for `@tag` resolution. Only id + name needed. */
+  readonly labels?: readonly { id: string; name: string }[];
   /** Reference "now" for chrono — defaults to new Date(). Test injection. */
   readonly now?: Date;
 }
@@ -52,6 +54,8 @@ export interface ParsedQuickAdd {
   readonly priority: 1 | 2 | 3 | 4 | null;
   /** Resolved project id or null. */
   readonly projectId: string | null;
+  /** Resolved label ids — empty array, not null, when none matched. */
+  readonly labelIds: readonly string[];
   /** RFC 5545 RRULE string or null. */
   readonly recurrence: string | null;
   /** Matched spans into the *original* input, in input order. For UI highlight. */
@@ -59,7 +63,7 @@ export interface ParsedQuickAdd {
 }
 
 export interface Match {
-  readonly type: 'date' | 'priority' | 'project' | 'recurrence';
+  readonly type: 'date' | 'priority' | 'project' | 'label' | 'recurrence';
   readonly text: string;
   /** Start offset (inclusive) into the original input. */
   readonly start: number;
@@ -104,6 +108,36 @@ export function parseQuickAdd(
     projectId = project.id;
     matches.push({
       type: 'project',
+      text: m[0],
+      start: m.index,
+      end: m.index + m[0].length,
+    });
+  }
+
+  // ── Labels — every matching @tag attaches a label; duplicates dedup ────
+  const labelIds: string[] = [];
+  const seenLabelIds = new Set<string>();
+  const labelMatches = [...input.matchAll(/@(\w+)/g)];
+  for (const m of labelMatches) {
+    if (m.index === undefined) continue;
+    const tag = (m[1] ?? '').toLowerCase();
+    const label = ctx.labels?.find((l) => l.name.toLowerCase() === tag);
+    if (label === undefined) continue;
+    if (seenLabelIds.has(label.id)) {
+      // Same label referenced twice — strip the duplicate tag from the
+      // title but don't double-attach.
+      matches.push({
+        type: 'label',
+        text: m[0],
+        start: m.index,
+        end: m.index + m[0].length,
+      });
+      continue;
+    }
+    seenLabelIds.add(label.id);
+    labelIds.push(label.id);
+    matches.push({
+      type: 'label',
       text: m[0],
       start: m.index,
       end: m.index + m[0].length,
@@ -177,6 +211,7 @@ export function parseQuickAdd(
     dueDate: finalDueDate,
     priority,
     projectId,
+    labelIds,
     recurrence,
     matches: matches.sort((a, b) => a.start - b.start),
   };

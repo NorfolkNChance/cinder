@@ -30,7 +30,8 @@ export type TaskScope =
   | { kind: 'inbox' }
   | { kind: 'today' }
   | { kind: 'upcoming' }
-  | { kind: 'project'; id: string };
+  | { kind: 'project'; id: string }
+  | { kind: 'label'; id: string };
 
 interface UIState {
   mode: Mode;

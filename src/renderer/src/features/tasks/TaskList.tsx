@@ -1,6 +1,11 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useUI } from '../../state/ui';
-import { useCreateTask, useProjectsList, useTasksList } from './queries';
+import {
+  useCreateTask,
+  useLabelsList,
+  useProjectsList,
+  useTasksList,
+} from './queries';
 import { TaskItem } from './TaskItem';
 import { formatDueDate, localDateString } from '../../lib/dates';
 import { parseQuickAdd, type ParsedQuickAdd } from './quickAdd';
@@ -28,6 +33,7 @@ export function TaskList(): JSX.Element {
   const taskScope = useUI((s) => s.taskScope);
   const { data: tasks, isLoading } = useTasksList(taskScope);
   const { data: projects } = useProjectsList();
+  const { data: labels } = useLabelsList();
   const createTask = useCreateTask();
 
   const headerLabel = useMemo(() => {
@@ -42,8 +48,12 @@ export function TaskList(): JSX.Element {
         const project = projects?.find((p) => p.id === taskScope.id);
         return project?.name ?? 'Project';
       }
+      case 'label': {
+        const label = labels?.find((l) => l.id === taskScope.id);
+        return label !== undefined ? `@${label.name}` : 'Label';
+      }
     }
-  }, [taskScope, projects]);
+  }, [taskScope, projects, labels]);
 
   // ── Quick-add input + keyboard shortcuts ────────────────────────────────
   const [draft, setDraft] = useState('');
@@ -79,8 +89,9 @@ export function TaskList(): JSX.Element {
     () =>
       parseQuickAdd(draft, {
         projects: projects ?? [],
+        labels: labels ?? [],
       }),
-    [draft, projects],
+    [draft, projects, labels],
   );
 
   const submitNewTask = useCallback(async () => {
@@ -94,7 +105,8 @@ export function TaskList(): JSX.Element {
       input.title === '' &&
       input.dueDate === undefined &&
       input.priority === undefined &&
-      input.projectId === undefined
+      input.projectId === undefined &&
+      (input.labelIds === undefined || input.labelIds.length === 0)
     ) {
       return;
     }
@@ -229,6 +241,7 @@ function buildCreateInput(
     ...(parsed.recurrence !== null
       ? { dueRecurrence: parsed.recurrence }
       : {}),
+    ...(parsed.labelIds.length > 0 ? { labelIds: [...parsed.labelIds] } : {}),
   };
 }
 
@@ -241,7 +254,12 @@ function QuickAddPreview({
   parsed: ParsedQuickAdd;
   projects: readonly { id: string; name: string }[];
 }): JSX.Element {
+  // Labels need their own lookup — they come from a different cache than
+  // projects. Keeping it inline avoids prop-drilling another array.
+  const { data: labels } = useLabelsList();
   const projectName = projects.find((p) => p.id === parsed.projectId)?.name;
+  const matchedLabels =
+    labels?.filter((l) => parsed.labelIds.includes(l.id)) ?? [];
   return (
     <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 px-1 text-xs text-gray-500">
       <span className="text-gray-400">
@@ -254,6 +272,11 @@ function QuickAddPreview({
         <Chip color={priorityColor(parsed.priority)}>P{parsed.priority}</Chip>
       )}
       {projectName !== undefined && <Chip color="indigo">#{projectName}</Chip>}
+      {matchedLabels.map((l) => (
+        <Chip key={l.id} color="teal">
+          @{l.name}
+        </Chip>
+      ))}
       {parsed.recurrence !== null && (
         <Chip color="purple">↻ {describeRecurrence(parsed.recurrence)}</Chip>
       )}
@@ -265,7 +288,15 @@ function Chip({
   color,
   children,
 }: {
-  color: 'emerald' | 'red' | 'orange' | 'blue' | 'gray' | 'indigo' | 'purple';
+  color:
+    | 'emerald'
+    | 'red'
+    | 'orange'
+    | 'blue'
+    | 'gray'
+    | 'indigo'
+    | 'purple'
+    | 'teal';
   children: React.ReactNode;
 }): JSX.Element {
   const palette: Record<typeof color, string> = {
@@ -276,6 +307,7 @@ function Chip({
     gray: 'border-gray-700 text-gray-300',
     indigo: 'border-indigo-700 text-indigo-300',
     purple: 'border-purple-700 text-purple-300',
+    teal: 'border-teal-700 text-teal-300',
   };
   return (
     <span

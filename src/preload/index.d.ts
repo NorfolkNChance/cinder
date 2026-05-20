@@ -35,7 +35,17 @@ import type {
   TaskGetInput,
   TaskListInput,
   TaskUpdateInput,
+  TaskWithLabels,
 } from '../shared/schemas/tasks';
+import type {
+  Label,
+  LabelCreateInput,
+  LabelDeleteInput,
+  LabelGetInput,
+  LabelListInput,
+  LabelUpdateInput,
+  LabelsSetForTaskInput,
+} from '../shared/schemas/labels';
 
 export {};
 
@@ -78,10 +88,18 @@ declare global {
       tasks: {
         create: (input: TaskCreateInput) => Promise<Task>;
         get: (input: TaskGetInput) => Promise<Task | null>;
-        list: (input: TaskListInput) => Promise<readonly Task[]>;
+        list: (input: TaskListInput) => Promise<readonly TaskWithLabels[]>;
         update: (input: TaskUpdateInput) => Promise<Task | null>;
         complete: (input: TaskCompleteInput) => Promise<Task | null>;
         delete: (input: TaskDeleteInput) => Promise<void>;
+      };
+      labels: {
+        create: (input: LabelCreateInput) => Promise<Label>;
+        get: (input: LabelGetInput) => Promise<Label | null>;
+        list: (input: LabelListInput) => Promise<readonly Label[]>;
+        update: (input: LabelUpdateInput) => Promise<Label | null>;
+        delete: (input: LabelDeleteInput) => Promise<void>;
+        setForTask: (input: LabelsSetForTaskInput) => Promise<void>;
       };
     };
   }

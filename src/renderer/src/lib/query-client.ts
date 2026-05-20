@@ -47,4 +47,8 @@ export const queryKeys = {
     list: (scope: object) => [...queryKeys.tasks.all, 'list', scope] as const,
     detail: (id: string) => [...queryKeys.tasks.all, 'detail', id] as const,
   },
+  labels: {
+    all: ['labels'] as const,
+    list: () => [...queryKeys.labels.all, 'list'] as const,
+  },
 } as const;

@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import type { Task } from '../../../../shared/schemas/tasks';
+import type { TaskWithLabels } from '../../../../shared/schemas/tasks';
 import {
   useCompleteTask,
   useDeleteTask,
@@ -9,7 +9,7 @@ import { formatDueDate, isOverdue } from '../../lib/dates';
 import { describeRecurrence } from '../../../../shared/recurrence';
 
 interface TaskItemProps {
-  task: Task;
+  task: TaskWithLabels;
   isSelected?: boolean;
   onSelect?: (id: string) => void;
 }
@@ -112,6 +112,20 @@ export function TaskItem({
       >
         {task.title || <span className="italic text-gray-600">Untitled</span>}
       </span>
+
+      {task.labels.length > 0 && (
+        <span className="flex shrink-0 items-center gap-1">
+          {task.labels.map((l) => (
+            <span
+              key={l.id}
+              className="inline-flex items-center rounded border border-teal-800 px-1.5 py-0.5 text-[10px] text-teal-300"
+              title={`Labelled @${l.name}`}
+            >
+              @{l.name}
+            </span>
+          ))}
+        </span>
+      )}
 
       {task.dueRecurrence !== null && (
         <span

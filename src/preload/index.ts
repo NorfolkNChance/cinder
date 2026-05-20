@@ -25,6 +25,12 @@ import {
   TASKS_GET,
   TASKS_LIST,
   TASKS_UPDATE,
+  LABELS_CREATE,
+  LABELS_DELETE,
+  LABELS_GET,
+  LABELS_LIST,
+  LABELS_SET_FOR_TASK,
+  LABELS_UPDATE,
 } from '../shared/ipc/channels';
 import type {
   Note,
@@ -63,7 +69,17 @@ import type {
   TaskGetInput,
   TaskListInput,
   TaskUpdateInput,
+  TaskWithLabels,
 } from '../shared/schemas/tasks';
+import type {
+  Label,
+  LabelCreateInput,
+  LabelDeleteInput,
+  LabelGetInput,
+  LabelListInput,
+  LabelUpdateInput,
+  LabelsSetForTaskInput,
+} from '../shared/schemas/labels';
 
 /**
  * Preload — the only path from the sandboxed renderer to the main process.
@@ -124,7 +140,7 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke(TASKS_CREATE, input),
     get: (input: TaskGetInput): Promise<Task | null> =>
       ipcRenderer.invoke(TASKS_GET, input),
-    list: (input: TaskListInput): Promise<readonly Task[]> =>
+    list: (input: TaskListInput): Promise<readonly TaskWithLabels[]> =>
       ipcRenderer.invoke(TASKS_LIST, input),
     update: (input: TaskUpdateInput): Promise<Task | null> =>
       ipcRenderer.invoke(TASKS_UPDATE, input),
@@ -132,5 +148,19 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke(TASKS_COMPLETE, input),
     delete: (input: TaskDeleteInput): Promise<void> =>
       ipcRenderer.invoke(TASKS_DELETE, input),
+  },
+  labels: {
+    create: (input: LabelCreateInput): Promise<Label> =>
+      ipcRenderer.invoke(LABELS_CREATE, input),
+    get: (input: LabelGetInput): Promise<Label | null> =>
+      ipcRenderer.invoke(LABELS_GET, input),
+    list: (input: LabelListInput): Promise<readonly Label[]> =>
+      ipcRenderer.invoke(LABELS_LIST, input),
+    update: (input: LabelUpdateInput): Promise<Label | null> =>
+      ipcRenderer.invoke(LABELS_UPDATE, input),
+    delete: (input: LabelDeleteInput): Promise<void> =>
+      ipcRenderer.invoke(LABELS_DELETE, input),
+    setForTask: (input: LabelsSetForTaskInput): Promise<void> =>
+      ipcRenderer.invoke(LABELS_SET_FOR_TASK, input),
   },
 });

@@ -10,7 +10,12 @@ import type {
   TaskCreateInput,
   TaskListInput,
   TaskUpdateInput,
+  TaskWithLabels,
 } from '../../../../shared/schemas/tasks';
+import type {
+  Label,
+  LabelCreateInput,
+} from '../../../../shared/schemas/labels';
 import type { TaskScope } from '../../state/ui';
 import { addDays, localDateString } from '../../lib/dates';
 
@@ -91,12 +96,14 @@ function scopeToFilter(scope: TaskScope): TaskListInput {
     }
     case 'project':
       return { projectId: scope.id };
+    case 'label':
+      return { labelId: scope.id };
   }
 }
 
 export function useTasksList(
   scope: TaskScope,
-): ReturnType<typeof useQuery<readonly Task[]>> {
+): ReturnType<typeof useQuery<readonly TaskWithLabels[]>> {
   return useQuery({
     queryKey: queryKeys.tasks.list(scope),
     queryFn: () => window.api.tasks.list(scopeToFilter(scope)),
@@ -153,6 +160,44 @@ export function useDeleteTask(): ReturnType<
   return useMutation({
     mutationFn: (id: string) => window.api.tasks.delete({ id }),
     onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.tasks.all });
+    },
+  });
+}
+
+// ── Labels ──────────────────────────────────────────────────────────────────
+
+export function useLabelsList(): ReturnType<
+  typeof useQuery<readonly Label[]>
+> {
+  return useQuery({
+    queryKey: queryKeys.labels.list(),
+    queryFn: () => window.api.labels.list({}),
+  });
+}
+
+export function useCreateLabel(): ReturnType<
+  typeof useMutation<Label, Error, LabelCreateInput>
+> {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: LabelCreateInput) => window.api.labels.create(input),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.labels.all });
+    },
+  });
+}
+
+export function useDeleteLabel(): ReturnType<
+  typeof useMutation<void, Error, string>
+> {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => window.api.labels.delete({ id }),
+    onSuccess: () => {
+      // FK cascade removes task_labels rows attached to this label, so
+      // affected task lists need a refresh too.
+      void qc.invalidateQueries({ queryKey: queryKeys.labels.all });
       void qc.invalidateQueries({ queryKey: queryKeys.tasks.all });
     },
   });

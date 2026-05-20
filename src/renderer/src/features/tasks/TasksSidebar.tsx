@@ -1,6 +1,13 @@
 import { useState, useCallback } from 'react';
 import clsx from 'clsx';
-import { useProjectsList, useCreateProject, useDeleteProject } from './queries';
+import {
+  useCreateLabel,
+  useCreateProject,
+  useDeleteLabel,
+  useDeleteProject,
+  useLabelsList,
+  useProjectsList,
+} from './queries';
 import { useUI } from '../../state/ui';
 
 /**
@@ -14,8 +21,11 @@ export function TasksSidebar(): JSX.Element {
   const taskScope = useUI((s) => s.taskScope);
   const setTaskScope = useUI((s) => s.setTaskScope);
   const { data: projects, isLoading } = useProjectsList();
+  const { data: labels } = useLabelsList();
   const createProject = useCreateProject();
   const deleteProject = useDeleteProject();
+  const createLabel = useCreateLabel();
+  const deleteLabel = useDeleteLabel();
 
   // ── New-project inline input ─────────────────────────────────────────────
   const [isCreating, setIsCreating] = useState(false);
@@ -38,6 +48,47 @@ export function TasksSidebar(): JSX.Element {
     setIsCreating(false);
     setNewName('');
   }, []);
+
+  // ── New-label inline input ───────────────────────────────────────────────
+  const [isCreatingLabel, setIsCreatingLabel] = useState(false);
+  const [newLabelName, setNewLabelName] = useState('');
+  const [labelError, setLabelError] = useState<string | null>(null);
+
+  const submitNewLabel = useCallback(async () => {
+    const name = newLabelName.trim();
+    if (name.length === 0) {
+      setIsCreatingLabel(false);
+      setNewLabelName('');
+      setLabelError(null);
+      return;
+    }
+    try {
+      const created = await createLabel.mutateAsync({ name });
+      setNewLabelName('');
+      setIsCreatingLabel(false);
+      setLabelError(null);
+      setTaskScope({ kind: 'label', id: created.id });
+    } catch (e) {
+      setLabelError(e instanceof Error ? e.message : 'Failed to create label');
+    }
+  }, [newLabelName, createLabel, setTaskScope]);
+
+  const cancelNewLabel = useCallback(() => {
+    setIsCreatingLabel(false);
+    setNewLabelName('');
+    setLabelError(null);
+  }, []);
+
+  const onDeleteLabel = async (
+    id: string,
+    e: React.MouseEvent,
+  ): Promise<void> => {
+    e.stopPropagation();
+    if (taskScope.kind === 'label' && taskScope.id === id) {
+      setTaskScope({ kind: 'inbox' });
+    }
+    await deleteLabel.mutateAsync(id);
+  };
 
   // ── Delete project ───────────────────────────────────────────────────────
   const onDeleteProject = async (
@@ -105,7 +156,7 @@ export function TasksSidebar(): JSX.Element {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="overflow-y-auto">
         {isLoading ? (
           <p className="px-4 py-3 text-sm text-gray-500">Loading…</p>
         ) : !projects || projects.length === 0 ? (
@@ -122,6 +173,67 @@ export function TasksSidebar(): JSX.Element {
                 }
                 onSelect={() => setTaskScope({ kind: 'project', id: p.id })}
                 onDelete={(e) => void onDeleteProject(p.id, e)}
+              />
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <SectionHeader
+        label="Labels"
+        action={
+          !isCreatingLabel ? (
+            <button
+              onClick={() => setIsCreatingLabel(true)}
+              title="New label"
+              className="rounded-md bg-emerald-600 px-2 py-0.5 text-xs font-medium text-white hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+            >
+              + New
+            </button>
+          ) : null
+        }
+      />
+
+      {isCreatingLabel && (
+        <div className="px-3 py-2">
+          <input
+            autoFocus
+            value={newLabelName}
+            onChange={(e) => {
+              setNewLabelName(e.target.value);
+              setLabelError(null);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') void submitNewLabel();
+              else if (e.key === 'Escape') cancelNewLabel();
+            }}
+            placeholder="urgent"
+            className="w-full rounded-md bg-gray-900 px-3 py-1.5 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          />
+          <p
+            className={clsx(
+              'mt-1 px-1 text-xs',
+              labelError !== null ? 'text-red-400' : 'text-gray-600',
+            )}
+          >
+            {labelError ?? 'Letters, digits, _ or - only. Enter to create, Esc to cancel.'}
+          </p>
+        </div>
+      )}
+
+      <div className="flex-1 overflow-y-auto">
+        {!labels || labels.length === 0 ? (
+          <p className="px-4 py-3 text-sm text-gray-500">No labels yet.</p>
+        ) : (
+          <ul>
+            {labels.map((l) => (
+              <LabelRow
+                key={l.id}
+                name={l.name}
+                color={l.color}
+                active={taskScope.kind === 'label' && taskScope.id === l.id}
+                onSelect={() => setTaskScope({ kind: 'label', id: l.id })}
+                onDelete={(e) => void onDeleteLabel(l.id, e)}
               />
             ))}
           </ul>
@@ -218,7 +330,55 @@ function ProjectRow({
   );
 }
 
+function LabelRow({
+  name,
+  color,
+  active,
+  onSelect,
+  onDelete,
+}: {
+  name: string;
+  color: string | null;
+  active: boolean;
+  onSelect: () => void;
+  onDelete: (e: React.MouseEvent) => void;
+}): JSX.Element {
+  return (
+    <li
+      className={clsx(
+        'group relative flex items-center gap-2',
+        active ? 'bg-gray-900' : 'hover:bg-gray-900/50',
+      )}
+    >
+      <button
+        onClick={onSelect}
+        className={clsx(
+          'flex min-w-0 flex-1 items-center gap-2 px-4 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-inset focus:ring-emerald-500',
+          active ? 'text-white' : 'text-gray-300',
+        )}
+      >
+        <span
+          aria-hidden
+          className="font-mono text-xs"
+          style={{ color: normaliseColor(color) }}
+        >
+          @
+        </span>
+        <span className="truncate">{name}</span>
+      </button>
+      <button
+        onClick={onDelete}
+        aria-label={`Delete label ${name}`}
+        title="Delete label"
+        className="absolute right-3 top-2 text-xs text-gray-500 opacity-0 hover:text-red-400 focus:opacity-100 focus:outline-none group-hover:opacity-60 hover:!opacity-100"
+      >
+        ✕
+      </button>
+    </li>
+  );
+}
+
 function normaliseColor(color: string | null): string {
-  if (color === null) return '#6b7280'; // gray-500 — default for uncoloured projects
+  if (color === null) return '#6b7280'; // gray-500 — default for uncoloured items
   return color.startsWith('#') ? color : `#${color}`;
 }

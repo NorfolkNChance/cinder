@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { Label } from './labels';
 
 /**
  * Zod schemas for the tasks domain. Tasks are the central entity in the
@@ -48,6 +49,16 @@ export const Task = z.object({
 });
 export type Task = z.infer<typeof Task>;
 
+/**
+ * Task plus the labels currently attached to it. Returned by list and
+ * detail fetches so the renderer doesn't need a separate round-trip
+ * per row to render label chips.
+ */
+export const TaskWithLabels = Task.extend({
+  labels: z.array(Label),
+});
+export type TaskWithLabels = z.infer<typeof TaskWithLabels>;
+
 export const TaskCreateInput = z.object({
   // Title is required. Empty string is allowed but very-long titles are
   // not — same lower-bound philosophy as notes (empty title = draft state).
@@ -59,6 +70,12 @@ export const TaskCreateInput = z.object({
   dueDate: DateOrDateTime.nullable().optional(),
   dueRecurrence: z.string().max(500).nullable().optional(),
   priority: Priority.optional(),
+  /**
+   * Labels to attach at creation time. The service applies them
+   * atomically with the task insert — caller doesn't need a follow-up
+   * `labels:setForTask` round-trip for the common quick-add flow.
+   */
+  labelIds: z.array(Uuid).max(50).optional(),
 });
 export type TaskCreateInput = z.infer<typeof TaskCreateInput>;
 
@@ -72,6 +89,8 @@ export const TaskListInput = z.object({
   projectId: Uuid.nullable().optional(),
   sectionId: Uuid.optional(),
   parentTaskId: Uuid.nullable().optional(),
+  /** Per-label view filter — matches tasks with this label attached. */
+  labelId: Uuid.optional(),
   // Date predicates for the Today / Upcoming views. Inclusive bounds.
   dueBefore: DateOrDateTime.optional(),
   dueOnOrAfter: DateOrDateTime.optional(),

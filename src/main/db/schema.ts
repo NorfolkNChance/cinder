@@ -1,6 +1,7 @@
 import {
   index,
   integer,
+  primaryKey,
   sqliteTable,
   text,
   type AnySQLiteColumn,
@@ -187,3 +188,56 @@ export const tasks = sqliteTable(
 
 export type Task = typeof tasks.$inferSelect;
 export type NewTask = typeof tasks.$inferInsert;
+
+// ─── Labels ──────────────────────────────────────────────────────────────────
+
+/**
+ * Labels table (§6.2) — cross-cutting tags that can be attached to many
+ * tasks via the `task_labels` join. Unlike projects, labels don't have a
+ * hierarchy or order column — they sit flat and are looked up by name.
+ */
+export const labels = sqliteTable(
+  'labels',
+  {
+    id: text('id').primaryKey(),
+    name: text('name').notNull(),
+    color: text('color'),
+    createdAt: text('created_at').notNull(),
+    updatedAt: text('updated_at').notNull(),
+  },
+  (table) => ({
+    // Case-insensitive uniqueness is enforced at the service layer (the
+    // quick-add parser does its own lowercased match). The plain index
+    // here speeds up that lookup.
+    nameIdx: index('labels_name_idx').on(table.name),
+  }),
+);
+
+export type Label = typeof labels.$inferSelect;
+export type NewLabel = typeof labels.$inferInsert;
+
+/**
+ * task_labels — many-to-many join between tasks and labels.
+ *
+ * Both FKs CASCADE so deleting a task or a label cleanly removes the
+ * association without leaving orphan rows. The composite PK doubles as
+ * the primary lookup index; additional per-column indexes speed up the
+ * two scan directions (find labels of a task, find tasks of a label).
+ */
+export const taskLabels = sqliteTable(
+  'task_labels',
+  {
+    taskId: text('task_id')
+      .notNull()
+      .references(() => tasks.id, { onDelete: 'cascade' }),
+    labelId: text('label_id')
+      .notNull()
+      .references(() => labels.id, { onDelete: 'cascade' }),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.taskId, table.labelId] }),
+    labelIdx: index('task_labels_label_idx').on(table.labelId),
+  }),
+);
+
+export type TaskLabel = typeof taskLabels.$inferSelect;
