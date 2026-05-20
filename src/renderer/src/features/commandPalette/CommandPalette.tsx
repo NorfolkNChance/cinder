@@ -132,6 +132,17 @@ export function CommandPalette(): JSX.Element | null {
         close();
       },
     });
+    cmds.push({
+      id: 'nav:matrix',
+      group: 'Navigation',
+      label: 'Matrix',
+      hint: 'Eisenhower view',
+      icon: '🔲',
+      execute: () => {
+        setMode('matrix');
+        close();
+      },
+    });
 
     // ── Task scopes ──
     cmds.push({

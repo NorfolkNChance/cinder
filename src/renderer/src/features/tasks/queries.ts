@@ -182,6 +182,20 @@ export function useCompleteTask(): ReturnType<
   });
 }
 
+/**
+ * Fetch every active (not completed, not deleted) task — used by the
+ * Eisenhower matrix view which needs the full task set before it
+ * classifies into quadrants.
+ */
+export function useAllTasksList(): ReturnType<
+  typeof useQuery<readonly TaskWithLabels[]>
+> {
+  return useQuery({
+    queryKey: [...queryKeys.tasks.all, 'list', 'all'],
+    queryFn: () => window.api.tasks.list({}),
+  });
+}
+
 export function useDeleteTask(): ReturnType<
   typeof useMutation<void, Error, string>
 > {

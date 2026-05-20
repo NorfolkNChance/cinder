@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import type { MatrixPrefs } from '../../../shared/matrix/classify';
+import { DEFAULT_MATRIX_PREFS } from '../../../shared/matrix/classify';
 
 /**
  * Client-side UI state (Zustand).
@@ -7,13 +9,13 @@ import { create } from 'zustand';
  * with the main process belongs in TanStack Query (server state) or in
  * the DB, not here.
  *
- * The store carries two parallel "selections" — one for Notes mode
- * (selectedNoteId) and one for Tasks mode (taskScope). Switching
- * between modes doesn't clobber the other side's selection, so the
- * user returns to whatever they were looking at last in each mode.
+ * The store carries parallel "selections" — one for Notes mode
+ * (selectedNoteId), one for Tasks mode (taskScope), and one for Matrix
+ * mode (matrixPrefs + optional project/label filter). Switching between
+ * modes doesn't clobber the other side's state.
  */
 
-export type Mode = 'notes' | 'tasks';
+export type Mode = 'notes' | 'tasks' | 'matrix';
 
 /**
  * The scope a Tasks-mode view is showing.
@@ -44,6 +46,16 @@ interface UIState {
   taskScope: TaskScope;
   setTaskScope: (s: TaskScope) => void;
 
+  /** Eisenhower matrix classification thresholds and optional scope filter. */
+  matrixPrefs: MatrixPrefs;
+  setMatrixPrefs: (prefs: Partial<MatrixPrefs>) => void;
+  /** Optional project filter applied inside the matrix (null = all projects). */
+  matrixProjectId: string | null;
+  setMatrixProjectId: (id: string | null) => void;
+  /** Optional label filter applied inside the matrix (null = all labels). */
+  matrixLabelId: string | null;
+  setMatrixLabelId: (id: string | null) => void;
+
   /** Whether the ⌘K command palette is open. */
   commandPaletteOpen: boolean;
   openCommandPalette: () => void;
@@ -59,6 +71,14 @@ export const useUI = create<UIState>((set) => ({
 
   taskScope: { kind: 'inbox' },
   setTaskScope: (s) => set({ taskScope: s }),
+
+  matrixPrefs: DEFAULT_MATRIX_PREFS,
+  setMatrixPrefs: (prefs) =>
+    set((s) => ({ matrixPrefs: { ...s.matrixPrefs, ...prefs } })),
+  matrixProjectId: null,
+  setMatrixProjectId: (id) => set({ matrixProjectId: id }),
+  matrixLabelId: null,
+  setMatrixLabelId: (id) => set({ matrixLabelId: id }),
 
   commandPaletteOpen: false,
   openCommandPalette: () => set({ commandPaletteOpen: true }),

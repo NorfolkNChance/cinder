@@ -4,6 +4,8 @@ import { NoteList } from './features/notes/NoteList';
 import { NoteEditor } from './features/notes/NoteEditor';
 import { TasksSidebar } from './features/tasks/TasksSidebar';
 import { TaskList } from './features/tasks/TaskList';
+import { MatrixSidebar } from './features/matrix/MatrixSidebar';
+import { MatrixView } from './features/matrix/MatrixView';
 import { CommandPalette } from './features/commandPalette/CommandPalette';
 import { useUI, type Mode } from './state/ui';
 
@@ -42,11 +44,23 @@ export default function App(): JSX.Element {
     <div className="flex h-screen flex-col bg-gray-950 text-white">
       <TopBar />
       <div className="flex min-h-0 flex-1">
-        <aside className="flex h-full w-72 flex-col border-r border-gray-800 bg-gray-950">
-          {mode === 'notes' ? <NoteList /> : <TasksSidebar />}
+        <aside className="flex h-full w-64 flex-col border-r border-gray-800 bg-gray-950">
+          {mode === 'notes' ? (
+            <NoteList />
+          ) : mode === 'tasks' ? (
+            <TasksSidebar />
+          ) : (
+            <MatrixSidebar />
+          )}
         </aside>
         <main className="min-w-0 flex-1 overflow-hidden">
-          {mode === 'notes' ? <NotesMainPane /> : <TaskList />}
+          {mode === 'notes' ? (
+            <NotesMainPane />
+          ) : mode === 'tasks' ? (
+            <TaskList />
+          ) : (
+            <MatrixView />
+          )}
         </main>
       </div>
       {/* Command palette portal — always mounted, shown when open */}
@@ -69,6 +83,9 @@ function TopBar(): JSX.Element {
       </ModeButton>
       <ModeButton active={mode === 'tasks'} onClick={() => setMode('tasks')}>
         Tasks
+      </ModeButton>
+      <ModeButton active={mode === 'matrix'} onClick={() => setMode('matrix')}>
+        Matrix
       </ModeButton>
       <div className="flex-1" />
       <button
