@@ -31,6 +31,8 @@ interface Args {
   readonly selectedTaskId: string | null;
   readonly setSelectedTaskId: (id: string | null) => void;
   readonly focusQuickAdd: () => void;
+  /** Called when the user presses `e` on a selected task to open edit mode. */
+  readonly startEditing?: () => void;
 }
 
 export function useTaskShortcuts({
@@ -38,12 +40,13 @@ export function useTaskShortcuts({
   selectedTaskId,
   setSelectedTaskId,
   focusQuickAdd,
+  startEditing,
 }: Args): void {
   const stateRef = useRef({ tasks, selectedTaskId });
   stateRef.current = { tasks, selectedTaskId };
 
-  const callbacksRef = useRef({ setSelectedTaskId, focusQuickAdd });
-  callbacksRef.current = { setSelectedTaskId, focusQuickAdd };
+  const callbacksRef = useRef({ setSelectedTaskId, focusQuickAdd, startEditing });
+  callbacksRef.current = { setSelectedTaskId, focusQuickAdd, startEditing };
 
   const updateTask = useUpdateTask();
   const completeTask = useCompleteTask();
@@ -54,7 +57,7 @@ export function useTaskShortcuts({
       if (isEditableTarget(e.target)) return;
 
       const { tasks, selectedTaskId } = stateRef.current;
-      const { setSelectedTaskId, focusQuickAdd } = callbacksRef.current;
+      const { setSelectedTaskId, focusQuickAdd, startEditing } = callbacksRef.current;
       const selectedTask =
         selectedTaskId === null
           ? null
@@ -106,6 +109,21 @@ export function useTaskShortcuts({
         if (selectedTaskId !== null) {
           e.preventDefault();
           setSelectedTaskId(null);
+        }
+        return;
+      }
+
+      // ── Edit selected task ─────────────────────────────────────────────
+      if (
+        e.key === 'e' &&
+        !e.metaKey &&
+        !e.ctrlKey &&
+        !e.altKey &&
+        !e.shiftKey
+      ) {
+        if (selectedTaskId !== null) {
+          e.preventDefault();
+          startEditing?.();
         }
         return;
       }

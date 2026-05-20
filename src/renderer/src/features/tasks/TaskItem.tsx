@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef, useCallback } from 'react';
 import clsx from 'clsx';
 import type { TaskWithLabels } from '../../../../shared/schemas/tasks';
 import {
@@ -12,33 +13,100 @@ interface TaskItemProps {
   task: TaskWithLabels;
   isSelected?: boolean;
   onSelect?: (id: string) => void;
+  /** Controlled edit mode — set by the parent (e.g. `e` keyboard shortcut). */
+  isEditing?: boolean;
+  /** Called when the task enters or exits edit mode. */
+  onEditingChange?: (editing: boolean) => void;
 }
 
 /**
  * A single task row.
  *
- *   [ ✓ ]  Title…                      [ Due chip ]  [ P# ]  [ ✕ ]
+ * Normal mode:
+ *   [ ✓ ]  Title…          [ Due chip ]  [ P# ]  [ ✎ ]  [ ✕ ]
  *
- * Checkbox border colour reflects priority (P1 red → P4 gray); filled
- * green when complete. Due chip is a styled wrapper around a native
- * `<input type="date">` for keyboard-accessible date picking; the
- * visible label shows the relative form ("Today", "Tomorrow",
- * "Overdue: May 18", weekday for the next week, "MMM d" otherwise).
- * Priority is changed via a small `<select>` — keyboard shortcuts
- * (1-4) on the selected row arrive in milestone 2.5.
+ * Edit mode (triggered by the ✎ button, double-clicking the title, or
+ * the `e` keyboard shortcut on the selected row):
+ *   [ ✓ ]  [ title input _________________________ ]
+ *          [ description textarea _______________ ]
+ *          [ Save ]  [ Cancel ]
  *
- * Note on title: still plain text in v1 — inline editing ships with
- * quick-add NLP in 2.4.
+ * Edit mode is partly controlled (isEditing / onEditingChange) so the
+ * parent can open it via keyboard shortcut, and partly self-contained
+ * (the component tracks the draft values internally).
  */
 export function TaskItem({
   task,
   isSelected = false,
   onSelect,
+  isEditing: isEditingProp = false,
+  onEditingChange,
 }: TaskItemProps): JSX.Element {
   const completeTask = useCompleteTask();
   const deleteTask = useDeleteTask();
   const updateTask = useUpdateTask();
 
+  // ── Edit-mode state ──────────────────────────────────────────────────────
+  const [isEditingLocal, setIsEditingLocal] = useState(false);
+  const [titleDraft, setTitleDraft] = useState(task.title);
+  const [descDraft, setDescDraft] = useState(task.description);
+  const titleInputRef = useRef<HTMLInputElement>(null);
+
+  // Either the prop OR local state can open edit mode.
+  const isEditing = isEditingProp || isEditingLocal;
+
+  const openEdit = useCallback(() => {
+    setTitleDraft(task.title);
+    setDescDraft(task.description);
+    setIsEditingLocal(true);
+    onEditingChange?.(true);
+    // Focus the title input after the DOM updates.
+    requestAnimationFrame(() => titleInputRef.current?.focus());
+  }, [task.title, task.description, onEditingChange]);
+
+  const closeEdit = useCallback(() => {
+    setIsEditingLocal(false);
+    onEditingChange?.(false);
+  }, [onEditingChange]);
+
+  const saveEdit = useCallback(() => {
+    const trimmedTitle = titleDraft.trim();
+    const trimmedDesc = descDraft.trim();
+    // Only send a mutation if something actually changed.
+    if (
+      trimmedTitle !== task.title ||
+      trimmedDesc !== task.description
+    ) {
+      updateTask.mutate({
+        id: task.id,
+        patch: {
+          title: trimmedTitle,
+          description: trimmedDesc,
+        },
+      });
+    }
+    closeEdit();
+  }, [titleDraft, descDraft, task.id, task.title, task.description, updateTask, closeEdit]);
+
+  // When the parent opens edit mode via the `e` shortcut, sync + focus.
+  useEffect(() => {
+    if (isEditingProp && !isEditingLocal) {
+      setTitleDraft(task.title);
+      setDescDraft(task.description);
+      setIsEditingLocal(true);
+      requestAnimationFrame(() => titleInputRef.current?.focus());
+    }
+  }, [isEditingProp]); // intentionally only on prop change
+
+  // Reset drafts when a different task arrives (e.g. re-use of the component).
+  useEffect(() => {
+    if (!isEditing) {
+      setTitleDraft(task.title);
+      setDescDraft(task.description);
+    }
+  }, [task.id]); // only on task identity change
+
+  // ── Normal handlers ──────────────────────────────────────────────────────
   const isComplete = task.completedAt !== null;
 
   const toggleComplete = (): void => {
@@ -51,8 +119,6 @@ export function TaskItem({
   };
 
   const onDueDateChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    // Empty string means "clear" — patch to null. Otherwise pass the
-    // YYYY-MM-DD value through (Zod accepts both date and datetime forms).
     const value = e.target.value;
     updateTask.mutate({
       id: task.id,
@@ -65,19 +131,100 @@ export function TaskItem({
     updateTask.mutate({ id: task.id, patch: { priority } });
   };
 
-  // Date input expects YYYY-MM-DD. If dueDate is a full datetime, slice
-  // off the time portion for display in the input. Storage retains
-  // whatever the user / NLP produced.
   const dueDateInputValue =
     task.dueDate === null ? '' : task.dueDate.slice(0, 10);
 
-  // Click anywhere on the row (except interactive children) to select.
-  // The interactive children stop propagation themselves, so this is
-  // safe to bind on the <li>.
   const onRowClick = (): void => {
-    onSelect?.(task.id);
+    if (!isEditing) onSelect?.(task.id);
   };
 
+  // ── Edit mode render ─────────────────────────────────────────────────────
+  if (isEditing) {
+    return (
+      <li
+        className={clsx(
+          'border-b border-gray-900 px-5 py-3 transition',
+          isSelected
+            ? 'bg-emerald-900/30 ring-1 ring-inset ring-emerald-700'
+            : 'bg-gray-900/20',
+        )}
+      >
+        <div className="flex items-start gap-3">
+          {/* Checkbox — still operable during edit */}
+          <button
+            onClick={(e) => { e.stopPropagation(); toggleComplete(); }}
+            role="checkbox"
+            aria-checked={isComplete}
+            aria-label={isComplete ? 'Mark as incomplete' : 'Mark as complete'}
+            className={clsx(
+              'mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded border-2 focus:outline-none focus:ring-2 focus:ring-emerald-500',
+              isComplete
+                ? 'border-emerald-500 bg-emerald-500/20 text-emerald-300'
+                : priorityCheckboxBorder(task.priority),
+            )}
+          >
+            {isComplete ? <span aria-hidden>✓</span> : null}
+          </button>
+
+          {/* Edit fields */}
+          <div className="flex-1 space-y-2">
+            <input
+              ref={titleInputRef}
+              value={titleDraft}
+              onChange={(e) => setTitleDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  saveEdit();
+                } else if (e.key === 'Escape') {
+                  e.preventDefault();
+                  closeEdit();
+                }
+              }}
+              placeholder="Task title"
+              aria-label="Task title"
+              className="w-full rounded-md border border-gray-600 bg-gray-900 px-3 py-1.5 text-sm text-gray-200 placeholder-gray-600 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+            />
+            <textarea
+              value={descDraft}
+              onChange={(e) => setDescDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  e.preventDefault();
+                  closeEdit();
+                }
+              }}
+              placeholder="Add a description… (optional)"
+              aria-label="Task description"
+              rows={2}
+              className="w-full resize-none rounded-md border border-gray-700 bg-gray-900 px-3 py-1.5 text-sm text-gray-300 placeholder-gray-600 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+            />
+
+            {/* Description preview (only when non-empty before editing) */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={(e) => { e.stopPropagation(); saveEdit(); }}
+                className="rounded-md bg-emerald-700 px-3 py-1 text-xs font-medium text-white hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              >
+                Save
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); closeEdit(); }}
+                className="rounded-md px-3 py-1 text-xs text-gray-500 hover:bg-gray-800 hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-600"
+              >
+                Cancel
+              </button>
+              <span className="ml-2 text-[11px] text-gray-700">
+                Enter to save · Esc to cancel
+              </span>
+            </div>
+          </div>
+        </div>
+      </li>
+    );
+  }
+
+  // ── Normal mode render ───────────────────────────────────────────────────
   return (
     <li
       onClick={onRowClick}
@@ -89,7 +236,7 @@ export function TaskItem({
       )}
     >
       <button
-        onClick={toggleComplete}
+        onClick={(e) => { e.stopPropagation(); toggleComplete(); }}
         role="checkbox"
         aria-checked={isComplete}
         aria-label={isComplete ? 'Mark as incomplete' : 'Mark as complete'}
@@ -103,14 +250,33 @@ export function TaskItem({
         {isComplete ? <span aria-hidden>✓</span> : null}
       </button>
 
+      {/* Title — double-click to edit */}
       <span
+        onDoubleClick={(e) => {
+          e.stopPropagation();
+          openEdit();
+        }}
         className={clsx(
           'min-w-0 flex-1 truncate text-sm',
           isComplete ? 'text-gray-500 line-through' : 'text-gray-200',
         )}
-        title={task.title}
+        title={
+          task.description
+            ? `${task.title}\n\n${task.description}`
+            : task.title
+        }
       >
         {task.title || <span className="italic text-gray-600">Untitled</span>}
+        {/* Small description indicator */}
+        {task.description.length > 0 && !isComplete && (
+          <span
+            className="ml-1.5 text-[10px] text-gray-600"
+            aria-label="Has description"
+            title={task.description}
+          >
+            ¶
+          </span>
+        )}
       </span>
 
       {task.labels.length > 0 && (
@@ -148,6 +314,7 @@ export function TaskItem({
       <select
         value={task.priority}
         onChange={onPriorityChange}
+        onClick={(e) => e.stopPropagation()}
         aria-label="Priority"
         title="Priority (1 = highest)"
         className="rounded-md border border-gray-800 bg-gray-900 px-1.5 py-0.5 text-xs text-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -157,6 +324,16 @@ export function TaskItem({
         <option value={3}>P3</option>
         <option value={4}>P4</option>
       </select>
+
+      {/* Edit button — visible on hover / when selected */}
+      <button
+        onClick={(e) => { e.stopPropagation(); openEdit(); }}
+        aria-label={`Edit task ${task.title || 'untitled'}`}
+        title="Edit (e)"
+        className="text-xs text-gray-500 opacity-0 transition hover:text-emerald-400 focus:opacity-100 focus:outline-none group-hover:opacity-60 hover:!opacity-100"
+      >
+        ✎
+      </button>
 
       <button
         onClick={onDelete}
@@ -170,13 +347,8 @@ export function TaskItem({
   );
 }
 
-/**
- * Wrap a native date input so we can show the formatted relative-date
- * label on top while still getting browser-native keyboard / calendar
- * support. The input is positioned absolutely behind the label and
- * stretched to fill the chip, so clicking anywhere in the chip opens
- * the date picker.
- */
+// ── DueDateChip ──────────────────────────────────────────────────────────────
+
 function DueDateChip({
   inputValue,
   formattedLabel,
@@ -200,6 +372,7 @@ function DueDateChip({
         !hasDate && 'text-gray-600',
       )}
       title={`Due date for ${taskTitle || 'this task'}`}
+      onClick={(e) => e.stopPropagation()}
     >
       <span aria-hidden className="select-none">
         {hasDate ? formattedLabel : '📅'}
@@ -209,19 +382,14 @@ function DueDateChip({
         value={inputValue}
         onChange={onChange}
         aria-label="Due date"
-        // Native date input — visually invisible but full-area clickable
-        // so the parent label captures all interactions.
         className="absolute inset-0 cursor-pointer opacity-0"
       />
     </label>
   );
 }
 
-/**
- * Map a priority value (1 highest, 4 lowest) to the unchecked checkbox
- * border colour. P4 (the default) is the same gray we use for plain
- * notes-list rows so unannotated tasks don't shout.
- */
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
 function priorityCheckboxBorder(priority: number): string {
   switch (priority) {
     case 1:

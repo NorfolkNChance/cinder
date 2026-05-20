@@ -67,20 +67,23 @@ export function TaskList(): JSX.Element {
   // ── Quick-add input + keyboard shortcuts ────────────────────────────────
   const [draft, setDraft] = useState('');
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const quickAddRef = useRef<HTMLInputElement>(null);
 
   // Reset selection when the scope changes — the previously selected
   // task is almost certainly not in the new view.
   useEffect(() => {
     setSelectedTaskId(null);
+    setEditingTaskId(null);
   }, [taskScope]);
 
-  // Drop selection if the selected task disappears from the visible list
-  // (completed, deleted, moved to another scope, etc).
+  // Drop selection/editing if the selected task disappears from the visible
+  // list (completed, deleted, moved to another scope, etc).
   useEffect(() => {
     if (selectedTaskId === null) return;
     if (!tasks?.some((t) => t.id === selectedTaskId)) {
       setSelectedTaskId(null);
+      setEditingTaskId(null);
     }
   }, [tasks, selectedTaskId]);
 
@@ -89,6 +92,9 @@ export function TaskList(): JSX.Element {
     selectedTaskId,
     setSelectedTaskId,
     focusQuickAdd: () => quickAddRef.current?.focus(),
+    startEditing: () => {
+      if (selectedTaskId !== null) setEditingTaskId(selectedTaskId);
+    },
   });
 
   // Live parse on every keystroke. Cheap — the parser is pure JS on a
@@ -172,6 +178,10 @@ export function TaskList(): JSX.Element {
                 task={task}
                 isSelected={task.id === selectedTaskId}
                 onSelect={setSelectedTaskId}
+                isEditing={task.id === editingTaskId}
+                onEditingChange={(editing) =>
+                  setEditingTaskId(editing ? task.id : null)
+                }
               />
             ))}
           </ul>
@@ -192,6 +202,7 @@ function ShortcutHint(): JSX.Element {
     <footer className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-gray-800 px-5 py-2 text-[11px] text-gray-600">
       <Hint label="q">quick-add</Hint>
       <Hint label="↑↓">navigate</Hint>
+      <Hint label="e">edit</Hint>
       <Hint label="1-4">priority</Hint>
       <Hint label="space">complete</Hint>
       <Hint label="del">delete</Hint>
