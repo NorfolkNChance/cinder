@@ -31,6 +31,11 @@ import {
   LABELS_LIST,
   LABELS_SET_FOR_TASK,
   LABELS_UPDATE,
+  SAVED_FILTERS_CREATE,
+  SAVED_FILTERS_DELETE,
+  SAVED_FILTERS_GET,
+  SAVED_FILTERS_LIST,
+  SAVED_FILTERS_UPDATE,
 } from '../shared/ipc/channels';
 import type {
   Note,
@@ -80,6 +85,14 @@ import type {
   LabelUpdateInput,
   LabelsSetForTaskInput,
 } from '../shared/schemas/labels';
+import type {
+  SavedFilter,
+  SavedFilterCreateInput,
+  SavedFilterDeleteInput,
+  SavedFilterGetInput,
+  SavedFilterListInput,
+  SavedFilterUpdateInput,
+} from '../shared/schemas/savedFilters';
 
 /**
  * Preload — the only path from the sandboxed renderer to the main process.
@@ -162,5 +175,17 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke(LABELS_DELETE, input),
     setForTask: (input: LabelsSetForTaskInput): Promise<void> =>
       ipcRenderer.invoke(LABELS_SET_FOR_TASK, input),
+  },
+  savedFilters: {
+    create: (input: SavedFilterCreateInput): Promise<SavedFilter> =>
+      ipcRenderer.invoke(SAVED_FILTERS_CREATE, input),
+    get: (input: SavedFilterGetInput): Promise<SavedFilter | null> =>
+      ipcRenderer.invoke(SAVED_FILTERS_GET, input),
+    list: (input: SavedFilterListInput): Promise<readonly SavedFilter[]> =>
+      ipcRenderer.invoke(SAVED_FILTERS_LIST, input),
+    update: (input: SavedFilterUpdateInput): Promise<SavedFilter | null> =>
+      ipcRenderer.invoke(SAVED_FILTERS_UPDATE, input),
+    delete: (input: SavedFilterDeleteInput): Promise<void> =>
+      ipcRenderer.invoke(SAVED_FILTERS_DELETE, input),
   },
 });

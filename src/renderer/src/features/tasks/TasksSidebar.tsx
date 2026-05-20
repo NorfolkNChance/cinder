@@ -3,12 +3,18 @@ import clsx from 'clsx';
 import {
   useCreateLabel,
   useCreateProject,
+  useCreateSavedFilter,
   useDeleteLabel,
   useDeleteProject,
+  useDeleteSavedFilter,
   useLabelsList,
   useProjectsList,
+  useSavedFiltersList,
 } from './queries';
 import { useUI } from '../../state/ui';
+import { lex } from '../../../../shared/filter/lex';
+import { parse } from '../../../../shared/filter/parse';
+import { FilterSyntaxError } from '../../../../shared/filter/types';
 
 /**
  * Tasks-mode sidebar.
@@ -26,6 +32,9 @@ export function TasksSidebar(): JSX.Element {
   const deleteProject = useDeleteProject();
   const createLabel = useCreateLabel();
   const deleteLabel = useDeleteLabel();
+  const { data: savedFilters } = useSavedFiltersList();
+  const createSavedFilter = useCreateSavedFilter();
+  const deleteSavedFilter = useDeleteSavedFilter();
 
   // ── New-project inline input ─────────────────────────────────────────────
   const [isCreating, setIsCreating] = useState(false);
@@ -90,6 +99,65 @@ export function TasksSidebar(): JSX.Element {
     await deleteLabel.mutateAsync(id);
   };
 
+  // ── New saved-filter inline form ─────────────────────────────────────────
+  const [isCreatingFilter, setIsCreatingFilter] = useState(false);
+  const [newFilterName, setNewFilterName] = useState('');
+  const [newFilterExpr, setNewFilterExpr] = useState('');
+  const [filterError, setFilterError] = useState<string | null>(null);
+
+  // Live-validate the expression as the user types so they see syntax
+  // errors immediately rather than only at save time. The compile step
+  // runs server-side; here we only lex+parse for syntactic feedback.
+  const liveExprError = (() => {
+    const trimmed = newFilterExpr.trim();
+    if (trimmed.length === 0) return null;
+    try {
+      parse(lex(trimmed));
+      return null;
+    } catch (e) {
+      return e instanceof FilterSyntaxError ? e.message : 'invalid syntax';
+    }
+  })();
+
+  const submitNewFilter = useCallback(async () => {
+    const name = newFilterName.trim();
+    const expression = newFilterExpr.trim();
+    if (name.length === 0 || expression.length === 0) return;
+    setFilterError(null);
+    try {
+      const created = await createSavedFilter.mutateAsync({
+        name,
+        expression,
+      });
+      setNewFilterName('');
+      setNewFilterExpr('');
+      setIsCreatingFilter(false);
+      setTaskScope({ kind: 'filter', id: created.id });
+    } catch (e) {
+      setFilterError(
+        e instanceof Error ? e.message : 'Failed to create filter',
+      );
+    }
+  }, [newFilterName, newFilterExpr, createSavedFilter, setTaskScope]);
+
+  const cancelNewFilter = useCallback(() => {
+    setIsCreatingFilter(false);
+    setNewFilterName('');
+    setNewFilterExpr('');
+    setFilterError(null);
+  }, []);
+
+  const onDeleteFilter = async (
+    id: string,
+    e: React.MouseEvent,
+  ): Promise<void> => {
+    e.stopPropagation();
+    if (taskScope.kind === 'filter' && taskScope.id === id) {
+      setTaskScope({ kind: 'inbox' });
+    }
+    await deleteSavedFilter.mutateAsync(id);
+  };
+
   // ── Delete project ───────────────────────────────────────────────────────
   const onDeleteProject = async (
     id: string,
@@ -122,41 +190,50 @@ export function TasksSidebar(): JSX.Element {
         onClick={() => setTaskScope({ kind: 'upcoming' })}
       />
 
-      <SectionHeader
-        label="Projects"
-        action={
-          !isCreating ? (
-            <button
-              onClick={() => setIsCreating(true)}
-              title="New project"
-              className="rounded-md bg-emerald-600 px-2 py-0.5 text-xs font-medium text-white hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-400"
-            >
-              + New
-            </button>
-          ) : null
-        }
-      />
+      {/*
+        Single scroll container for the three list sections. Each
+        section is natural height; the whole stack scrolls together if
+        contents exceed the viewport. Earlier versions used per-section
+        flex-1 + overflow-y-auto, which only allowed one section to
+        consume remaining space — adding the Filters section broke that
+        layout, so the simpler "one scroll for everything below smart
+        views" approach took over.
+      */}
+      <div className="flex-1 overflow-y-auto">
+        <SectionHeader
+          label="Projects"
+          action={
+            !isCreating ? (
+              <button
+                onClick={() => setIsCreating(true)}
+                title="New project"
+                className="rounded-md bg-emerald-600 px-2 py-0.5 text-xs font-medium text-white hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+              >
+                + New
+              </button>
+            ) : null
+          }
+        />
 
-      {isCreating && (
-        <div className="px-3 py-2">
-          <input
-            autoFocus
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') void submitNewProject();
-              else if (e.key === 'Escape') cancelNewProject();
-            }}
-            placeholder="Project name…"
-            className="w-full rounded-md bg-gray-900 px-3 py-1.5 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-          />
-          <p className="mt-1 px-1 text-xs text-gray-600">
-            Enter to create, Esc to cancel.
-          </p>
-        </div>
-      )}
+        {isCreating && (
+          <div className="px-3 py-2">
+            <input
+              autoFocus
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') void submitNewProject();
+                else if (e.key === 'Escape') cancelNewProject();
+              }}
+              placeholder="Project name…"
+              className="w-full rounded-md bg-gray-900 px-3 py-1.5 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            />
+            <p className="mt-1 px-1 text-xs text-gray-600">
+              Enter to create, Esc to cancel.
+            </p>
+          </div>
+        )}
 
-      <div className="overflow-y-auto">
         {isLoading ? (
           <p className="px-4 py-3 text-sm text-gray-500">Loading…</p>
         ) : !projects || projects.length === 0 ? (
@@ -177,51 +254,50 @@ export function TasksSidebar(): JSX.Element {
             ))}
           </ul>
         )}
-      </div>
 
-      <SectionHeader
-        label="Labels"
-        action={
-          !isCreatingLabel ? (
-            <button
-              onClick={() => setIsCreatingLabel(true)}
-              title="New label"
-              className="rounded-md bg-emerald-600 px-2 py-0.5 text-xs font-medium text-white hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+        <SectionHeader
+          label="Labels"
+          action={
+            !isCreatingLabel ? (
+              <button
+                onClick={() => setIsCreatingLabel(true)}
+                title="New label"
+                className="rounded-md bg-emerald-600 px-2 py-0.5 text-xs font-medium text-white hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+              >
+                + New
+              </button>
+            ) : null
+          }
+        />
+
+        {isCreatingLabel && (
+          <div className="px-3 py-2">
+            <input
+              autoFocus
+              value={newLabelName}
+              onChange={(e) => {
+                setNewLabelName(e.target.value);
+                setLabelError(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') void submitNewLabel();
+                else if (e.key === 'Escape') cancelNewLabel();
+              }}
+              placeholder="urgent"
+              className="w-full rounded-md bg-gray-900 px-3 py-1.5 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            />
+            <p
+              className={clsx(
+                'mt-1 px-1 text-xs',
+                labelError !== null ? 'text-red-400' : 'text-gray-600',
+              )}
             >
-              + New
-            </button>
-          ) : null
-        }
-      />
+              {labelError ??
+                'Letters, digits, _ or - only. Enter to create, Esc to cancel.'}
+            </p>
+          </div>
+        )}
 
-      {isCreatingLabel && (
-        <div className="px-3 py-2">
-          <input
-            autoFocus
-            value={newLabelName}
-            onChange={(e) => {
-              setNewLabelName(e.target.value);
-              setLabelError(null);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') void submitNewLabel();
-              else if (e.key === 'Escape') cancelNewLabel();
-            }}
-            placeholder="urgent"
-            className="w-full rounded-md bg-gray-900 px-3 py-1.5 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-          />
-          <p
-            className={clsx(
-              'mt-1 px-1 text-xs',
-              labelError !== null ? 'text-red-400' : 'text-gray-600',
-            )}
-          >
-            {labelError ?? 'Letters, digits, _ or - only. Enter to create, Esc to cancel.'}
-          </p>
-        </div>
-      )}
-
-      <div className="flex-1 overflow-y-auto">
         {!labels || labels.length === 0 ? (
           <p className="px-4 py-3 text-sm text-gray-500">No labels yet.</p>
         ) : (
@@ -234,6 +310,90 @@ export function TasksSidebar(): JSX.Element {
                 active={taskScope.kind === 'label' && taskScope.id === l.id}
                 onSelect={() => setTaskScope({ kind: 'label', id: l.id })}
                 onDelete={(e) => void onDeleteLabel(l.id, e)}
+              />
+            ))}
+          </ul>
+        )}
+
+        <SectionHeader
+          label="Filters"
+          action={
+            !isCreatingFilter ? (
+              <button
+                onClick={() => setIsCreatingFilter(true)}
+                title="New filter"
+                className="rounded-md bg-emerald-600 px-2 py-0.5 text-xs font-medium text-white hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+              >
+                + New
+              </button>
+            ) : null
+          }
+        />
+
+        {isCreatingFilter && (
+          <div className="space-y-2 px-3 py-2">
+            <input
+              autoFocus
+              value={newFilterName}
+              onChange={(e) => setNewFilterName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') cancelNewFilter();
+              }}
+              placeholder="Filter name"
+              className="w-full rounded-md bg-gray-900 px-3 py-1.5 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            />
+            <input
+              value={newFilterExpr}
+              onChange={(e) => {
+                setNewFilterExpr(e.target.value);
+                setFilterError(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') void submitNewFilter();
+                else if (e.key === 'Escape') cancelNewFilter();
+              }}
+              placeholder="today & p1"
+              className={clsx(
+                'w-full rounded-md bg-gray-900 px-3 py-1.5 font-mono text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2',
+                liveExprError !== null || filterError !== null
+                  ? 'ring-1 ring-red-500 focus:ring-red-500'
+                  : 'focus:ring-emerald-500',
+              )}
+            />
+            <p
+              className={clsx(
+                'px-1 text-xs',
+                liveExprError !== null || filterError !== null
+                  ? 'text-red-400'
+                  : 'text-gray-600',
+              )}
+            >
+              {filterError ?? liveExprError ?? (
+                <>
+                  Try{' '}
+                  <span className="font-mono">today &amp; p1</span>,{' '}
+                  <span className="font-mono">@work &amp; overdue</span>,{' '}
+                  <span className="font-mono">#personal &amp; no-date</span>.
+                  Enter to save, Esc to cancel.
+                </>
+              )}
+            </p>
+          </div>
+        )}
+
+        {!savedFilters || savedFilters.length === 0 ? (
+          <p className="px-4 py-3 text-sm text-gray-500">No filters yet.</p>
+        ) : (
+          <ul>
+            {savedFilters.map((f) => (
+              <SavedFilterRow
+                key={f.id}
+                name={f.name}
+                expression={f.expression}
+                color={f.color}
+                active={taskScope.kind === 'filter' && taskScope.id === f.id}
+                onSelect={() => setTaskScope({ kind: 'filter', id: f.id })}
+                onDelete={(e) => void onDeleteFilter(f.id, e)}
               />
             ))}
           </ul>
@@ -370,6 +530,57 @@ function LabelRow({
         onClick={onDelete}
         aria-label={`Delete label ${name}`}
         title="Delete label"
+        className="absolute right-3 top-2 text-xs text-gray-500 opacity-0 hover:text-red-400 focus:opacity-100 focus:outline-none group-hover:opacity-60 hover:!opacity-100"
+      >
+        ✕
+      </button>
+    </li>
+  );
+}
+
+function SavedFilterRow({
+  name,
+  expression,
+  color,
+  active,
+  onSelect,
+  onDelete,
+}: {
+  name: string;
+  expression: string;
+  color: string | null;
+  active: boolean;
+  onSelect: () => void;
+  onDelete: (e: React.MouseEvent) => void;
+}): JSX.Element {
+  return (
+    <li
+      className={clsx(
+        'group relative flex items-center gap-2',
+        active ? 'bg-gray-900' : 'hover:bg-gray-900/50',
+      )}
+    >
+      <button
+        onClick={onSelect}
+        title={expression}
+        className={clsx(
+          'flex min-w-0 flex-1 items-center gap-2 px-4 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-inset focus:ring-emerald-500',
+          active ? 'text-white' : 'text-gray-300',
+        )}
+      >
+        <span
+          aria-hidden
+          className="text-xs"
+          style={{ color: normaliseColor(color) }}
+        >
+          ⌕
+        </span>
+        <span className="truncate">{name}</span>
+      </button>
+      <button
+        onClick={onDelete}
+        aria-label={`Delete filter ${name}`}
+        title="Delete filter"
         className="absolute right-3 top-2 text-xs text-gray-500 opacity-0 hover:text-red-400 focus:opacity-100 focus:outline-none group-hover:opacity-60 hover:!opacity-100"
       >
         ✕

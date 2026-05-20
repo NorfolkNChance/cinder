@@ -49,3 +49,10 @@ export const LABELS_LIST = 'labels:list' as const;
 export const LABELS_UPDATE = 'labels:update' as const;
 export const LABELS_DELETE = 'labels:delete' as const;
 export const LABELS_SET_FOR_TASK = 'labels:setForTask' as const;
+
+// ── Saved filters ────────────────────────────────────────────────────────────
+export const SAVED_FILTERS_CREATE = 'savedFilters:create' as const;
+export const SAVED_FILTERS_GET = 'savedFilters:get' as const;
+export const SAVED_FILTERS_LIST = 'savedFilters:list' as const;
+export const SAVED_FILTERS_UPDATE = 'savedFilters:update' as const;
+export const SAVED_FILTERS_DELETE = 'savedFilters:delete' as const;

@@ -46,6 +46,14 @@ import type {
   LabelUpdateInput,
   LabelsSetForTaskInput,
 } from '../shared/schemas/labels';
+import type {
+  SavedFilter,
+  SavedFilterCreateInput,
+  SavedFilterDeleteInput,
+  SavedFilterGetInput,
+  SavedFilterListInput,
+  SavedFilterUpdateInput,
+} from '../shared/schemas/savedFilters';
 
 export {};
 
@@ -100,6 +108,17 @@ declare global {
         update: (input: LabelUpdateInput) => Promise<Label | null>;
         delete: (input: LabelDeleteInput) => Promise<void>;
         setForTask: (input: LabelsSetForTaskInput) => Promise<void>;
+      };
+      savedFilters: {
+        create: (input: SavedFilterCreateInput) => Promise<SavedFilter>;
+        get: (input: SavedFilterGetInput) => Promise<SavedFilter | null>;
+        list: (
+          input: SavedFilterListInput,
+        ) => Promise<readonly SavedFilter[]>;
+        update: (
+          input: SavedFilterUpdateInput,
+        ) => Promise<SavedFilter | null>;
+        delete: (input: SavedFilterDeleteInput) => Promise<void>;
       };
     };
   }

@@ -241,3 +241,32 @@ export const taskLabels = sqliteTable(
 );
 
 export type TaskLabel = typeof taskLabels.$inferSelect;
+
+// ─── Saved filters ───────────────────────────────────────────────────────────
+
+/**
+ * Saved filters — named DSL expressions the user keeps in the sidebar.
+ *
+ * The `expression` column stores the raw DSL string (e.g. "today & p1");
+ * it's lexed/parsed/compiled at query time by the filter pipeline in
+ * src/shared/filter/. Service-level validation rejects expressions that
+ * don't parse so the DB never holds a broken filter.
+ */
+export const savedFilters = sqliteTable(
+  'saved_filters',
+  {
+    id: text('id').primaryKey(),
+    name: text('name').notNull(),
+    expression: text('expression').notNull(),
+    color: text('color'),
+    order: integer('order').notNull().default(0),
+    createdAt: text('created_at').notNull(),
+    updatedAt: text('updated_at').notNull(),
+  },
+  (table) => ({
+    orderIdx: index('saved_filters_order_idx').on(table.order),
+  }),
+);
+
+export type SavedFilter = typeof savedFilters.$inferSelect;
+export type NewSavedFilter = typeof savedFilters.$inferInsert;

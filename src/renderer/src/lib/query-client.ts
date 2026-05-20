@@ -51,4 +51,8 @@ export const queryKeys = {
     all: ['labels'] as const,
     list: () => [...queryKeys.labels.all, 'list'] as const,
   },
+  savedFilters: {
+    all: ['savedFilters'] as const,
+    list: () => [...queryKeys.savedFilters.all, 'list'] as const,
+  },
 } as const;

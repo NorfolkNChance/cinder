@@ -31,7 +31,8 @@ export type TaskScope =
   | { kind: 'today' }
   | { kind: 'upcoming' }
   | { kind: 'project'; id: string }
-  | { kind: 'label'; id: string };
+  | { kind: 'label'; id: string }
+  | { kind: 'filter'; id: string };
 
 interface UIState {
   mode: Mode;

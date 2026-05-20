@@ -4,6 +4,7 @@ import {
   useCreateTask,
   useLabelsList,
   useProjectsList,
+  useSavedFiltersList,
   useTasksList,
 } from './queries';
 import { TaskItem } from './TaskItem';
@@ -34,26 +35,34 @@ export function TaskList(): JSX.Element {
   const { data: tasks, isLoading } = useTasksList(taskScope);
   const { data: projects } = useProjectsList();
   const { data: labels } = useLabelsList();
+  const { data: savedFilters } = useSavedFiltersList();
   const createTask = useCreateTask();
 
-  const headerLabel = useMemo(() => {
+  const header = useMemo<{ title: string; subtitle?: string }>(() => {
     switch (taskScope.kind) {
       case 'inbox':
-        return 'Inbox';
+        return { title: 'Inbox' };
       case 'today':
-        return 'Today';
+        return { title: 'Today' };
       case 'upcoming':
-        return 'Upcoming';
+        return { title: 'Upcoming' };
       case 'project': {
         const project = projects?.find((p) => p.id === taskScope.id);
-        return project?.name ?? 'Project';
+        return { title: project?.name ?? 'Project' };
       }
       case 'label': {
         const label = labels?.find((l) => l.id === taskScope.id);
-        return label !== undefined ? `@${label.name}` : 'Label';
+        return { title: label !== undefined ? `@${label.name}` : 'Label' };
+      }
+      case 'filter': {
+        const f = savedFilters?.find((x) => x.id === taskScope.id);
+        return {
+          title: f?.name ?? 'Filter',
+          subtitle: f?.expression,
+        };
       }
     }
-  }, [taskScope, projects, labels]);
+  }, [taskScope, projects, labels, savedFilters]);
 
   // ── Quick-add input + keyboard shortcuts ────────────────────────────────
   const [draft, setDraft] = useState('');
@@ -118,8 +127,13 @@ export function TaskList(): JSX.Element {
     <div className="flex h-full flex-col">
       <header className="border-b border-gray-800 px-6 py-4">
         <h2 className="text-2xl font-semibold tracking-tight text-white">
-          {headerLabel}
+          {header.title}
         </h2>
+        {header.subtitle !== undefined && (
+          <p className="mt-0.5 font-mono text-xs text-gray-500">
+            {header.subtitle}
+          </p>
+        )}
       </header>
 
       <div className="border-b border-gray-800 px-5 py-3">

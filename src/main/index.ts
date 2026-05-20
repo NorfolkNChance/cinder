@@ -13,6 +13,7 @@ import { registerProjectsHandlers } from './ipc/projects';
 import { registerSectionsHandlers } from './ipc/sections';
 import { registerTasksHandlers } from './ipc/tasks';
 import { registerLabelsHandlers } from './ipc/labels';
+import { registerSavedFiltersHandlers } from './ipc/savedFilters';
 import {
   registerAttachmentProtocol,
   registerAttachmentSchemePrivileges,
@@ -122,6 +123,7 @@ app.whenReady().then(async () => {
   registerSectionsHandlers();
   registerTasksHandlers();
   registerLabelsHandlers();
+  registerSavedFiltersHandlers();
 
   createWindow();
 

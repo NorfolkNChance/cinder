@@ -16,6 +16,10 @@ import type {
   Label,
   LabelCreateInput,
 } from '../../../../shared/schemas/labels';
+import type {
+  SavedFilter,
+  SavedFilterCreateInput,
+} from '../../../../shared/schemas/savedFilters';
 import type { TaskScope } from '../../state/ui';
 import { addDays, localDateString } from '../../lib/dates';
 
@@ -82,7 +86,10 @@ export function useDeleteProject(): ReturnType<
  * today). No upper bound for v1 — tasks far in the future are rare
  * enough that capping at, say, 30 days doesn't earn its complexity.
  */
-function scopeToFilter(scope: TaskScope): TaskListInput {
+function scopeToFilter(
+  scope: TaskScope,
+  savedFilterExpression: string | null,
+): TaskListInput {
   switch (scope.kind) {
     case 'inbox':
       return { projectId: null };
@@ -98,15 +105,37 @@ function scopeToFilter(scope: TaskScope): TaskListInput {
       return { projectId: scope.id };
     case 'label':
       return { labelId: scope.id };
+    case 'filter':
+      // The saved-filter row is fetched from the cache by useTasksList
+      // before this gets called; if it isn't available yet we return
+      // an empty filter (results empty) — better than a runtime throw.
+      return savedFilterExpression === null
+        ? { filter: '' }
+        : { filter: savedFilterExpression };
   }
 }
 
 export function useTasksList(
   scope: TaskScope,
 ): ReturnType<typeof useQuery<readonly TaskWithLabels[]>> {
+  // For 'filter' scope we need the saved filter's expression. Pull from
+  // the cached list rather than firing a separate fetch — the sidebar
+  // is already rendering this data.
+  const savedFilters = useSavedFiltersList();
+  const expression =
+    scope.kind === 'filter'
+      ? (savedFilters.data?.find((f) => f.id === scope.id)?.expression ??
+        null)
+      : null;
   return useQuery({
-    queryKey: queryKeys.tasks.list(scope),
-    queryFn: () => window.api.tasks.list(scopeToFilter(scope)),
+    queryKey:
+      scope.kind === 'filter'
+        ? [...queryKeys.tasks.list(scope), expression]
+        : queryKeys.tasks.list(scope),
+    queryFn: () => window.api.tasks.list(scopeToFilter(scope, expression)),
+    // Wait until the saved-filter list resolves before running the
+    // filter-scoped query.
+    enabled: scope.kind !== 'filter' || savedFilters.data !== undefined,
   });
 }
 
@@ -199,6 +228,42 @@ export function useDeleteLabel(): ReturnType<
       // affected task lists need a refresh too.
       void qc.invalidateQueries({ queryKey: queryKeys.labels.all });
       void qc.invalidateQueries({ queryKey: queryKeys.tasks.all });
+    },
+  });
+}
+
+// ── Saved filters ───────────────────────────────────────────────────────────
+
+export function useSavedFiltersList(): ReturnType<
+  typeof useQuery<readonly SavedFilter[]>
+> {
+  return useQuery({
+    queryKey: queryKeys.savedFilters.list(),
+    queryFn: () => window.api.savedFilters.list({}),
+  });
+}
+
+export function useCreateSavedFilter(): ReturnType<
+  typeof useMutation<SavedFilter, Error, SavedFilterCreateInput>
+> {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: SavedFilterCreateInput) =>
+      window.api.savedFilters.create(input),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.savedFilters.all });
+    },
+  });
+}
+
+export function useDeleteSavedFilter(): ReturnType<
+  typeof useMutation<void, Error, string>
+> {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => window.api.savedFilters.delete({ id }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.savedFilters.all });
     },
   });
 }
