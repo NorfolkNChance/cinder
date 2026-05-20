@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import clsx from 'clsx';
 import { NoteList } from './features/notes/NoteList';
 import { NoteEditor } from './features/notes/NoteEditor';
@@ -9,6 +9,8 @@ import { MatrixView } from './features/matrix/MatrixView';
 import { CommandPalette } from './features/commandPalette/CommandPalette';
 import { HelpModal } from './features/help/HelpModal';
 import { useUI, type Mode } from './state/ui';
+import { useCreateNote } from './features/notes/queries';
+import { isSupportedFile, importDroppedFiles } from './features/notes/fileImport';
 
 /**
  * Top-level layout.
@@ -158,7 +160,7 @@ function ModeButton({
   );
 }
 
-// ── Notes main pane (existing behaviour, lifted out so the layout is symmetric) ─
+// ── Notes main pane ──────────────────────────────────────────────────────────
 
 function NotesMainPane(): JSX.Element {
   const selectedNoteId = useUI((s) => s.selectedNoteId);
@@ -166,19 +168,134 @@ function NotesMainPane(): JSX.Element {
   return <NoteEditor noteId={selectedNoteId} />;
 }
 
+/**
+ * Empty state for the Notes main pane — shown when no note is selected.
+ *
+ * Acts as a second drag-and-drop import target (the sidebar is the primary
+ * one). Having the full main pane as a drop zone makes the feature more
+ * discoverable and gives a large drag surface.
+ */
 function NotesEmptyState(): JSX.Element {
+  const createNote = useCreateNote();
+  const setSelectedNoteId = useUI((s) => s.setSelectedNoteId);
+
+  const [dropState, setDropState] = useState<'idle' | 'valid' | 'invalid'>('idle');
+  const [importing, setImporting] = useState(false);
+  const dragCounterRef = useRef(0);
+
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounterRef.current += 1;
+    if (dragCounterRef.current !== 1) return;
+    const files = Array.from(e.dataTransfer.items);
+    const hasSupported = files.some(
+      (item) =>
+        item.kind === 'file' &&
+        isSupportedFile({ name: item.getAsFile()?.name ?? '' } as File),
+    );
+    setDropState(hasSupported ? 'valid' : 'invalid');
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = dropState === 'valid' ? 'copy' : 'none';
+  }, [dropState]);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounterRef.current -= 1;
+    if (dragCounterRef.current === 0) setDropState('idle');
+  }, []);
+
+  const handleDrop = useCallback(
+    async (e: React.DragEvent) => {
+      e.preventDefault();
+      dragCounterRef.current = 0;
+      setDropState('idle');
+      if (dropState !== 'valid') return;
+
+      setImporting(true);
+      try {
+        const results = await importDroppedFiles(e.dataTransfer);
+        let lastCreatedId: string | null = null;
+        for (const result of results) {
+          if (!result.ok) continue;
+          const created = await createNote.mutateAsync({
+            title: result.note.title,
+            body: result.note.body,
+          });
+          lastCreatedId = created.id;
+        }
+        if (lastCreatedId !== null) setSelectedNoteId(lastCreatedId);
+      } finally {
+        setImporting(false);
+      }
+    },
+    [dropState, createNote, setSelectedNoteId],
+  );
+
   return (
-    <div className="flex h-full items-center justify-center">
-      <div className="text-center">
-        <h1 className="mb-3 text-3xl font-bold tracking-tight">Cinder</h1>
-        <p className="text-gray-500">
-          Select a note from the sidebar, or press{' '}
-          <kbd className="rounded border border-gray-700 bg-gray-900 px-1.5 py-0.5 font-mono text-xs">
-            ⌘N
-          </kbd>{' '}
-          to create one.
-        </p>
-      </div>
+    <div
+      className="relative flex h-full items-center justify-center"
+      onDragEnter={handleDragEnter}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={(e) => void handleDrop(e)}
+    >
+      {/* Drop overlay */}
+      {dropState !== 'idle' && (
+        <div
+          className={clsx(
+            'pointer-events-none absolute inset-4 flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed transition-colors',
+            dropState === 'valid'
+              ? 'border-emerald-500 bg-emerald-950/30'
+              : 'border-red-700 bg-red-950/20',
+          )}
+        >
+          <span className="text-4xl">
+            {dropState === 'valid' ? '📄' : '⛔'}
+          </span>
+          <span
+            className={clsx(
+              'text-base font-medium',
+              dropState === 'valid' ? 'text-emerald-300' : 'text-red-400',
+            )}
+          >
+            {dropState === 'valid' ? 'Drop to import' : 'Unsupported file type'}
+          </span>
+          {dropState === 'valid' && (
+            <span className="text-sm text-emerald-600">
+              .md · .markdown · .html · .htm
+            </span>
+          )}
+        </div>
+      )}
+
+      {importing && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-950/60">
+          <p className="text-sm text-gray-400">Importing…</p>
+        </div>
+      )}
+
+      {dropState === 'idle' && !importing && (
+        <div className="text-center">
+          <h1 className="mb-3 text-3xl font-bold tracking-tight">Cinder</h1>
+          <p className="mb-6 text-gray-500">
+            Select a note from the sidebar, or press{' '}
+            <kbd className="rounded border border-gray-700 bg-gray-900 px-1.5 py-0.5 font-mono text-xs">
+              ⌘N
+            </kbd>{' '}
+            to create one.
+          </p>
+          <div className="mx-auto flex max-w-xs flex-col items-center gap-1 rounded-xl border border-dashed border-gray-800 px-6 py-5 text-sm text-gray-600">
+            <span className="text-2xl">⬇</span>
+            <span>Drop a file to import</span>
+            <span className="text-xs text-gray-700">
+              .md · .markdown · .html · .htm
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
