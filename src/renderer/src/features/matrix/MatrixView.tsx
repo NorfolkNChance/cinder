@@ -10,6 +10,7 @@ import {
 import { formatDueDate, localDateString } from '../../lib/dates';
 import type { TaskWithLabels } from '../../../../shared/schemas/tasks';
 import type { TaskUpdateInput } from '../../../../shared/schemas/tasks';
+import { MatrixTaskDetail } from './MatrixTaskDetail';
 
 /**
  * Eisenhower matrix — 2×2 CSS grid view.
@@ -124,6 +125,14 @@ export function MatrixView(): JSX.Element {
   // Confirmation state (large moves)
   const [pendingDrop, setPendingDrop] = useState<PendingDrop | null>(null);
 
+  // Detail panel — which task card was clicked
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+
+  // Snapshot mode — freeze quadrant membership as of the moment snapshot
+  // was taken, so live re-classification doesn't fight user intent while
+  // they are dragging tasks around intentionally.
+  const [snapshot, setSnapshot] = useState<Record<Quadrant, string[]> | null>(null);
+
   // Apply project + label filters before classification.
   const filteredTasks = useMemo(() => {
     if (!allTasks) return [];
@@ -150,6 +159,50 @@ export function MatrixView(): JSX.Element {
     (id: string): TaskWithLabels | undefined =>
       allTasks?.find((t) => t.id === id),
     [allTasks],
+  );
+
+  // Snapshot helpers
+  const takeSnapshot = useCallback(() => {
+    setSnapshot({
+      do: quadrants.do.map((t) => t.id),
+      schedule: quadrants.schedule.map((t) => t.id),
+      delegate: quadrants.delegate.map((t) => t.id),
+      eliminate: quadrants.eliminate.map((t) => t.id),
+    });
+  }, [quadrants]);
+
+  const releaseSnapshot = useCallback(() => {
+    setSnapshot(null);
+  }, []);
+
+  // When snapshot is active, use frozen task-id sets for placement but
+  // fresh TaskWithLabels data (so title / priority chips stay current).
+  const displayQuadrants = useMemo<Record<Quadrant, readonly TaskWithLabels[]>>(
+    () =>
+      snapshot === null
+        ? quadrants
+        : {
+            do: filteredTasks.filter((t) => snapshot.do.includes(t.id)),
+            schedule: filteredTasks.filter((t) =>
+              snapshot.schedule.includes(t.id),
+            ),
+            delegate: filteredTasks.filter((t) =>
+              snapshot.delegate.includes(t.id),
+            ),
+            eliminate: filteredTasks.filter((t) =>
+              snapshot.eliminate.includes(t.id),
+            ),
+          },
+    [snapshot, quadrants, filteredTasks],
+  );
+
+  // Selected task — close panel if task disappears (deleted / completed).
+  const selectedTask = useMemo(
+    () =>
+      selectedTaskId !== null
+        ? (allTasks?.find((t) => t.id === selectedTaskId) ?? null)
+        : null,
+    [selectedTaskId, allTasks],
   );
 
   // DnD handlers passed down to QuadrantPanel
@@ -204,13 +257,36 @@ export function MatrixView(): JSX.Element {
 
   return (
     <div className="relative flex h-full flex-col">
-      {/* Column headers */}
-      <div className="grid grid-cols-2 border-b border-gray-800">
-        <div className="border-r border-gray-800 px-4 py-2 text-center text-xs font-semibold uppercase tracking-widest text-gray-500">
-          Urgent
+      {/* Column + snapshot header */}
+      <div className="flex items-stretch border-b border-gray-800">
+        {/* Row-axis label — "Important" shown via sidebar; this row shows urgency axis */}
+        <div className="grid flex-1 grid-cols-2">
+          <div className="border-r border-gray-800 px-4 py-2 text-center text-xs font-semibold uppercase tracking-widest text-gray-500">
+            Urgent
+          </div>
+          <div className="px-4 py-2 text-center text-xs font-semibold uppercase tracking-widest text-gray-500">
+            Not Urgent
+          </div>
         </div>
-        <div className="px-4 py-2 text-center text-xs font-semibold uppercase tracking-widest text-gray-500">
-          Not Urgent
+        {/* Snapshot toggle */}
+        <div className="flex items-center border-l border-gray-800 px-3">
+          {snapshot === null ? (
+            <button
+              onClick={takeSnapshot}
+              title="Freeze quadrant membership (snapshot mode)"
+              className="rounded-md border border-gray-700 bg-gray-900 px-2.5 py-1 text-[11px] text-gray-500 hover:border-gray-600 hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            >
+              📷 Snapshot
+            </button>
+          ) : (
+            <button
+              onClick={releaseSnapshot}
+              title="Resume live classification"
+              className="rounded-md border border-emerald-700 bg-emerald-900/30 px-2.5 py-1 text-[11px] text-emerald-400 hover:bg-emerald-900/50 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            >
+              🔴 Live
+            </button>
+          )}
         </div>
       </div>
 
@@ -221,7 +297,7 @@ export function MatrixView(): JSX.Element {
           label="Do"
           accent="red"
           importance="Important"
-          tasks={quadrants.do}
+          tasks={displayQuadrants.do}
           position="top-left"
           isDragOver={hoveredQuadrant === 'do'}
           onDrop={handleDrop}
@@ -229,13 +305,15 @@ export function MatrixView(): JSX.Element {
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
           draggingId={draggingId}
+          selectedTaskId={selectedTaskId}
+          onSelect={setSelectedTaskId}
         />
         <QuadrantPanel
           quadrant="schedule"
           label="Schedule"
           accent="blue"
           importance="Important"
-          tasks={quadrants.schedule}
+          tasks={displayQuadrants.schedule}
           position="top-right"
           isDragOver={hoveredQuadrant === 'schedule'}
           onDrop={handleDrop}
@@ -243,13 +321,15 @@ export function MatrixView(): JSX.Element {
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
           draggingId={draggingId}
+          selectedTaskId={selectedTaskId}
+          onSelect={setSelectedTaskId}
         />
         <QuadrantPanel
           quadrant="delegate"
           label="Delegate"
           accent="orange"
           importance="Not Important"
-          tasks={quadrants.delegate}
+          tasks={displayQuadrants.delegate}
           position="bottom-left"
           isDragOver={hoveredQuadrant === 'delegate'}
           onDrop={handleDrop}
@@ -257,13 +337,15 @@ export function MatrixView(): JSX.Element {
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
           draggingId={draggingId}
+          selectedTaskId={selectedTaskId}
+          onSelect={setSelectedTaskId}
         />
         <QuadrantPanel
           quadrant="eliminate"
           label="Eliminate"
           accent="gray"
           importance="Not Important"
-          tasks={quadrants.eliminate}
+          tasks={displayQuadrants.eliminate}
           position="bottom-right"
           isDragOver={hoveredQuadrant === 'eliminate'}
           onDrop={handleDrop}
@@ -271,6 +353,8 @@ export function MatrixView(): JSX.Element {
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
           draggingId={draggingId}
+          selectedTaskId={selectedTaskId}
+          onSelect={setSelectedTaskId}
         />
       </div>
 
@@ -282,6 +366,14 @@ export function MatrixView(): JSX.Element {
           taskTitle={pendingDrop.task.title}
           onConfirm={confirmDrop}
           onCancel={() => setPendingDrop(null)}
+        />
+      )}
+
+      {/* Task detail side panel */}
+      {selectedTask !== null && (
+        <MatrixTaskDetail
+          task={selectedTask}
+          onClose={() => setSelectedTaskId(null)}
         />
       )}
     </div>
@@ -347,6 +439,8 @@ function QuadrantPanel({
   onDragStart,
   onDragEnd,
   draggingId,
+  selectedTaskId,
+  onSelect,
 }: {
   quadrant: Quadrant;
   label: string;
@@ -360,6 +454,8 @@ function QuadrantPanel({
   onDragStart: (taskId: string) => void;
   onDragEnd: () => void;
   draggingId: string | null;
+  selectedTaskId: string | null;
+  onSelect: (id: string | null) => void;
 }): JSX.Element {
   const styles = ACCENT_STYLES[accent];
 
@@ -406,8 +502,10 @@ function QuadrantPanel({
                 task={task}
                 styles={styles}
                 isDragging={task.id === draggingId}
+                isSelected={task.id === selectedTaskId}
                 onDragStart={onDragStart}
                 onDragEnd={onDragEnd}
+                onSelect={onSelect}
               />
             ))}
           </ul>
@@ -436,29 +534,36 @@ function MatrixTaskCard({
   task,
   styles,
   isDragging,
+  isSelected,
   onDragStart,
   onDragEnd,
+  onSelect,
 }: {
   task: TaskWithLabels;
   styles: { badge: string; card: string };
   isDragging: boolean;
+  isSelected: boolean;
   onDragStart: (taskId: string) => void;
   onDragEnd: () => void;
+  onSelect: (id: string | null) => void;
 }): JSX.Element {
   const due = formatDueDate(task.dueDate);
 
   return (
     <li
       draggable
+      onClick={() => onSelect(isSelected ? null : task.id)}
       onDragStart={(e) => {
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.setData('text/plain', task.id);
         onDragStart(task.id);
       }}
       onDragEnd={onDragEnd}
-      className={`cursor-grab rounded-lg border border-gray-800 bg-gray-900/60 px-3 py-2 transition-all active:cursor-grabbing ${styles.card} ${
-        isDragging ? 'opacity-40 scale-95' : 'opacity-100'
-      }`}
+      className={`cursor-pointer rounded-lg border px-3 py-2 transition-all active:cursor-grabbing ${
+        isSelected
+          ? 'border-emerald-600 bg-emerald-900/20 ring-1 ring-inset ring-emerald-700/60'
+          : `border-gray-800 bg-gray-900/60 ${styles.card}`
+      } ${isDragging ? 'scale-95 opacity-40' : 'opacity-100'}`}
       title={task.title || '(untitled)'}
     >
       {/* Title */}
