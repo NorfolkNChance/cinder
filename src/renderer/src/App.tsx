@@ -13,7 +13,7 @@ import { UpdateBanner } from './features/update/UpdateBanner';
 import { Toast } from './components/Toast';
 import { useUI, type Mode } from './state/ui';
 import { useCreateNote } from './features/notes/queries';
-import { isSupportedFile, importDroppedFiles } from './features/notes/fileImport';
+import { importDroppedFiles } from './features/notes/fileImport';
 import { useSettings } from './features/settings/useSettings';
 
 /**
@@ -259,13 +259,13 @@ function NotesEmptyState(): JSX.Element {
     e.preventDefault();
     dragCounterRef.current += 1;
     if (dragCounterRef.current !== 1) return;
-    const files = Array.from(e.dataTransfer.items);
-    const hasSupported = files.some(
-      (item) =>
-        item.kind === 'file' &&
-        isSupportedFile({ name: item.getAsFile()?.name ?? '' } as File),
+    // getAsFile() returns null during dragenter in Electron's sandboxed
+    // renderer — file names are only available on drop. Accept any file-kind
+    // item optimistically; the real extension check runs in handleDrop.
+    const hasFiles = Array.from(e.dataTransfer.items).some(
+      (item) => item.kind === 'file',
     );
-    setDropState(hasSupported ? 'valid' : 'invalid');
+    setDropState(hasFiles ? 'valid' : 'invalid');
   }, []);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {

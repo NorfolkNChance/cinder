@@ -8,10 +8,7 @@ import {
 } from './queries';
 import { useUI } from '../../state/ui';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
-import {
-  isSupportedFile,
-  importDroppedFiles,
-} from './fileImport';
+import { importDroppedFiles } from './fileImport';
 
 /**
  * Note list sidebar.
@@ -63,13 +60,15 @@ export function NoteList(): JSX.Element {
     dragCounterRef.current += 1;
     if (dragCounterRef.current !== 1) return; // already handling
 
-    const files = Array.from(e.dataTransfer.items);
-    const hasSupported = files.some(
-      (item) =>
-        item.kind === 'file' &&
-        isSupportedFile({ name: item.getAsFile()?.name ?? '' } as File),
+    // During dragenter, `getAsFile()` returns null in Electron's sandboxed
+    // renderer — the actual File objects (including their names) are only
+    // accessible on the `drop` event. We therefore check whether any item
+    // is a file-kind and show the "valid" overlay optimistically. The real
+    // extension check happens in `handleDrop` via `importDroppedFiles`.
+    const hasFiles = Array.from(e.dataTransfer.items).some(
+      (item) => item.kind === 'file',
     );
-    setDropState(hasSupported ? 'valid' : 'invalid');
+    setDropState(hasFiles ? 'valid' : 'invalid');
   }, []);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
