@@ -14,6 +14,10 @@ import { registerSectionsHandlers } from './ipc/sections';
 import { registerTasksHandlers } from './ipc/tasks';
 import { registerLabelsHandlers } from './ipc/labels';
 import { registerSavedFiltersHandlers } from './ipc/savedFilters';
+import { registerExportHandlers } from './ipc/export';
+import { registerSettingsHandlers } from './ipc/settings';
+import { registerUpdateHandlers } from './ipc/update';
+import { initUpdater } from './services/updater';
 import {
   registerAttachmentProtocol,
   registerAttachmentSchemePrivileges,
@@ -124,8 +128,12 @@ app.whenReady().then(async () => {
   registerTasksHandlers();
   registerLabelsHandlers();
   registerSavedFiltersHandlers();
+  registerExportHandlers();
+  registerSettingsHandlers();
+  registerUpdateHandlers();
 
-  createWindow();
+  const mainWindow = createWindow();
+  initUpdater(mainWindow);
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

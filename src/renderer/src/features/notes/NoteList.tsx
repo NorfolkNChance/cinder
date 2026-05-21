@@ -262,7 +262,7 @@ export function NoteList(): JSX.Element {
             )}
           </div>
         ) : (
-          <ul className="divide-y divide-gray-900">
+          <ul className="divide-y divide-gray-900" role="list" aria-label="Notes">
             {notes.map((note) => (
               <li
                 key={note.id}
@@ -275,6 +275,8 @@ export function NoteList(): JSX.Element {
               >
                 <button
                   onClick={() => setSelectedNoteId(note.id)}
+                  aria-label={note.title || 'Untitled'}
+                  aria-current={selectedNoteId === note.id ? 'true' : undefined}
                   className={clsx(
                     'min-w-0 flex-1 px-4 py-3 text-left focus:outline-none focus:ring-2 focus:ring-inset focus:ring-emerald-500',
                     selectedNoteId === note.id
@@ -282,10 +284,10 @@ export function NoteList(): JSX.Element {
                       : 'text-gray-300',
                   )}
                 >
-                  <div className="truncate text-sm font-medium">
+                  <div className="truncate text-sm font-medium" aria-hidden="true">
                     {note.title || 'Untitled'}
                   </div>
-                  <div className="mt-0.5 truncate text-xs text-gray-500">
+                  <div className="mt-0.5 truncate text-xs text-gray-500" aria-hidden="true">
                     {note.body.slice(0, 60) || 'Empty'}
                   </div>
                 </button>

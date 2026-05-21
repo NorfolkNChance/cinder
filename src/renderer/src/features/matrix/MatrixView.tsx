@@ -461,6 +461,9 @@ function QuadrantPanel({
 
   return (
     <div
+      role="region"
+      aria-label={label}
+      aria-dropeffect={isDragOver ? 'move' : 'none'}
       className={`flex flex-col overflow-hidden transition-colors ${BORDER_CLASSES[position]} ${isDragOver ? styles.dropRing : ''}`}
       onDragOver={(e) => {
         e.preventDefault(); // required to allow drop
@@ -495,7 +498,7 @@ function QuadrantPanel({
             {isDragOver ? 'Drop here' : 'Empty'}
           </p>
         ) : (
-          <ul className="flex flex-col gap-1.5">
+          <ul className="flex flex-col gap-1.5" role="list" aria-label={`${label} tasks`}>
             {tasks.map((task) => (
               <MatrixTaskCard
                 key={task.id}
@@ -549,22 +552,33 @@ function MatrixTaskCard({
 }): JSX.Element {
   const due = formatDueDate(task.dueDate);
 
+  const toggle = (): void => onSelect(isSelected ? null : task.id);
+
   return (
     <li
       draggable
-      onClick={() => onSelect(isSelected ? null : task.id)}
+      role="button"
+      tabIndex={0}
+      aria-pressed={isSelected}
+      aria-label={task.title || 'Untitled task'}
+      onClick={toggle}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          toggle();
+        }
+      }}
       onDragStart={(e) => {
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.setData('text/plain', task.id);
         onDragStart(task.id);
       }}
       onDragEnd={onDragEnd}
-      className={`cursor-pointer rounded-lg border px-3 py-2 transition-all active:cursor-grabbing ${
+      className={`cursor-pointer rounded-lg border px-3 py-2 transition-all active:cursor-grabbing focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-950 ${
         isSelected
           ? 'border-emerald-600 bg-emerald-900/20 ring-1 ring-inset ring-emerald-700/60'
           : `border-gray-800 bg-gray-900/60 ${styles.card}`
       } ${isDragging ? 'scale-95 opacity-40' : 'opacity-100'}`}
-      title={task.title || '(untitled)'}
     >
       {/* Title */}
       <p className="truncate text-sm leading-snug text-gray-200">

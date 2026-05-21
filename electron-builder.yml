@@ -20,3 +20,9 @@ mac:
         - x64
 
 afterSign: scripts/notarize.js
+
+# Publish config — used by electron-updater to locate update metadata.
+# Set GH_TOKEN (with repo write scope) in CI before running `npm run release`.
+publish:
+  provider: github
+  releaseType: release

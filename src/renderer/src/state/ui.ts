@@ -65,6 +65,19 @@ interface UIState {
   helpOpen: boolean;
   openHelp: () => void;
   closeHelp: () => void;
+
+  /** Whether the Settings modal is open. */
+  settingsOpen: boolean;
+  openSettings: () => void;
+  closeSettings: () => void;
+
+  /**
+   * Ephemeral toast notification (auto-dismissed).
+   * null means nothing is showing.
+   */
+  toast: { id: number; message: string; kind: 'success' | 'error' } | null;
+  showToast: (message: string, kind: 'success' | 'error') => void;
+  clearToast: () => void;
 }
 
 export const useUI = create<UIState>((set) => ({
@@ -92,4 +105,22 @@ export const useUI = create<UIState>((set) => ({
   helpOpen: false,
   openHelp: () => set({ helpOpen: true }),
   closeHelp: () => set({ helpOpen: false }),
+
+  settingsOpen: false,
+  openSettings: () => set({ settingsOpen: true }),
+  closeSettings: () => set({ settingsOpen: false }),
+
+  toast: null,
+  showToast: (message, kind) => {
+    const id = Date.now();
+    set({ toast: { id, message, kind } });
+    // Auto-dismiss after 3.5 s. The clearToast guard on `id` prevents a
+    // stale timeout from hiding a newer toast that arrived in the window.
+    setTimeout(() => {
+      set((s) =>
+        s.toast?.id === id ? { toast: null } : s,
+      );
+    }, 3500);
+  },
+  clearToast: () => set({ toast: null }),
 }));

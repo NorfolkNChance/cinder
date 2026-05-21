@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron';
+import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron';
 import {
   APP_GET_VERSION,
   ATTACHMENTS_SAVE,
@@ -36,6 +36,15 @@ import {
   SAVED_FILTERS_GET,
   SAVED_FILTERS_LIST,
   SAVED_FILTERS_UPDATE,
+  EXPORT_NOTE,
+  EXPORT_ALL_NOTES,
+  EXPORT_TASKS,
+  EXPORT_BACKUP,
+  SETTINGS_GET_ALL,
+  SETTINGS_SET,
+  UPDATE_CHECK,
+  UPDATE_INSTALL,
+  UPDATE_STATUS,
 } from '../shared/ipc/channels';
 import type {
   Note,
@@ -93,6 +102,18 @@ import type {
   SavedFilterListInput,
   SavedFilterUpdateInput,
 } from '../shared/schemas/savedFilters';
+import type {
+  ExportNoteInput,
+  ExportAllNotesInput,
+  ExportTasksInput,
+  ExportBackupInput,
+  ExportResult,
+} from '../shared/schemas/export';
+import type {
+  AppSettings,
+  SettingsSetInput,
+} from '../shared/schemas/settings';
+import type { UpdateStatus } from '../shared/schemas/update';
 
 /**
  * Preload — the only path from the sandboxed renderer to the main process.
@@ -187,5 +208,49 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke(SAVED_FILTERS_UPDATE, input),
     delete: (input: SavedFilterDeleteInput): Promise<void> =>
       ipcRenderer.invoke(SAVED_FILTERS_DELETE, input),
+  },
+  export: {
+    note: (input: ExportNoteInput): Promise<ExportResult> =>
+      ipcRenderer.invoke(EXPORT_NOTE, input),
+    allNotes: (input: ExportAllNotesInput): Promise<ExportResult> =>
+      ipcRenderer.invoke(EXPORT_ALL_NOTES, input),
+    tasks: (input: ExportTasksInput): Promise<ExportResult> =>
+      ipcRenderer.invoke(EXPORT_TASKS, input),
+    backup: (input: ExportBackupInput): Promise<ExportResult> =>
+      ipcRenderer.invoke(EXPORT_BACKUP, input),
+  },
+  settings: {
+    getAll: (): Promise<AppSettings> =>
+      ipcRenderer.invoke(SETTINGS_GET_ALL),
+    set: (input: SettingsSetInput): Promise<AppSettings> =>
+      ipcRenderer.invoke(SETTINGS_SET, input),
+  },
+  update: {
+    /**
+     * Ask the main process to check for updates.
+     * Status changes arrive via `onStatus`.
+     */
+    check: (): Promise<void> =>
+      ipcRenderer.invoke(UPDATE_CHECK),
+    /**
+     * Quit the app and install the downloaded update.
+     * Only call when status.phase === 'ready'.
+     */
+    install: (): Promise<void> =>
+      ipcRenderer.invoke(UPDATE_INSTALL),
+    /**
+     * Subscribe to update status pushes from the main process.
+     * Returns a cleanup function — call it to unsubscribe.
+     *
+     * Example:
+     *   const off = window.api.update.onStatus((s) => setState(s));
+     *   return off; // inside useEffect
+     */
+    onStatus: (cb: (status: UpdateStatus) => void): (() => void) => {
+      const handler = (_e: IpcRendererEvent, status: UpdateStatus): void =>
+        cb(status);
+      ipcRenderer.on(UPDATE_STATUS, handler);
+      return () => ipcRenderer.off(UPDATE_STATUS, handler);
+    },
   },
 });

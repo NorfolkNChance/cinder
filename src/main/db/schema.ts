@@ -270,3 +270,20 @@ export const savedFilters = sqliteTable(
 
 export type SavedFilter = typeof savedFilters.$inferSelect;
 export type NewSavedFilter = typeof savedFilters.$inferInsert;
+
+// ─── Settings ─────────────────────────────────────────────────────────────────
+
+/**
+ * Application settings — simple key/value store.
+ *
+ * Keys are dotted strings like `"matrix.urgencyDays"`. Values are
+ * JSON-serialized strings so any scalar or small object can be persisted
+ * without additional columns. Typed access goes through the settings service
+ * which applies defaults for missing keys and validates shapes with Zod.
+ */
+export const settings = sqliteTable('settings', {
+  key: text('key').primaryKey(),
+  value: text('value').notNull(),
+});
+
+export type Setting = typeof settings.$inferSelect;

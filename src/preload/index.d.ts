@@ -54,6 +54,18 @@ import type {
   SavedFilterListInput,
   SavedFilterUpdateInput,
 } from '../shared/schemas/savedFilters';
+import type {
+  ExportNoteInput,
+  ExportAllNotesInput,
+  ExportTasksInput,
+  ExportBackupInput,
+  ExportResult,
+} from '../shared/schemas/export';
+import type {
+  AppSettings,
+  SettingsSetInput,
+} from '../shared/schemas/settings';
+import type { UpdateStatus } from '../shared/schemas/update';
 
 export {};
 
@@ -119,6 +131,21 @@ declare global {
           input: SavedFilterUpdateInput,
         ) => Promise<SavedFilter | null>;
         delete: (input: SavedFilterDeleteInput) => Promise<void>;
+      };
+      export: {
+        note: (input: ExportNoteInput) => Promise<ExportResult>;
+        allNotes: (input: ExportAllNotesInput) => Promise<ExportResult>;
+        tasks: (input: ExportTasksInput) => Promise<ExportResult>;
+        backup: (input: ExportBackupInput) => Promise<ExportResult>;
+      };
+      settings: {
+        getAll: () => Promise<AppSettings>;
+        set: (input: SettingsSetInput) => Promise<AppSettings>;
+      };
+      update: {
+        check: () => Promise<void>;
+        install: () => Promise<void>;
+        onStatus: (cb: (status: UpdateStatus) => void) => () => void;
       };
     };
   }

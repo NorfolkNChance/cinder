@@ -171,7 +171,7 @@ export function TaskList(): JSX.Element {
             Nothing here yet. Add a task above.
           </p>
         ) : (
-          <ul>
+          <ul role="list" aria-label="Tasks">
             {tasks.map((task) => (
               <TaskItem
                 key={task.id}

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { TipTapEditor } from './TipTapEditor';
 import { useNote, useUpdateNote } from './queries';
 import { useDebouncedCallback } from '../../hooks/useDebouncedCallback';
+import { ExportMenu } from '../export/ExportMenu';
 
 interface NoteEditorProps {
   noteId: string;
@@ -134,14 +135,17 @@ export function NoteEditor({ noteId }: NoteEditorProps): JSX.Element {
           placeholder="Untitled"
           className="flex-1 bg-transparent text-2xl font-semibold tracking-tight text-white placeholder-gray-600 focus:outline-none"
         />
-        <span
-          className={`ml-4 text-xs ${
-            draft.dirty ? 'text-amber-400' : 'text-gray-600'
-          }`}
-          aria-live="polite"
-        >
-          {draft.dirty ? 'Unsaved…' : 'Saved'}
-        </span>
+        <div className="ml-4 flex items-center gap-3">
+          <span
+            className={`text-xs ${
+              draft.dirty ? 'text-amber-400' : 'text-gray-600'
+            }`}
+            aria-live="polite"
+          >
+            {draft.dirty ? 'Unsaved…' : 'Saved'}
+          </span>
+          <ExportMenu noteId={note.id} />
+        </div>
       </div>
       <div className="flex-1 overflow-y-auto px-6 py-5">
         <TipTapEditor

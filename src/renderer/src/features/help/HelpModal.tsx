@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useUI } from '../../state/ui';
 import { HELP_SECTIONS, type HelpSection } from './helpContent';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 /**
  * In-app help documentation overlay.
@@ -26,13 +27,15 @@ export function HelpModal(): JSX.Element | null {
   );
   const contentRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
-  // Reset on open
+  useFocusTrap(panelRef, isOpen);
+
+  // Reset on open (focus trap handles focus)
   useEffect(() => {
     if (isOpen) {
       setQuery('');
       setActiveSectionId(HELP_SECTIONS[0]?.id ?? '');
-      requestAnimationFrame(() => searchRef.current?.focus());
     }
   }, [isOpen]);
 
@@ -74,6 +77,7 @@ export function HelpModal(): JSX.Element | null {
     >
       {/* Panel */}
       <div
+        ref={panelRef}
         className="flex h-[80vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-gray-700 bg-gray-950 shadow-2xl"
         role="dialog"
         aria-label="Help documentation"

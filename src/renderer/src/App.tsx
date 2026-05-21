@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import clsx from 'clsx';
 import { NoteList } from './features/notes/NoteList';
 import { NoteEditor } from './features/notes/NoteEditor';
@@ -8,9 +8,13 @@ import { MatrixSidebar } from './features/matrix/MatrixSidebar';
 import { MatrixView } from './features/matrix/MatrixView';
 import { CommandPalette } from './features/commandPalette/CommandPalette';
 import { HelpModal } from './features/help/HelpModal';
+import { SettingsModal } from './features/settings/SettingsModal';
+import { UpdateBanner } from './features/update/UpdateBanner';
+import { Toast } from './components/Toast';
 import { useUI, type Mode } from './state/ui';
 import { useCreateNote } from './features/notes/queries';
 import { isSupportedFile, importDroppedFiles } from './features/notes/fileImport';
+import { useSettings } from './features/settings/useSettings';
 
 /**
  * Top-level layout.
@@ -31,15 +35,22 @@ export default function App(): JSX.Element {
   const mode = useUI((s) => s.mode);
   const openCommandPalette = useUI((s) => s.openCommandPalette);
   const openHelp = useUI((s) => s.openHelp);
+  const openSettings = useUI((s) => s.openSettings);
   const helpOpen = useUI((s) => s.helpOpen);
 
-  // Global shortcuts — ⌘K for command palette, ⌘/ or ? for help.
+  // Global shortcuts — ⌘K, ⌘/, ?, ⌘,
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent): void {
       // ⌘K — command palette (always, even in editable context)
       if (e.key === 'k' && e.metaKey && !e.shiftKey && !e.altKey) {
         e.preventDefault();
         openCommandPalette();
+        return;
+      }
+      // ⌘, — settings
+      if (e.key === ',' && e.metaKey) {
+        e.preventDefault();
+        openSettings();
         return;
       }
       // ⌘/ — help (always)
@@ -65,13 +76,30 @@ export default function App(): JSX.Element {
     }
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [openCommandPalette, openHelp, helpOpen]);
+  }, [openCommandPalette, openHelp, openSettings, helpOpen]);
 
   return (
     <div className="flex h-screen flex-col bg-gray-950 text-white">
+      {/* Skip to main content — visible on focus for keyboard users */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100] focus:rounded focus:bg-indigo-600 focus:px-3 focus:py-1.5 focus:text-sm focus:text-white"
+      >
+        Skip to main content
+      </a>
+      <SettingsInitializer />
       <TopBar />
       <div className="flex min-h-0 flex-1">
-        <aside className="flex h-full w-64 flex-col border-r border-gray-800 bg-gray-950">
+        <aside
+          aria-label={
+            mode === 'notes'
+              ? 'Notes sidebar'
+              : mode === 'tasks'
+              ? 'Tasks sidebar'
+              : 'Matrix sidebar'
+          }
+          className="flex h-full w-64 flex-col border-r border-gray-800 bg-gray-950"
+        >
           {mode === 'notes' ? (
             <NoteList />
           ) : mode === 'tasks' ? (
@@ -80,7 +108,7 @@ export default function App(): JSX.Element {
             <MatrixSidebar />
           )}
         </aside>
-        <main className="min-w-0 flex-1 overflow-hidden">
+        <main id="main-content" className="min-w-0 flex-1 overflow-hidden" tabIndex={-1}>
           {mode === 'notes' ? (
             <NotesMainPane />
           ) : mode === 'tasks' ? (
@@ -93,8 +121,44 @@ export default function App(): JSX.Element {
       {/* Global overlays — always mounted, shown when open */}
       <CommandPalette />
       <HelpModal />
+      <SettingsModal />
+      <UpdateBanner />
+      <Toast />
     </div>
   );
+}
+
+// ── Settings initializer ─────────────────────────────────────────────────────
+
+/**
+ * Render-nothing component that loads persisted settings on startup and
+ * applies them to the Zustand store. Mounted once above the layout so it
+ * runs before the user sees any UI.
+ *
+ * Matrix prefs and default task scope are applied only on the first load
+ * (tracked by `appliedRef`). Subsequent settings mutations (e.g., the user
+ * changing urgency days in the Settings modal) are reflected immediately
+ * in the MatrixView because that view reads `matrixPrefs` from Zustand and
+ * the Settings modal calls `setMatrixPrefs` directly via `useSettings` +
+ * the mutation success callback below.
+ */
+function SettingsInitializer(): null {
+  const { settings } = useSettings();
+  const setMatrixPrefs = useUI((s) => s.setMatrixPrefs);
+  const setTaskScope = useUI((s) => s.setTaskScope);
+  const appliedRef = useRef(false);
+
+  useEffect(() => {
+    if (!settings || appliedRef.current) return;
+    appliedRef.current = true;
+    setMatrixPrefs({
+      urgencyDays: settings['matrix.urgencyDays'],
+      importanceCutoff: settings['matrix.importanceCutoff'],
+    });
+    setTaskScope({ kind: settings['tasks.defaultScope'] });
+  }, [settings, setMatrixPrefs, setTaskScope]);
+
+  return null;
 }
 
 // ── Top bar ─────────────────────────────────────────────────────────────────
@@ -104,9 +168,10 @@ function TopBar(): JSX.Element {
   const setMode = useUI((s) => s.setMode);
   const openCommandPalette = useUI((s) => s.openCommandPalette);
   const openHelp = useUI((s) => s.openHelp);
+  const openSettings = useUI((s) => s.openSettings);
 
   return (
-    <header className="flex items-center gap-1 border-b border-gray-800 px-3 py-1.5">
+    <header className="flex items-center gap-1 border-b border-gray-800 px-3 py-1.5" aria-label="Application toolbar">
       <ModeButton active={mode === 'notes'} onClick={() => setMode('notes')}>
         Notes
       </ModeButton>
@@ -130,6 +195,13 @@ function TopBar(): JSX.Element {
         className="flex items-center rounded-md border border-gray-700 bg-gray-900 px-2 py-1 text-xs text-gray-500 hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
       >
         ?
+      </button>
+      <button
+        onClick={openSettings}
+        title="Settings (⌘,)"
+        className="flex items-center rounded-md border border-gray-700 bg-gray-900 px-2 py-1 text-xs text-gray-500 hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+      >
+        ⚙
       </button>
     </header>
   );

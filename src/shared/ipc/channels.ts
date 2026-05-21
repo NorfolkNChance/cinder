@@ -56,3 +56,27 @@ export const SAVED_FILTERS_GET = 'savedFilters:get' as const;
 export const SAVED_FILTERS_LIST = 'savedFilters:list' as const;
 export const SAVED_FILTERS_UPDATE = 'savedFilters:update' as const;
 export const SAVED_FILTERS_DELETE = 'savedFilters:delete' as const;
+
+// ── Auto-update ───────────────────────────────────────────────────────────────
+/** Renderer → Main: start an update check. */
+export const UPDATE_CHECK = 'update:check' as const;
+/** Renderer → Main: quit the app and install the downloaded update. */
+export const UPDATE_INSTALL = 'update:install' as const;
+/** Main → Renderer (push): current update status changed. */
+export const UPDATE_STATUS = 'update:status' as const;
+
+// ── Settings ─────────────────────────────────────────────────────────────────
+/** Fetch all settings, with defaults applied for any missing keys. */
+export const SETTINGS_GET_ALL = 'settings:getAll' as const;
+/** Persist a single setting by key and return the updated settings object. */
+export const SETTINGS_SET = 'settings:set' as const;
+
+// ── Export ───────────────────────────────────────────────────────────────────
+/** Export a single note as a .md file — opens a Save dialog. */
+export const EXPORT_NOTE = 'export:note' as const;
+/** Export all notes as .md files into a user-chosen directory. */
+export const EXPORT_ALL_NOTES = 'export:allNotes' as const;
+/** Export all active tasks as a .csv file — opens a Save dialog. */
+export const EXPORT_TASKS = 'export:tasks' as const;
+/** Copy the encrypted DB file to a user-chosen location. */
+export const EXPORT_BACKUP = 'export:backup' as const;

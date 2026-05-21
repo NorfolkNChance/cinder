@@ -11,6 +11,8 @@ import {
   useLabelsList,
   useSavedFiltersList,
 } from '../tasks/queries';
+import { useExport } from '../export/useExport';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 /**
  * ⌘K Command palette.
@@ -31,7 +33,7 @@ import {
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-type CommandGroup = 'Navigation' | 'Tasks' | 'Actions';
+type CommandGroup = 'Navigation' | 'Tasks' | 'Actions' | 'Export';
 
 interface Command {
   id: string;
@@ -86,6 +88,9 @@ export function CommandPalette(): JSX.Element | null {
   const setTaskScope = useUI((s) => s.setTaskScope);
   const setSelectedNoteId = useUI((s) => s.setSelectedNoteId);
   const openHelp = useUI((s) => s.openHelp);
+  const openSettings = useUI((s) => s.openSettings);
+  const selectedNoteId = useUI((s) => s.selectedNoteId);
+  const { exportNote, exportAllNotes, exportTasks, exportBackup } = useExport();
 
   const { data: projects } = useProjectsList();
   const { data: labels } = useLabelsList();
@@ -95,14 +100,15 @@ export function CommandPalette(): JSX.Element | null {
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
-  // Focus the input when the palette opens; reset query/selection.
+  useFocusTrap(panelRef, isOpen);
+
+  // Reset query/selection when palette opens (focus trap handles focus).
   useEffect(() => {
     if (isOpen) {
       setQuery('');
       setActiveIndex(0);
-      // Defer to let the DOM render first.
-      requestAnimationFrame(() => inputRef.current?.focus());
     }
   }, [isOpen]);
 
@@ -262,6 +268,27 @@ export function CommandPalette(): JSX.Element | null {
       },
     });
     cmds.push({
+      id: 'action:settings',
+      group: 'Actions',
+      label: 'Settings',
+      hint: '⌘,',
+      icon: '⚙',
+      execute: () => {
+        close();
+        openSettings();
+      },
+    });
+    cmds.push({
+      id: 'action:check-updates',
+      group: 'Actions',
+      label: 'Check for updates',
+      icon: '↑',
+      execute: () => {
+        close();
+        void window.api.update.check();
+      },
+    });
+    cmds.push({
       id: 'action:quick-add',
       group: 'Actions',
       label: 'Add task',
@@ -280,8 +307,62 @@ export function CommandPalette(): JSX.Element | null {
       },
     });
 
+    // ── Export ──
+    if (selectedNoteId !== null) {
+      cmds.push({
+        id: 'export:note',
+        group: 'Export',
+        label: 'Export current note…',
+        hint: '.md',
+        icon: '📄',
+        execute: () => {
+          close();
+          void exportNote({ noteId: selectedNoteId });
+        },
+      });
+    }
+    cmds.push({
+      id: 'export:all-notes',
+      group: 'Export',
+      label: 'Export all notes…',
+      hint: 'folder of .md',
+      icon: '📁',
+      execute: () => {
+        close();
+        void exportAllNotes();
+      },
+    });
+    cmds.push({
+      id: 'export:tasks',
+      group: 'Export',
+      label: 'Export tasks as CSV…',
+      hint: '.csv',
+      icon: '📊',
+      execute: () => {
+        close();
+        void exportTasks({});
+      },
+    });
+    cmds.push({
+      id: 'export:backup',
+      group: 'Export',
+      label: 'Back up database…',
+      hint: '.db',
+      icon: '💾',
+      execute: () => {
+        close();
+        void exportBackup();
+      },
+    });
+
     return cmds;
-  }, [projects, labels, savedFilters, setMode, setTaskScope, setSelectedNoteId, openHelp, close]);
+  }, [
+    projects, labels, savedFilters,
+    setMode, setTaskScope, setSelectedNoteId,
+    openHelp, openSettings, close,
+    selectedNoteId,
+    exportNote, exportAllNotes, exportTasks, exportBackup,
+  ]);
 
   // Filter + rank against the current query.
   const filtered = useMemo<Command[]>(() => {
@@ -355,14 +436,16 @@ export function CommandPalette(): JSX.Element | null {
     >
       {/* Panel */}
       <div
+        ref={panelRef}
         className="w-full max-w-xl overflow-hidden rounded-xl border border-gray-700 bg-gray-900 shadow-2xl"
         role="dialog"
         aria-label="Command palette"
         aria-modal="true"
+        id="command-palette-panel"
       >
         {/* Input */}
         <div className="flex items-center gap-3 border-b border-gray-700 px-4 py-3">
-          <span className="text-gray-500">⌘</span>
+          <span className="text-gray-500" aria-hidden="true">⌘</span>
           <input
             ref={inputRef}
             value={query}
@@ -373,6 +456,13 @@ export function CommandPalette(): JSX.Element | null {
             onKeyDown={handleKeyDown}
             placeholder="Search commands and navigation…"
             aria-label="Command palette search"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded={filtered.length > 0}
+            aria-controls="command-palette-listbox"
+            aria-activedescendant={
+              filtered[activeIndex] ? `cmd-option-${filtered[activeIndex].id}` : undefined
+            }
             className="flex-1 bg-transparent text-sm text-gray-100 placeholder-gray-600 focus:outline-none"
           />
           {query.length > 0 && (
@@ -388,6 +478,7 @@ export function CommandPalette(): JSX.Element | null {
         {/* Results */}
         <ul
           ref={listRef}
+          id="command-palette-listbox"
           className="max-h-80 overflow-y-auto py-1"
           role="listbox"
           aria-label="Commands"
@@ -473,6 +564,7 @@ function CommandGroup({
         return (
           <li
             key={cmd.id}
+            id={`cmd-option-${cmd.id}`}
             role="option"
             aria-selected={isActive}
             onMouseEnter={() => setActiveIndex(globalIndex)}
@@ -483,12 +575,12 @@ function CommandGroup({
                 : 'text-gray-300 hover:bg-gray-800/50'
             }`}
           >
-            <span className="w-5 text-center text-base leading-none">
+            <span className="w-5 text-center text-base leading-none" aria-hidden="true">
               {cmd.icon}
             </span>
             <span className="flex-1">{cmd.label}</span>
             {cmd.hint !== undefined && (
-              <span className="text-xs text-gray-600">{cmd.hint}</span>
+              <span className="text-xs text-gray-600" aria-label={`shortcut: ${cmd.hint}`}>{cmd.hint}</span>
             )}
           </li>
         );
