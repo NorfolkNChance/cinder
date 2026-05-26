@@ -6,6 +6,7 @@ import {
   deserialize,
   editorExtensions,
 } from '../../../../shared/markdown';
+import { EditorToolbar } from './EditorToolbar';
 
 interface TipTapEditorProps {
   /** Markdown body to load. Editor is recreated when `noteId` changes. */
@@ -161,5 +162,12 @@ export function TipTapEditor({
     return <div className="px-1 text-gray-500">Loading editor…</div>;
   }
 
-  return <EditorContent editor={editor} />;
+  return (
+    <>
+      <EditorToolbar editor={editor} />
+      <div className="flex-1 overflow-y-auto px-6 py-5">
+        <EditorContent id="tiptap-editor-content" editor={editor} />
+      </div>
+    </>
+  );
 }

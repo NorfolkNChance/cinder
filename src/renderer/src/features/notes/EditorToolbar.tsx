@@ -1,0 +1,265 @@
+import type { Editor } from '@tiptap/core';
+import clsx from 'clsx';
+
+interface EditorToolbarProps {
+  editor: Editor | null;
+}
+
+// ── Toolbar button ────────────────────────────────────────────────────────────
+
+interface ToolbarButtonProps {
+  label: string;
+  active?: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}
+
+function ToolbarButton({
+  label,
+  active = false,
+  disabled = false,
+  onClick,
+  children,
+}: ToolbarButtonProps): JSX.Element {
+  return (
+    <button
+      type="button"
+      title={label}
+      aria-label={label}
+      aria-pressed={active}
+      disabled={disabled}
+      onMouseDown={(e) => {
+        // Prevent the editor losing focus when the toolbar is clicked.
+        e.preventDefault();
+        onClick();
+      }}
+      className={clsx(
+        'flex h-7 min-w-[1.75rem] items-center justify-center rounded px-1.5 text-sm transition',
+        'focus:outline-none focus:ring-2 focus:ring-emerald-500',
+        active
+          ? 'bg-gray-700 text-white'
+          : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200',
+        disabled && 'cursor-not-allowed opacity-30',
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Divider(): JSX.Element {
+  return <div className="mx-1 h-5 w-px bg-gray-700" aria-hidden="true" />;
+}
+
+// ── Heading label ─────────────────────────────────────────────────────────────
+
+function HeadingLabel({ level }: { level: 1 | 2 | 3 }): JSX.Element {
+  return (
+    <span className="font-mono text-[11px] font-bold leading-none">
+      H{level}
+    </span>
+  );
+}
+
+// ── Main toolbar ──────────────────────────────────────────────────────────────
+
+/**
+ * Formatting ribbon for the TipTap markdown editor.
+ *
+ * Renders buttons for the most common ProseMirror commands available through
+ * TipTap's StarterKit: headings (H1–H3), bold, italic, strikethrough, inline
+ * code, bullet list, ordered list, blockquote, code block, and horizontal rule.
+ *
+ * Active state tracks the cursor position via `editor.isActive()`, which is
+ * reactive because the parent component (`TipTapEditor`) re-renders on every
+ * TipTap transaction.
+ *
+ * `onMouseDown` with `e.preventDefault()` is used instead of `onClick` so the
+ * editor never loses focus when a button is pressed.
+ */
+export function EditorToolbar({ editor }: EditorToolbarProps): JSX.Element {
+  const disabled = editor === null;
+
+  return (
+    <div
+      role="toolbar"
+      aria-label="Formatting toolbar"
+      aria-controls="tiptap-editor-content"
+      className="flex flex-wrap items-center gap-0.5 border-b border-gray-800 bg-gray-950 px-4 py-1.5"
+    >
+      {/* Headings */}
+      <ToolbarButton
+        label="Heading 1"
+        active={editor?.isActive('heading', { level: 1 }) ?? false}
+        disabled={disabled}
+        onClick={() =>
+          editor?.chain().focus().toggleHeading({ level: 1 }).run()
+        }
+      >
+        <HeadingLabel level={1} />
+      </ToolbarButton>
+      <ToolbarButton
+        label="Heading 2"
+        active={editor?.isActive('heading', { level: 2 }) ?? false}
+        disabled={disabled}
+        onClick={() =>
+          editor?.chain().focus().toggleHeading({ level: 2 }).run()
+        }
+      >
+        <HeadingLabel level={2} />
+      </ToolbarButton>
+      <ToolbarButton
+        label="Heading 3"
+        active={editor?.isActive('heading', { level: 3 }) ?? false}
+        disabled={disabled}
+        onClick={() =>
+          editor?.chain().focus().toggleHeading({ level: 3 }).run()
+        }
+      >
+        <HeadingLabel level={3} />
+      </ToolbarButton>
+
+      <Divider />
+
+      {/* Inline marks */}
+      <ToolbarButton
+        label="Bold (⌘B)"
+        active={editor?.isActive('bold') ?? false}
+        disabled={disabled}
+        onClick={() => editor?.chain().focus().toggleBold().run()}
+      >
+        <span className="font-bold">B</span>
+      </ToolbarButton>
+      <ToolbarButton
+        label="Italic (⌘I)"
+        active={editor?.isActive('italic') ?? false}
+        disabled={disabled}
+        onClick={() => editor?.chain().focus().toggleItalic().run()}
+      >
+        <span className="italic">I</span>
+      </ToolbarButton>
+      <ToolbarButton
+        label="Strikethrough"
+        active={editor?.isActive('strike') ?? false}
+        disabled={disabled}
+        onClick={() => editor?.chain().focus().toggleStrike().run()}
+      >
+        {/* S with strikethrough */}
+        <span className="line-through">S</span>
+      </ToolbarButton>
+      <ToolbarButton
+        label="Inline code"
+        active={editor?.isActive('code') ?? false}
+        disabled={disabled}
+        onClick={() => editor?.chain().focus().toggleCode().run()}
+      >
+        <span className="font-mono text-xs">&lt;/&gt;</span>
+      </ToolbarButton>
+
+      <Divider />
+
+      {/* Block structure */}
+      <ToolbarButton
+        label="Bullet list"
+        active={editor?.isActive('bulletList') ?? false}
+        disabled={disabled}
+        onClick={() => editor?.chain().focus().toggleBulletList().run()}
+      >
+        {/* ≡ list icon */}
+        <svg
+          viewBox="0 0 16 16"
+          width="14"
+          height="14"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <circle cx="2" cy="4" r="1.5" />
+          <rect x="5" y="3" width="9" height="2" rx="1" />
+          <circle cx="2" cy="8" r="1.5" />
+          <rect x="5" y="7" width="9" height="2" rx="1" />
+          <circle cx="2" cy="12" r="1.5" />
+          <rect x="5" y="11" width="9" height="2" rx="1" />
+        </svg>
+      </ToolbarButton>
+      <ToolbarButton
+        label="Ordered list"
+        active={editor?.isActive('orderedList') ?? false}
+        disabled={disabled}
+        onClick={() => editor?.chain().focus().toggleOrderedList().run()}
+      >
+        <svg
+          viewBox="0 0 16 16"
+          width="14"
+          height="14"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <text x="0" y="5" fontSize="5" fontFamily="monospace">1.</text>
+          <rect x="5" y="3" width="9" height="2" rx="1" />
+          <text x="0" y="9.5" fontSize="5" fontFamily="monospace">2.</text>
+          <rect x="5" y="7" width="9" height="2" rx="1" />
+          <text x="0" y="14" fontSize="5" fontFamily="monospace">3.</text>
+          <rect x="5" y="11" width="9" height="2" rx="1" />
+        </svg>
+      </ToolbarButton>
+      <ToolbarButton
+        label="Blockquote"
+        active={editor?.isActive('blockquote') ?? false}
+        disabled={disabled}
+        onClick={() => editor?.chain().focus().toggleBlockquote().run()}
+      >
+        <svg
+          viewBox="0 0 16 16"
+          width="14"
+          height="14"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <rect x="0" y="2" width="2.5" height="12" rx="1" />
+          <rect x="4" y="4" width="10" height="2" rx="1" />
+          <rect x="4" y="8" width="8" height="2" rx="1" />
+          <rect x="4" y="12" width="9" height="2" rx="1" />
+        </svg>
+      </ToolbarButton>
+
+      <Divider />
+
+      {/* Code block */}
+      <ToolbarButton
+        label="Code block"
+        active={editor?.isActive('codeBlock') ?? false}
+        disabled={disabled}
+        onClick={() => editor?.chain().focus().toggleCodeBlock().run()}
+      >
+        <svg
+          viewBox="0 0 16 16"
+          width="14"
+          height="14"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <path d="M5.5 4L1.5 8l4 4 1-1L3.5 8l3-3-1-1zM10.5 4l-1 1 3 3-3 3 1 1 4-4-4-4z" />
+        </svg>
+      </ToolbarButton>
+
+      {/* Horizontal rule */}
+      <ToolbarButton
+        label="Horizontal rule"
+        disabled={disabled}
+        onClick={() => editor?.chain().focus().setHorizontalRule().run()}
+      >
+        {/* em-dash style icon */}
+        <svg
+          viewBox="0 0 16 16"
+          width="14"
+          height="14"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <rect x="1" y="7" width="14" height="2" rx="1" />
+        </svg>
+      </ToolbarButton>
+    </div>
+  );
+}
