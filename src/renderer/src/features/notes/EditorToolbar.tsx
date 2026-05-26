@@ -23,28 +23,46 @@ function ToolbarButton({
   children,
 }: ToolbarButtonProps): JSX.Element {
   return (
-    <button
-      type="button"
-      title={label}
-      aria-label={label}
-      aria-pressed={active}
-      disabled={disabled}
-      onMouseDown={(e) => {
-        // Prevent the editor losing focus when the toolbar is clicked.
-        e.preventDefault();
-        onClick();
-      }}
-      className={clsx(
-        'flex h-7 min-w-[1.75rem] items-center justify-center rounded px-1.5 text-sm transition',
-        'focus:outline-none focus:ring-2 focus:ring-emerald-500',
-        active
-          ? 'bg-gray-700 text-white'
-          : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200',
-        disabled && 'cursor-not-allowed opacity-30',
-      )}
-    >
-      {children}
-    </button>
+    <div className="group relative">
+      <button
+        type="button"
+        aria-label={label}
+        aria-pressed={active}
+        disabled={disabled}
+        onMouseDown={(e) => {
+          // Prevent the editor losing focus when the toolbar is clicked.
+          e.preventDefault();
+          onClick();
+        }}
+        className={clsx(
+          'flex h-7 min-w-[1.75rem] items-center justify-center rounded px-1.5 text-sm transition',
+          'focus:outline-none focus:ring-2 focus:ring-emerald-500',
+          active
+            ? 'bg-gray-700 text-white'
+            : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200',
+          disabled && 'cursor-not-allowed opacity-30',
+        )}
+      >
+        {children}
+      </button>
+      {/* CSS-only tooltip — appears below the button on hover */}
+      <span
+        role="tooltip"
+        className={clsx(
+          'pointer-events-none absolute left-1/2 top-full z-50 mt-1.5',
+          '-translate-x-1/2 whitespace-nowrap rounded bg-gray-800 px-2 py-1',
+          'text-[11px] leading-none text-gray-200 shadow-lg',
+          'opacity-0 transition-opacity delay-300 group-hover:opacity-100',
+        )}
+      >
+        {label}
+        {/* Arrow pointing up */}
+        <span
+          aria-hidden="true"
+          className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-800"
+        />
+      </span>
+    </div>
   );
 }
 
