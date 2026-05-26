@@ -104,3 +104,28 @@
   float: left;
   height: 0;
 }
+
+/* ── Light mode overrides for ProseMirror ──────────────────────────── */
+:root:not(.dark) .ProseMirror {
+  color: rgb(17 24 39);
+}
+:root:not(.dark) .ProseMirror blockquote {
+  border-left-color: rgb(156 163 175);
+  color: rgb(75 85 99);
+}
+:root:not(.dark) .ProseMirror code {
+  background-color: rgb(243 244 246);
+  color: rgb(220 38 38);
+}
+:root:not(.dark) .ProseMirror pre,
+:root:not(.dark) .ProseMirror .cinder-codeblock {
+  background-color: rgb(249 250 251);
+  color: rgb(17 24 39);
+  border-color: rgb(229 231 235);
+}
+:root:not(.dark) .ProseMirror hr {
+  border-top-color: rgb(209 213 219);
+}
+:root:not(.dark) .ProseMirror p.is-editor-empty:first-child::before {
+  color: rgb(156 163 175);
+}

@@ -52,7 +52,7 @@ export function ExportMenu({ noteId }: ExportMenuProps): JSX.Element {
         aria-label="Export options"
         aria-haspopup="true"
         aria-expanded={open}
-        className="flex items-center gap-1 rounded px-2 py-1 text-xs text-gray-500 hover:bg-gray-800 hover:text-gray-300 transition-colors"
+        className="flex items-center gap-1 rounded px-2 py-1 text-xs text-gray-500 hover:bg-gray-200 hover:text-gray-700 transition-colors dark:hover:bg-gray-800 dark:hover:text-gray-300"
       >
         <span aria-hidden="true">↑</span>
         <span>Export</span>
@@ -61,7 +61,7 @@ export function ExportMenu({ noteId }: ExportMenuProps): JSX.Element {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-full z-20 mt-1 w-52 overflow-hidden rounded-lg border border-gray-700 bg-gray-900 shadow-xl"
+          className="absolute right-0 top-full z-20 mt-1 w-52 overflow-hidden rounded-lg border border-gray-300 bg-gray-100 shadow-xl dark:border-gray-700 dark:bg-gray-900"
         >
           {noteId !== undefined && (
             <MenuItem
@@ -77,14 +77,14 @@ export function ExportMenu({ noteId }: ExportMenuProps): JSX.Element {
             description="folder of .md files"
             onClick={() => run(exportAllNotes)}
           />
-          <div className="my-1 border-t border-gray-800" />
+          <div className="my-1 border-t border-gray-200 dark:border-gray-800" />
           <MenuItem
             icon="📊"
             label="Export tasks as CSV…"
             description="all active tasks"
             onClick={() => run(() => exportTasks({}))}
           />
-          <div className="my-1 border-t border-gray-800" />
+          <div className="my-1 border-t border-gray-200 dark:border-gray-800" />
           <MenuItem
             icon="💾"
             label="Back up database…"
@@ -114,12 +114,12 @@ function MenuItem({
     <button
       role="menuitem"
       onClick={onClick}
-      className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm text-gray-300 hover:bg-gray-800 transition-colors"
+      className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-200 transition-colors dark:text-gray-300 dark:hover:bg-gray-800"
     >
       <span className="text-base leading-none">{icon}</span>
       <span className="flex-1">
         <span className="block">{label}</span>
-        <span className="block text-[11px] text-gray-600">{description}</span>
+        <span className="block text-[11px] text-gray-500 dark:text-gray-600">{description}</span>
       </span>
     </button>
   );

@@ -52,8 +52,7 @@ export function SettingsModal(): JSX.Element | null {
   return (
     // Backdrop
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: 'rgba(0,0,0,0.6)' }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) close();
       }}
@@ -64,13 +63,14 @@ export function SettingsModal(): JSX.Element | null {
         role="dialog"
         aria-label="Settings"
         aria-modal="true"
-        className="flex h-[480px] w-[640px] overflow-hidden rounded-xl border border-gray-700 bg-gray-900 shadow-2xl"
+        className="flex h-[480px] w-[640px] overflow-hidden rounded-xl border border-gray-300 bg-gray-100 shadow-2xl dark:border-gray-700 dark:bg-gray-900"
       >
         {/* Sidebar */}
-        <nav className="w-44 flex-shrink-0 border-r border-gray-800 py-4">
-          <p className="mb-3 px-4 text-[10px] font-semibold uppercase tracking-widest text-gray-600">
+        <nav className="w-44 flex-shrink-0 border-r border-gray-200 py-4 dark:border-gray-800">
+          <p className="mb-3 px-4 text-[10px] font-semibold uppercase tracking-widest text-gray-500 dark:text-gray-600">
             Settings
           </p>
+          <SidebarItem label="Appearance" icon="🎨" />
           <SidebarItem label="Matrix" icon="🔲" />
           <SidebarItem label="Tasks" icon="✅" />
         </nav>
@@ -78,12 +78,12 @@ export function SettingsModal(): JSX.Element | null {
         {/* Content */}
         <div className="flex flex-1 flex-col overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-gray-800 px-6 py-4">
-            <h2 className="text-sm font-semibold text-gray-200">Settings</h2>
+          <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-800">
+            <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Settings</h2>
             <button
               onClick={close}
               aria-label="Close settings"
-              className="text-gray-500 hover:text-gray-300 transition-colors"
+              className="text-gray-500 hover:text-gray-700 transition-colors dark:hover:text-gray-300"
             >
               ✕
             </button>
@@ -95,21 +95,23 @@ export function SettingsModal(): JSX.Element | null {
               <p className="text-sm text-gray-500">Loading…</p>
             ) : (
               <>
+                <AppearanceSection settings={settings} set={setWithSync} />
+                <div className="my-6 border-t border-gray-200 dark:border-gray-800" />
                 <MatrixSection settings={settings} set={setWithSync} />
-                <div className="my-6 border-t border-gray-800" />
+                <div className="my-6 border-t border-gray-200 dark:border-gray-800" />
                 <TasksSection settings={settings} set={setWithSync} />
               </>
             )}
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-between border-t border-gray-800 px-6 py-2">
-            <span className="text-[11px] text-gray-600">
+          <div className="flex items-center justify-between border-t border-gray-200 px-6 py-2 dark:border-gray-800">
+            <span className="text-[11px] text-gray-500 dark:text-gray-600">
               Changes take effect immediately. Preferences are stored locally.
             </span>
             <button
               onClick={() => void window.api.update.check()}
-              className="text-[11px] text-gray-600 hover:text-gray-400 underline transition-colors"
+              className="text-[11px] text-gray-500 underline transition-colors hover:text-gray-700 dark:text-gray-600 dark:hover:text-gray-400"
             >
               Check for updates
             </button>
@@ -124,10 +126,59 @@ export function SettingsModal(): JSX.Element | null {
 
 function SidebarItem({ label, icon }: { label: string; icon: string }): JSX.Element {
   return (
-    <div className="flex items-center gap-2 px-4 py-2 text-sm text-gray-400">
+    <div className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-400">
       <span>{icon}</span>
       <span>{label}</span>
     </div>
+  );
+}
+
+// ── Appearance section ────────────────────────────────────────────────────────
+
+function AppearanceSection({
+  settings,
+  set,
+}: {
+  settings: AppSettings;
+  set: SetFn;
+}): JSX.Element {
+  const theme = settings['appearance.theme'];
+  const options: Array<{ value: 'auto' | 'light' | 'dark'; label: string }> = [
+    { value: 'auto', label: 'Auto' },
+    { value: 'light', label: 'Light' },
+    { value: 'dark', label: 'Dark' },
+  ];
+
+  return (
+    <section>
+      <SectionHeading icon="🎨" title="Appearance" />
+      <Field
+        label="Theme"
+        description="Controls the colour scheme. Auto follows your system setting."
+      >
+        <div
+          role="radiogroup"
+          aria-label="Theme"
+          className="flex rounded-md border border-gray-300 divide-x divide-gray-300 dark:border-gray-700 dark:divide-gray-700"
+        >
+          {options.map(({ value, label }) => (
+            <button
+              key={value}
+              role="radio"
+              aria-checked={theme === value}
+              onClick={() => set('appearance.theme', value)}
+              className={`px-3 py-1 text-xs font-medium transition focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 ${
+                theme === value
+                  ? 'bg-indigo-600 text-white rounded-md'
+                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 rounded-md'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </Field>
+    </section>
   );
 }
 
@@ -143,7 +194,7 @@ function MatrixSection({
   return (
     <section>
       <SectionHeading icon="🔲" title="Eisenhower Matrix" />
-      <p className="mb-4 text-[12px] text-gray-500">
+      <p className="mb-4 text-[12px] text-gray-500 dark:text-gray-500">
         Controls how tasks are classified into the four quadrants.
       </p>
 
@@ -164,7 +215,7 @@ function MatrixSection({
             className="w-36 accent-indigo-500"
             aria-label="Urgency days"
           />
-          <span className="w-8 text-center text-sm tabular-nums text-gray-300">
+          <span className="w-8 text-center text-sm tabular-nums text-gray-700 dark:text-gray-300">
             {settings['matrix.urgencyDays']}d
           </span>
         </div>
@@ -182,7 +233,7 @@ function MatrixSection({
               Number(e.target.value) as 1 | 2 | 3 | 4,
             )
           }
-          className="rounded border border-gray-700 bg-gray-800 px-2 py-1 text-sm text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          className="rounded border border-gray-300 bg-gray-200 px-2 py-1 text-sm text-gray-800 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
           aria-label="Importance cutoff"
         >
           <option value={1}>P1 only</option>
@@ -220,7 +271,7 @@ function TasksSection({
               e.target.value as 'inbox' | 'today' | 'upcoming',
             )
           }
-          className="rounded border border-gray-700 bg-gray-800 px-2 py-1 text-sm text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          className="rounded border border-gray-300 bg-gray-200 px-2 py-1 text-sm text-gray-800 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
           aria-label="Default task scope"
         >
           <option value="inbox">Inbox</option>
@@ -239,8 +290,8 @@ function TasksSection({
           onClick={() =>
             set('tasks.showCompleted', !settings['tasks.showCompleted'])
           }
-          className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900 ${
-            settings['tasks.showCompleted'] ? 'bg-indigo-600' : 'bg-gray-700'
+          className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900 ${
+            settings['tasks.showCompleted'] ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-700'
           }`}
         >
           <span
@@ -264,7 +315,7 @@ function SectionHeading({
   title: string;
 }): JSX.Element {
   return (
-    <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-300">
+    <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
       <span>{icon}</span>
       <span>{title}</span>
     </h3>
@@ -283,8 +334,8 @@ function Field({
   return (
     <div className="mb-5 flex items-start justify-between gap-6">
       <div className="flex-1">
-        <p className="text-sm text-gray-300">{label}</p>
-        <p className="mt-0.5 text-[11px] text-gray-600">{description}</p>
+        <p className="text-sm text-gray-700 dark:text-gray-300">{label}</p>
+        <p className="mt-0.5 text-[11px] text-gray-500 dark:text-gray-600">{description}</p>
       </div>
       <div className="flex-shrink-0 pt-0.5">{children}</div>
     </div>

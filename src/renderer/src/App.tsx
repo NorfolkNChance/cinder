@@ -15,6 +15,7 @@ import { useUI, type Mode } from './state/ui';
 import { useCreateNote } from './features/notes/queries';
 import { importDroppedFiles } from './features/notes/fileImport';
 import { useSettings } from './features/settings/useSettings';
+import { ThemeWatcher } from './features/settings/ThemeWatcher';
 
 /**
  * Top-level layout.
@@ -79,7 +80,7 @@ export default function App(): JSX.Element {
   }, [openCommandPalette, openHelp, openSettings, helpOpen]);
 
   return (
-    <div className="flex h-screen flex-col bg-gray-950 text-white">
+    <div className="flex h-screen flex-col bg-white text-gray-900 dark:bg-gray-950 dark:text-white">
       {/* Skip to main content — visible on focus for keyboard users */}
       <a
         href="#main-content"
@@ -88,6 +89,7 @@ export default function App(): JSX.Element {
         Skip to main content
       </a>
       <SettingsInitializer />
+      <ThemeWatcher />
       <TopBar />
       <div className="flex min-h-0 flex-1">
         <aside
@@ -98,7 +100,7 @@ export default function App(): JSX.Element {
               ? 'Tasks sidebar'
               : 'Matrix sidebar'
           }
-          className="flex h-full w-64 flex-col border-r border-gray-800 bg-gray-950"
+          className="flex h-full w-64 flex-col border-r border-gray-200 bg-gray-100 dark:border-gray-800 dark:bg-gray-950"
         >
           {mode === 'notes' ? (
             <NoteList />
@@ -171,7 +173,7 @@ function TopBar(): JSX.Element {
   const openSettings = useUI((s) => s.openSettings);
 
   return (
-    <header className="flex items-center gap-1 border-b border-gray-800 px-3 py-1.5" aria-label="Application toolbar">
+    <header className="flex items-center gap-1 border-b border-gray-200 px-3 py-1.5 dark:border-gray-800" aria-label="Application toolbar">
       <ModeButton active={mode === 'notes'} onClick={() => setMode('notes')}>
         Notes
       </ModeButton>
@@ -185,21 +187,21 @@ function TopBar(): JSX.Element {
       <button
         onClick={openCommandPalette}
         title="Command palette (⌘K)"
-        className="flex items-center rounded-md border border-gray-700 bg-gray-900 px-2 py-1 text-xs text-gray-500 hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        className="flex items-center rounded-md border border-gray-300 bg-gray-100 px-2 py-1 text-xs text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-gray-700 dark:bg-gray-900 dark:hover:text-gray-300"
       >
         ⌘K
       </button>
       <button
         onClick={openHelp}
         title="Help (⌘/)"
-        className="flex items-center rounded-md border border-gray-700 bg-gray-900 px-2 py-1 text-xs text-gray-500 hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        className="flex items-center rounded-md border border-gray-300 bg-gray-100 px-2 py-1 text-xs text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-gray-700 dark:bg-gray-900 dark:hover:text-gray-300"
       >
         ?
       </button>
       <button
         onClick={openSettings}
         title="Settings (⌘,)"
-        className="flex items-center rounded-md border border-gray-700 bg-gray-900 px-2 py-1 text-xs text-gray-500 hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        className="flex items-center rounded-md border border-gray-300 bg-gray-100 px-2 py-1 text-xs text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-gray-700 dark:bg-gray-900 dark:hover:text-gray-300"
       >
         ⚙
       </button>
@@ -223,8 +225,8 @@ function ModeButton({
       className={clsx(
         'rounded-md px-3 py-1 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-emerald-500',
         active
-          ? 'bg-gray-800 text-white'
-          : 'text-gray-400 hover:bg-gray-900 hover:text-gray-200',
+          ? 'bg-gray-200 text-gray-900 dark:bg-gray-800 dark:text-white'
+          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-gray-200',
       )}
     >
       {children}
@@ -320,8 +322,8 @@ function NotesEmptyState(): JSX.Element {
           className={clsx(
             'pointer-events-none absolute inset-4 flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed transition-colors',
             dropState === 'valid'
-              ? 'border-emerald-500 bg-emerald-950/30'
-              : 'border-red-700 bg-red-950/20',
+              ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/30'
+              : 'border-red-700 bg-red-50/50 dark:bg-red-950/20',
           )}
         >
           <span className="text-4xl">
@@ -344,8 +346,8 @@ function NotesEmptyState(): JSX.Element {
       )}
 
       {importing && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-950/60">
-          <p className="text-sm text-gray-400">Importing…</p>
+        <div className="absolute inset-0 flex items-center justify-center bg-white/60 dark:bg-gray-950/60">
+          <p className="text-sm text-gray-600 dark:text-gray-400">Importing…</p>
         </div>
       )}
 
@@ -354,15 +356,15 @@ function NotesEmptyState(): JSX.Element {
           <h1 className="mb-3 text-3xl font-bold tracking-tight">Cinder</h1>
           <p className="mb-6 text-gray-500">
             Select a note from the sidebar, or press{' '}
-            <kbd className="rounded border border-gray-700 bg-gray-900 px-1.5 py-0.5 font-mono text-xs">
+            <kbd className="rounded border border-gray-300 bg-gray-100 px-1.5 py-0.5 font-mono text-xs text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400">
               ⌘N
             </kbd>{' '}
             to create one.
           </p>
-          <div className="mx-auto flex max-w-xs flex-col items-center gap-1 rounded-xl border border-dashed border-gray-800 px-6 py-5 text-sm text-gray-600">
+          <div className="mx-auto flex max-w-xs flex-col items-center gap-1 rounded-xl border border-dashed border-gray-200 px-6 py-5 text-sm text-gray-500 dark:border-gray-800 dark:text-gray-600">
             <span className="text-2xl">⬇</span>
             <span>Drop a file to import</span>
-            <span className="text-xs text-gray-700">
+            <span className="text-xs text-gray-400 dark:text-gray-700">
               .md · .markdown · .html · .htm
             </span>
           </div>

@@ -22,23 +22,23 @@ export interface HelpSection {
 
 export function H2({ children }: { children: React.ReactNode }): JSX.Element {
   return (
-    <h2 className="mb-3 mt-0 text-base font-semibold text-white">{children}</h2>
+    <h2 className="mb-3 mt-0 text-base font-semibold text-gray-900 dark:text-white">{children}</h2>
   );
 }
 
 export function H3({ children }: { children: React.ReactNode }): JSX.Element {
   return (
-    <h3 className="mb-2 mt-5 text-sm font-semibold text-gray-300">{children}</h3>
+    <h3 className="mb-2 mt-5 text-sm font-semibold text-gray-700 dark:text-gray-300">{children}</h3>
   );
 }
 
 export function P({ children }: { children: React.ReactNode }): JSX.Element {
-  return <p className="mb-3 leading-relaxed text-gray-400">{children}</p>;
+  return <p className="mb-3 leading-relaxed text-gray-600 dark:text-gray-400">{children}</p>;
 }
 
 export function Code({ children }: { children: React.ReactNode }): JSX.Element {
   return (
-    <code className="rounded bg-gray-800 px-1.5 py-0.5 font-mono text-[12px] text-emerald-300">
+    <code className="rounded bg-gray-200 px-1.5 py-0.5 font-mono text-[12px] text-emerald-700 dark:bg-gray-800 dark:text-emerald-300">
       {children}
     </code>
   );
@@ -46,7 +46,7 @@ export function Code({ children }: { children: React.ReactNode }): JSX.Element {
 
 export function CodeBlock({ children }: { children: React.ReactNode }): JSX.Element {
   return (
-    <pre className="mb-3 overflow-x-auto rounded-lg border border-gray-800 bg-gray-900 p-3 font-mono text-[12px] leading-relaxed text-emerald-300">
+    <pre className="mb-3 overflow-x-auto rounded-lg border border-gray-200 bg-gray-100 p-3 font-mono text-[12px] leading-relaxed text-emerald-700 dark:border-gray-800 dark:bg-gray-900 dark:text-emerald-300">
       {children}
     </pre>
   );
@@ -54,7 +54,7 @@ export function CodeBlock({ children }: { children: React.ReactNode }): JSX.Elem
 
 export function Kbd({ children }: { children: React.ReactNode }): JSX.Element {
   return (
-    <kbd className="rounded border border-gray-600 bg-gray-800 px-1.5 py-0.5 font-mono text-[11px] text-gray-300">
+    <kbd className="rounded border border-gray-400 bg-gray-200 px-1.5 py-0.5 font-mono text-[11px] text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300">
       {children}
     </kbd>
   );
@@ -88,18 +88,18 @@ function ShortcutRow({
   description: string;
 }): JSX.Element {
   return (
-    <tr className="border-b border-gray-800/60">
+    <tr className="border-b border-gray-200/60 dark:border-gray-800/60">
       <td className="py-1.5 pr-4">
         <span className="flex items-center gap-1">
           {keys.map((k, i) => (
             <span key={i} className="flex items-center gap-0.5">
-              {i > 0 && <span className="text-gray-700">/</span>}
+              {i > 0 && <span className="text-gray-400 dark:text-gray-700">/</span>}
               <Kbd>{k}</Kbd>
             </span>
           ))}
         </span>
       </td>
-      <td className="py-1.5 text-sm text-gray-400">{description}</td>
+      <td className="py-1.5 text-sm text-gray-600 dark:text-gray-400">{description}</td>
     </tr>
   );
 }
@@ -140,16 +140,16 @@ export const HELP_SECTIONS: HelpSection[] = [
 
         <H3>Two modes</H3>
         <P>
-          Switch between <strong className="text-gray-200">Notes</strong> and{' '}
-          <strong className="text-gray-200">Tasks</strong> using the buttons at
+          Switch between <strong className="text-gray-800 dark:text-gray-200">Notes</strong> and{' '}
+          <strong className="text-gray-800 dark:text-gray-200">Tasks</strong> using the buttons at
           the top, or open the{' '}
-          <strong className="text-gray-200">Matrix</strong> for an Eisenhower
+          <strong className="text-gray-800 dark:text-gray-200">Matrix</strong> for an Eisenhower
           view of your tasks. The keyboard shortcut{' '}
           <Kbd>⌘K</Kbd> opens the command palette from anywhere.
         </P>
 
         <H3>Five things to try first</H3>
-        <ol className="mb-3 ml-4 list-decimal space-y-1.5 text-sm text-gray-400">
+        <ol className="mb-3 ml-4 list-decimal space-y-1.5 text-sm text-gray-600 dark:text-gray-400">
           <li>
             Press <Kbd>⌘N</Kbd> in Notes mode to create your first note.
           </li>
@@ -242,10 +242,10 @@ export const HELP_SECTIONS: HelpSection[] = [
           remaining text becomes the task title.
         </P>
 
-        <div className="mb-4 overflow-hidden rounded-lg border border-gray-800">
+        <div className="mb-4 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800">
           <table className="w-full border-collapse text-sm">
             <thead>
-              <tr className="border-b border-gray-800 bg-gray-900/60">
+              <tr className="border-b border-gray-200 bg-gray-100/50 dark:border-gray-800 dark:bg-gray-900/60">
                 <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500">Token</th>
                 <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500">Example</th>
                 <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500">Meaning</th>
@@ -263,10 +263,10 @@ export const HELP_SECTIONS: HelpSection[] = [
                 ['@[label]', '@urgent', 'Attach a label'],
                 ['every [freq]', 'every week', 'Set recurrence'],
               ].map(([token, ex, meaning]) => (
-                <tr key={token} className="border-b border-gray-800/50">
+                <tr key={token} className="border-b border-gray-200/50 dark:border-gray-800/50">
                   <td className="px-3 py-1.5 font-mono text-[12px] text-emerald-300">{token}</td>
-                  <td className="px-3 py-1.5 font-mono text-[12px] text-gray-400">{ex}</td>
-                  <td className="px-3 py-1.5 text-gray-400">{meaning}</td>
+                  <td className="px-3 py-1.5 font-mono text-[12px] text-gray-600 dark:text-gray-400">{ex}</td>
+                  <td className="px-3 py-1.5 text-gray-600 dark:text-gray-400">{meaning}</td>
                 </tr>
               ))}
             </tbody>
@@ -284,7 +284,7 @@ Weekly review every monday p2
   → title: "Weekly review", recurs: every Monday, P2`}</CodeBlock>
 
         <H3>Views</H3>
-        <div className="mb-4 overflow-hidden rounded-lg border border-gray-800 text-sm">
+        <div className="mb-4 overflow-hidden rounded-lg border border-gray-200 text-sm dark:border-gray-800">
           {[
             ['Inbox', 'Tasks with no project assigned'],
             ['Today', 'Tasks due today or overdue'],
@@ -293,8 +293,8 @@ Weekly review every monday p2
             ['Label', 'All tasks with a specific label'],
             ['Filter', 'Tasks matching a saved DSL expression'],
           ].map(([view, desc]) => (
-            <div key={view} className="flex gap-3 border-b border-gray-800/50 px-3 py-2">
-              <span className="w-20 shrink-0 font-medium text-gray-300">{view}</span>
+            <div key={view} className="flex gap-3 border-b border-gray-200/50 px-3 py-2 dark:border-gray-800/50">
+              <span className="w-20 shrink-0 font-medium text-gray-700 dark:text-gray-300">{view}</span>
               <span className="text-gray-500">{desc}</span>
             </div>
           ))}
@@ -396,13 +396,13 @@ Weekly review every monday p2
 
         <H3>Creating a project</H3>
         <P>
-          In the Tasks sidebar, click <strong className="text-gray-200">+ New project</strong> at
+          In the Tasks sidebar, click <strong className="text-gray-800 dark:text-gray-200">+ New project</strong> at
           the bottom of the Projects section. Type a name and press Enter.
         </P>
 
         <H3>Assigning tasks to a project</H3>
         <P>Three ways:</P>
-        <ol className="mb-3 ml-4 list-decimal space-y-1.5 text-sm text-gray-400">
+        <ol className="mb-3 ml-4 list-decimal space-y-1.5 text-sm text-gray-600 dark:text-gray-400">
           <li>
             Type <Code>#projectname</Code> in the quick-add bar — the parser
             matches against existing project names (case-insensitive).
@@ -452,7 +452,7 @@ Weekly review every monday p2
         <H3>Creating a label</H3>
         <P>
           In the Tasks sidebar, open the Labels section and click{' '}
-          <strong className="text-gray-200">+ New label</strong>. Type a name
+          <strong className="text-gray-800 dark:text-gray-200">+ New label</strong>. Type a name
           (without the <Code>@</Code>) and press Enter.
         </P>
 
@@ -495,7 +495,7 @@ Weekly review every monday p2
         </P>
 
         <H3>Atoms (basic building blocks)</H3>
-        <div className="mb-4 overflow-hidden rounded-lg border border-gray-800 text-sm">
+        <div className="mb-4 overflow-hidden rounded-lg border border-gray-200 text-sm dark:border-gray-800">
           {[
             ['today', 'Due today or overdue'],
             ['overdue', 'Due date is in the past'],
@@ -505,9 +505,9 @@ Weekly review every monday p2
             ['#project', 'Belongs to the specified project'],
             ['completed', 'Task is marked complete'],
           ].map(([atom, desc]) => (
-            <div key={atom} className="flex items-start gap-3 border-b border-gray-800/50 px-3 py-2">
-              <code className="w-36 shrink-0 font-mono text-[12px] text-emerald-300">{atom}</code>
-              <span className="text-gray-400">{desc}</span>
+            <div key={atom} className="flex items-start gap-3 border-b border-gray-200/50 px-3 py-2 dark:border-gray-800/50">
+              <code className="w-36 shrink-0 font-mono text-[12px] text-emerald-700 dark:text-emerald-300">{atom}</code>
+              <span className="text-gray-600 dark:text-gray-400">{desc}</span>
             </div>
           ))}
         </div>
@@ -584,7 +584,7 @@ Pay rent every month
 Take vitamins every day`}</CodeBlock>
 
         <H3>Supported frequencies</H3>
-        <div className="mb-4 overflow-hidden rounded-lg border border-gray-800 text-sm">
+        <div className="mb-4 overflow-hidden rounded-lg border border-gray-200 text-sm dark:border-gray-800">
           {[
             ['every day / daily', 'FREQ=DAILY'],
             ['every weekday', 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR'],
@@ -593,8 +593,8 @@ Take vitamins every day`}</CodeBlock>
             ['every month / monthly', 'FREQ=MONTHLY'],
             ['every year / yearly', 'FREQ=YEARLY'],
           ].map(([phrase, rule]) => (
-            <div key={phrase} className="flex items-start gap-3 border-b border-gray-800/50 px-3 py-2">
-              <code className="w-44 shrink-0 font-mono text-[12px] text-emerald-300">{phrase}</code>
+            <div key={phrase} className="flex items-start gap-3 border-b border-gray-200/50 px-3 py-2 dark:border-gray-800/50">
+              <code className="w-44 shrink-0 font-mono text-[12px] text-emerald-700 dark:text-emerald-300">{phrase}</code>
               <code className="text-[12px] text-gray-500">{rule}</code>
             </div>
           ))}
@@ -643,7 +643,7 @@ Take vitamins every day`}</CodeBlock>
             { q: 'Do', color: 'border-red-800 bg-red-950/30 text-red-300', desc: 'Urgent + Important. Act on these first.' },
             { q: 'Schedule', color: 'border-blue-800 bg-blue-950/30 text-blue-300', desc: 'Not Urgent + Important. Block time for these.' },
             { q: 'Delegate', color: 'border-orange-800 bg-orange-950/30 text-orange-300', desc: 'Urgent + Not Important. Handle quickly or hand off.' },
-            { q: 'Eliminate', color: 'border-gray-700 bg-gray-900/40 text-gray-400', desc: 'Not Urgent + Not Important. Reconsider whether these are needed.' },
+            { q: 'Eliminate', color: 'border-gray-300 bg-gray-100 text-gray-600 dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-400', desc: 'Not Urgent + Not Important. Reconsider whether these are needed.' },
           ].map(({ q, color, desc }) => (
             <div key={q} className={`rounded-lg border p-2.5 ${color}`}>
               <div className="mb-1 font-semibold">{q}</div>
@@ -656,14 +656,14 @@ Take vitamins every day`}</CodeBlock>
         <P>
           Adjust both axes in the Matrix sidebar:
         </P>
-        <ul className="mb-3 ml-4 list-disc space-y-1.5 text-sm text-gray-400">
+        <ul className="mb-3 ml-4 list-disc space-y-1.5 text-sm text-gray-600 dark:text-gray-400">
           <li>
-            <strong className="text-gray-300">Urgent within N days</strong> —
+            <strong className="text-gray-700 dark:text-gray-300">Urgent within N days</strong> —
             tasks due today or within the next N days count as urgent. Default:
             0 (today + overdue only).
           </li>
           <li>
-            <strong className="text-gray-300">Important up to P#</strong> —
+            <strong className="text-gray-700 dark:text-gray-300">Important up to P#</strong> —
             tasks with priority ≤ this threshold count as important. Default:
             P2 (P1 and P2 are important).
           </li>
@@ -674,11 +674,11 @@ Take vitamins every day`}</CodeBlock>
           Drag any task card to a different quadrant. Cinder computes the
           minimum change to land the task there:
         </P>
-        <ul className="mb-3 ml-4 list-disc space-y-1.5 text-sm text-gray-400">
-          <li>Moving to <strong className="text-gray-300">urgent</strong> → sets due date to today (if not already urgent)</li>
-          <li>Moving to <strong className="text-gray-300">not urgent</strong> → clears the due date</li>
-          <li>Moving to <strong className="text-gray-300">important</strong> → raises priority to the importance cutoff</li>
-          <li>Moving to <strong className="text-gray-300">not important</strong> → lowers priority below the cutoff</li>
+        <ul className="mb-3 ml-4 list-disc space-y-1.5 text-sm text-gray-600 dark:text-gray-400">
+          <li>Moving to <strong className="text-gray-700 dark:text-gray-300">urgent</strong> → sets due date to today (if not already urgent)</li>
+          <li>Moving to <strong className="text-gray-700 dark:text-gray-300">not urgent</strong> → clears the due date</li>
+          <li>Moving to <strong className="text-gray-700 dark:text-gray-300">important</strong> → raises priority to the importance cutoff</li>
+          <li>Moving to <strong className="text-gray-700 dark:text-gray-300">not important</strong> → lowers priority below the cutoff</li>
         </ul>
         <P>
           Diagonal moves (e.g. Eliminate → Do) change both axes and prompt a
@@ -687,11 +687,11 @@ Take vitamins every day`}</CodeBlock>
 
         <H3>Snapshot mode</H3>
         <P>
-          Click the <strong className="text-gray-200">📷 Snapshot</strong>{' '}
+          Click the <strong className="text-gray-800 dark:text-gray-200">📷 Snapshot</strong>{' '}
           button to freeze quadrant membership. While a snapshot is active,
           live re-classification won't move cards as you drag — your intent
           is preserved. Click{' '}
-          <strong className="text-gray-200">🔴 Live</strong> to resume.
+          <strong className="text-gray-800 dark:text-gray-200">🔴 Live</strong> to resume.
         </P>
 
         <H3>Task detail panel</H3>
@@ -719,7 +719,7 @@ Take vitamins every day`}</CodeBlock>
         </P>
 
         <H3>What's in the palette</H3>
-        <div className="mb-4 overflow-hidden rounded-lg border border-gray-800 text-sm">
+        <div className="mb-4 overflow-hidden rounded-lg border border-gray-200 text-sm dark:border-gray-800">
           {[
             ['Navigation', 'Switch to Notes, Tasks, or Matrix mode'],
             ['Task scopes', 'Jump to Inbox, Today, Upcoming'],
@@ -729,8 +729,8 @@ Take vitamins every day`}</CodeBlock>
             ['New note', 'Create a new note (⌘N)'],
             ['Add task', 'Focus the quick-add bar (q)'],
           ].map(([name, desc]) => (
-            <div key={name} className="flex items-start gap-3 border-b border-gray-800/50 px-3 py-2">
-              <span className="w-32 shrink-0 font-medium text-gray-300">{name}</span>
+            <div key={name} className="flex items-start gap-3 border-b border-gray-200/50 px-3 py-2 dark:border-gray-800/50">
+              <span className="w-32 shrink-0 font-medium text-gray-700 dark:text-gray-300">{name}</span>
               <span className="text-gray-500">{desc}</span>
             </div>
           ))}

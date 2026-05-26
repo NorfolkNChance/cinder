@@ -69,8 +69,7 @@ export function HelpModal(): JSX.Element | null {
   return (
     // Backdrop
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-6"
-      style={{ background: 'rgba(0,0,0,0.65)' }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/[0.65]"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) close();
       }}
@@ -78,13 +77,13 @@ export function HelpModal(): JSX.Element | null {
       {/* Panel */}
       <div
         ref={panelRef}
-        className="flex h-[80vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-gray-700 bg-gray-950 shadow-2xl"
+        className="flex h-[80vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-gray-300 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-950"
         role="dialog"
         aria-label="Help documentation"
         aria-modal="true"
       >
         {/* Header — search + close */}
-        <div className="flex items-center gap-3 border-b border-gray-800 px-4 py-3">
+        <div className="flex items-center gap-3 border-b border-gray-200 px-4 py-3 dark:border-gray-800">
           <span className="text-gray-500">?</span>
           <input
             ref={searchRef}
@@ -111,12 +110,12 @@ export function HelpModal(): JSX.Element | null {
             }}
             placeholder="Search documentation…"
             aria-label="Search help"
-            className="flex-1 bg-transparent text-sm text-gray-100 placeholder-gray-600 focus:outline-none"
+            className="flex-1 bg-transparent text-sm text-gray-900 placeholder-gray-500 focus:outline-none dark:text-gray-100 dark:placeholder-gray-600"
           />
           <button
             onClick={close}
             aria-label="Close help"
-            className="rounded p-1 text-gray-600 hover:bg-gray-800 hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="rounded p-1 text-gray-500 hover:bg-gray-200 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
           >
             ✕
           </button>
@@ -126,7 +125,7 @@ export function HelpModal(): JSX.Element | null {
         <div className="flex min-h-0 flex-1">
           {/* TOC sidebar */}
           <nav
-            className="flex w-48 shrink-0 flex-col overflow-y-auto border-r border-gray-800 py-2"
+            className="flex w-48 shrink-0 flex-col overflow-y-auto border-r border-gray-200 py-2 dark:border-gray-800"
             aria-label="Help sections"
           >
             {visibleSections.length === 0 ? (
@@ -140,8 +139,8 @@ export function HelpModal(): JSX.Element | null {
                   onClick={() => setActiveSectionId(section.id)}
                   className={`flex items-center gap-2 px-4 py-2 text-left text-sm transition ${
                     section.id === activeSectionId
-                      ? 'bg-gray-800 text-white'
-                      : 'text-gray-400 hover:bg-gray-900/60 hover:text-gray-200'
+                      ? 'bg-gray-200 text-gray-900 dark:bg-gray-800 dark:text-white'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-gray-900/60 dark:hover:text-gray-200'
                   }`}
                 >
                   <span className="w-4 text-center text-base leading-none">
@@ -167,7 +166,7 @@ export function HelpModal(): JSX.Element | null {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center gap-4 border-t border-gray-800 px-4 py-2 text-[11px] text-gray-600">
+        <div className="flex items-center gap-4 border-t border-gray-200 px-4 py-2 text-[11px] text-gray-500 dark:border-gray-800 dark:text-gray-600">
           <span>
             <kbd className="font-mono">↑↓</kbd> navigate sections
           </span>

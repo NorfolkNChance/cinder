@@ -29,7 +29,7 @@ export function MatrixSidebar(): JSX.Element {
 
         {/* Urgency threshold */}
         <section className="mb-5">
-          <label className="mb-1.5 block text-xs font-medium text-gray-400">
+          <label className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">
             Urgent within
           </label>
           <div className="flex items-center gap-2">
@@ -46,7 +46,7 @@ export function MatrixSidebar(): JSX.Element {
                   ),
                 })
               }
-              className="w-16 rounded-md border border-gray-700 bg-gray-900 px-2 py-1.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-16 rounded-md border border-gray-300 bg-gray-100 px-2 py-1.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
             />
             <span className="text-xs text-gray-500">days</span>
           </div>
@@ -59,7 +59,7 @@ export function MatrixSidebar(): JSX.Element {
 
         {/* Importance cutoff */}
         <section className="mb-5">
-          <label className="mb-1.5 block text-xs font-medium text-gray-400">
+          <label className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">
             Important up to
           </label>
           <select
@@ -69,7 +69,7 @@ export function MatrixSidebar(): JSX.Element {
                 importanceCutoff: parseInt(e.target.value, 10) as 1 | 2 | 3 | 4,
               })
             }
-            className="w-full rounded-md border border-gray-700 bg-gray-900 px-2 py-1.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full rounded-md border border-gray-300 bg-gray-100 px-2 py-1.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
           >
             <option value={1}>P1 only</option>
             <option value={2}>P1 – P2 (default)</option>
@@ -80,7 +80,7 @@ export function MatrixSidebar(): JSX.Element {
 
         {/* Project filter */}
         <section className="mb-5">
-          <label className="mb-1.5 block text-xs font-medium text-gray-400">
+          <label className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">
             Project
           </label>
           <select
@@ -88,7 +88,7 @@ export function MatrixSidebar(): JSX.Element {
             onChange={(e) =>
               setMatrixProjectId(e.target.value === '' ? null : e.target.value)
             }
-            className="w-full rounded-md border border-gray-700 bg-gray-900 px-2 py-1.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full rounded-md border border-gray-300 bg-gray-100 px-2 py-1.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
           >
             <option value="">All projects</option>
             {projects?.map((p) => (
@@ -101,7 +101,7 @@ export function MatrixSidebar(): JSX.Element {
 
         {/* Label filter */}
         <section className="mb-5">
-          <label className="mb-1.5 block text-xs font-medium text-gray-400">
+          <label className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">
             Label
           </label>
           <select
@@ -109,7 +109,7 @@ export function MatrixSidebar(): JSX.Element {
             onChange={(e) =>
               setMatrixLabelId(e.target.value === '' ? null : e.target.value)
             }
-            className="w-full rounded-md border border-gray-700 bg-gray-900 px-2 py-1.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full rounded-md border border-gray-300 bg-gray-100 px-2 py-1.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
           >
             <option value="">All labels</option>
             {labels?.map((l) => (
@@ -131,7 +131,7 @@ export function MatrixSidebar(): JSX.Element {
               setMatrixProjectId(null);
               setMatrixLabelId(null);
             }}
-            className="text-xs text-gray-600 underline hover:text-gray-400"
+            className="text-xs text-gray-500 underline hover:text-gray-700 dark:text-gray-600 dark:hover:text-gray-400"
           >
             Reset to defaults
           </button>
@@ -139,7 +139,7 @@ export function MatrixSidebar(): JSX.Element {
       </div>
 
       {/* Legend */}
-      <div className="mt-auto border-t border-gray-800 pt-4">
+      <div className="mt-auto border-t border-gray-200 pt-4 dark:border-gray-800">
         <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-gray-600">
           Quadrants
         </p>
@@ -173,8 +173,8 @@ function QuadrantLegend({
     <div className="flex items-start gap-1.5">
       <span className={`mt-0.5 h-2 w-2 flex-shrink-0 rounded-full ${dot[color]}`} />
       <div>
-        <div className="font-medium text-gray-400">{label}</div>
-        <div className="text-gray-600">{sub}</div>
+        <div className="font-medium text-gray-600 dark:text-gray-400">{label}</div>
+        <div className="text-gray-500 dark:text-gray-600">{sub}</div>
       </div>
     </div>
   );

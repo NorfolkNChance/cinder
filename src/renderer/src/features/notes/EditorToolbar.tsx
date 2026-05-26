@@ -38,8 +38,8 @@ function ToolbarButton({
           'flex h-7 min-w-[1.75rem] items-center justify-center rounded px-1.5 text-sm transition',
           'focus:outline-none focus:ring-2 focus:ring-emerald-500',
           active
-            ? 'bg-gray-700 text-white'
-            : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200',
+            ? 'bg-gray-300 text-gray-900 dark:bg-gray-700 dark:text-white'
+            : 'text-gray-600 hover:bg-gray-200 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200',
           disabled && 'cursor-not-allowed opacity-30',
         )}
       >
@@ -50,8 +50,8 @@ function ToolbarButton({
         role="tooltip"
         className={clsx(
           'pointer-events-none absolute left-1/2 top-full z-50 mt-1.5',
-          '-translate-x-1/2 whitespace-nowrap rounded bg-gray-800 px-2 py-1',
-          'text-[11px] leading-none text-gray-200 shadow-lg',
+          '-translate-x-1/2 whitespace-nowrap rounded bg-gray-700 px-2 py-1',
+          'text-[11px] leading-none text-gray-100 shadow-lg',
           'opacity-0 transition-opacity delay-300 group-hover:opacity-100',
         )}
       >
@@ -67,7 +67,7 @@ function ToolbarButton({
 }
 
 function Divider(): JSX.Element {
-  return <div className="mx-1 h-5 w-px bg-gray-700" aria-hidden="true" />;
+  return <div className="mx-1 h-5 w-px bg-gray-300 dark:bg-gray-700" aria-hidden="true" />;
 }
 
 // ── Heading label ─────────────────────────────────────────────────────────────
@@ -104,7 +104,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps): JSX.Element {
       role="toolbar"
       aria-label="Formatting toolbar"
       aria-controls="tiptap-editor-content"
-      className="flex flex-wrap items-center gap-0.5 border-b border-gray-800 bg-gray-950 px-4 py-1.5"
+      className="flex flex-wrap items-center gap-0.5 border-b border-gray-200 bg-gray-100 px-4 py-1.5 dark:border-gray-800 dark:bg-gray-950"
     >
       {/* Headings */}
       <ToolbarButton

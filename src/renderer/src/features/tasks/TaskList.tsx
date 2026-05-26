@@ -131,8 +131,8 @@ export function TaskList(): JSX.Element {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="border-b border-gray-800 px-6 py-4">
-        <h2 className="text-2xl font-semibold tracking-tight text-white">
+      <header className="border-b border-gray-200 px-6 py-4 dark:border-gray-800">
+        <h2 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">
           {header.title}
         </h2>
         {header.subtitle !== undefined && (
@@ -142,7 +142,7 @@ export function TaskList(): JSX.Element {
         )}
       </header>
 
-      <div className="border-b border-gray-800 px-5 py-3">
+      <div className="border-b border-gray-200 px-5 py-3 dark:border-gray-800">
         <input
           ref={quickAddRef}
           value={draft}
@@ -156,7 +156,7 @@ export function TaskList(): JSX.Element {
           }}
           placeholder="Press q to focus — try “tomorrow at 5pm p1 #work”…"
           aria-label="New task quick-add"
-          className="w-full rounded-md bg-gray-900 px-3 py-2 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          className="w-full rounded-md bg-gray-200 px-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-gray-900 dark:text-gray-200 dark:placeholder-gray-500"
         />
         {draft.length > 0 && (
           <QuickAddPreview parsed={parsed} projects={projects ?? []} />
@@ -199,7 +199,7 @@ export function TaskList(): JSX.Element {
  */
 function ShortcutHint(): JSX.Element {
   return (
-    <footer className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-gray-800 px-5 py-2 text-[11px] text-gray-600">
+    <footer className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-gray-200 px-5 py-2 text-[11px] text-gray-500 dark:border-gray-800 dark:text-gray-600">
       <Hint label="q">quick-add</Hint>
       <Hint label="↑↓">navigate</Hint>
       <Hint label="e">edit</Hint>
@@ -220,7 +220,7 @@ function Hint({
 }): JSX.Element {
   return (
     <span className="inline-flex items-center gap-1">
-      <kbd className="rounded border border-gray-700 bg-gray-900 px-1 font-mono text-[10px] text-gray-400">
+      <kbd className="rounded border border-gray-300 bg-gray-100 px-1 font-mono text-[10px] text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400">
         {label}
       </kbd>
       <span>{children}</span>
@@ -287,8 +287,8 @@ function QuickAddPreview({
     labels?.filter((l) => parsed.labelIds.includes(l.id)) ?? [];
   return (
     <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 px-1 text-xs text-gray-500">
-      <span className="text-gray-400">
-        ↳ {parsed.title || <em className="text-gray-600">empty title</em>}
+      <span className="text-gray-600 dark:text-gray-400">
+        ↳ {parsed.title || <em className="text-gray-500 dark:text-gray-600">empty title</em>}
       </span>
       {parsed.dueDate !== null && (
         <Chip color="emerald">{formatDueDate(parsed.dueDate)}</Chip>

@@ -127,13 +127,13 @@ export function NoteEditor({ noteId }: NoteEditorProps): JSX.Element {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-b border-gray-800 px-6 py-3">
+      <div className="flex items-center justify-between border-b border-gray-200 px-6 py-3 dark:border-gray-800">
         <input
           aria-label="Note title"
           value={draft.title}
           onChange={onTitleChange}
           placeholder="Untitled"
-          className="flex-1 bg-transparent text-2xl font-semibold tracking-tight text-white placeholder-gray-600 focus:outline-none"
+          className="flex-1 bg-transparent text-2xl font-semibold tracking-tight text-gray-900 placeholder-gray-500 focus:outline-none dark:text-white dark:placeholder-gray-600"
         />
         <div className="ml-4 flex items-center gap-3">
           <span

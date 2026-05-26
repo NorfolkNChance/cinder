@@ -87,19 +87,19 @@ export function MatrixTaskDetail({
   return (
     // Slide-in overlay panel
     <div
-      className="absolute bottom-0 right-0 top-0 z-10 flex w-72 flex-col border-l border-gray-700 bg-gray-950 shadow-2xl"
+      className="absolute bottom-0 right-0 top-0 z-10 flex w-72 flex-col border-l border-gray-300 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-950"
       role="complementary"
       aria-label="Task detail"
     >
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-gray-800 px-4 py-3">
+      <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-800">
         <span className="text-xs font-semibold uppercase tracking-widest text-gray-500">
           Task detail
         </span>
         <button
           onClick={onClose}
           aria-label="Close detail panel"
-          className="rounded p-1 text-gray-600 hover:bg-gray-800 hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          className="rounded p-1 text-gray-500 hover:bg-gray-200 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
         >
           ✕
         </button>
@@ -109,7 +109,7 @@ export function MatrixTaskDetail({
       <div className="flex-1 overflow-y-auto px-4 py-4">
         {/* Title */}
         <div className="mb-4">
-          <label className="mb-1 block text-[11px] font-medium uppercase tracking-widest text-gray-600">
+          <label className="mb-1 block text-[11px] font-medium uppercase tracking-widest text-gray-500 dark:text-gray-600">
             Title
           </label>
           <input
@@ -122,19 +122,19 @@ export function MatrixTaskDetail({
               }
             }}
             placeholder="Task title"
-            className="w-full rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full rounded-md border border-gray-300 bg-gray-100 px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
           />
         </div>
 
         {/* Priority */}
         <div className="mb-4">
-          <label className="mb-1 block text-[11px] font-medium uppercase tracking-widest text-gray-600">
+          <label className="mb-1 block text-[11px] font-medium uppercase tracking-widest text-gray-500 dark:text-gray-600">
             Priority
           </label>
           <select
             value={task.priority}
             onChange={onPriorityChange}
-            className="w-full rounded-md border border-gray-700 bg-gray-900 px-2 py-1.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full rounded-md border border-gray-300 bg-gray-100 px-2 py-1.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
           >
             <option value={1}>P1 — Critical</option>
             <option value={2}>P2 — High</option>
@@ -145,14 +145,14 @@ export function MatrixTaskDetail({
 
         {/* Due date */}
         <div className="mb-4">
-          <label className="mb-1 block text-[11px] font-medium uppercase tracking-widest text-gray-600">
+          <label className="mb-1 block text-[11px] font-medium uppercase tracking-widest text-gray-500 dark:text-gray-600">
             Due date
           </label>
           <input
             type="date"
             value={dueDateInputValue}
             onChange={onDueDateChange}
-            className="w-full rounded-md border border-gray-700 bg-gray-900 px-2 py-1.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full rounded-md border border-gray-300 bg-gray-100 px-2 py-1.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
           />
           {task.dueDate !== null && (
             <p className="mt-0.5 text-xs text-gray-600">
@@ -163,13 +163,13 @@ export function MatrixTaskDetail({
 
         {/* Project */}
         <div className="mb-4">
-          <label className="mb-1 block text-[11px] font-medium uppercase tracking-widest text-gray-600">
+          <label className="mb-1 block text-[11px] font-medium uppercase tracking-widest text-gray-500 dark:text-gray-600">
             Project
           </label>
           <select
             value={task.projectId ?? ''}
             onChange={onProjectChange}
-            className="w-full rounded-md border border-gray-700 bg-gray-900 px-2 py-1.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full rounded-md border border-gray-300 bg-gray-100 px-2 py-1.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
           >
             <option value="">No project (Inbox)</option>
             {projects?.map((p) => (
@@ -183,7 +183,7 @@ export function MatrixTaskDetail({
         {/* Labels (read-only) */}
         {task.labels.length > 0 && (
           <div className="mb-4">
-            <label className="mb-1.5 block text-[11px] font-medium uppercase tracking-widest text-gray-600">
+            <label className="mb-1.5 block text-[11px] font-medium uppercase tracking-widest text-gray-500 dark:text-gray-600">
               Labels
             </label>
             <div className="flex flex-wrap gap-1.5">
@@ -202,7 +202,7 @@ export function MatrixTaskDetail({
         {/* Recurrence (read-only) */}
         {task.dueRecurrence !== null && (
           <div className="mb-4">
-            <label className="mb-1 block text-[11px] font-medium uppercase tracking-widest text-gray-600">
+            <label className="mb-1 block text-[11px] font-medium uppercase tracking-widest text-gray-500 dark:text-gray-600">
               Repeats
             </label>
             <p className="text-xs text-purple-400">
@@ -228,13 +228,13 @@ export function MatrixTaskDetail({
       </div>
 
       {/* Footer actions */}
-      <div className="border-t border-gray-800 px-4 py-3">
+      <div className="border-t border-gray-200 px-4 py-3 dark:border-gray-800">
         <div className="flex items-center gap-2">
           <button
             onClick={toggleComplete}
             className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition focus:outline-none focus:ring-2 focus:ring-emerald-500 ${
               isComplete
-                ? 'border border-gray-700 bg-gray-900 text-gray-400 hover:text-gray-200'
+                ? 'border border-gray-300 bg-gray-100 text-gray-600 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
                 : 'bg-emerald-700 text-white hover:bg-emerald-600'
             }`}
           >
@@ -242,7 +242,7 @@ export function MatrixTaskDetail({
           </button>
           <button
             onClick={handleDelete}
-            className="rounded-md border border-gray-700 px-3 py-1.5 text-xs text-gray-500 hover:border-red-700 hover:text-red-400 focus:outline-none focus:ring-2 focus:ring-red-600"
+            className="rounded-md border border-gray-300 px-3 py-1.5 text-xs text-gray-500 hover:border-red-700 hover:text-red-400 focus:outline-none focus:ring-2 focus:ring-red-600 dark:border-gray-700"
           >
             Delete
           </button>

@@ -258,10 +258,10 @@ export function MatrixView(): JSX.Element {
   return (
     <div className="relative flex h-full flex-col">
       {/* Column + snapshot header */}
-      <div className="flex items-stretch border-b border-gray-800">
+      <div className="flex items-stretch border-b border-gray-200 dark:border-gray-800">
         {/* Row-axis label — "Important" shown via sidebar; this row shows urgency axis */}
         <div className="grid flex-1 grid-cols-2">
-          <div className="border-r border-gray-800 px-4 py-2 text-center text-xs font-semibold uppercase tracking-widest text-gray-500">
+          <div className="border-r border-gray-200 px-4 py-2 text-center text-xs font-semibold uppercase tracking-widest text-gray-500 dark:border-gray-800">
             Urgent
           </div>
           <div className="px-4 py-2 text-center text-xs font-semibold uppercase tracking-widest text-gray-500">
@@ -269,12 +269,12 @@ export function MatrixView(): JSX.Element {
           </div>
         </div>
         {/* Snapshot toggle */}
-        <div className="flex items-center border-l border-gray-800 px-3">
+        <div className="flex items-center border-l border-gray-200 px-3 dark:border-gray-800">
           {snapshot === null ? (
             <button
               onClick={takeSnapshot}
               title="Freeze quadrant membership (snapshot mode)"
-              className="rounded-md border border-gray-700 bg-gray-900 px-2.5 py-1 text-[11px] text-gray-500 hover:border-gray-600 hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="rounded-md border border-gray-300 bg-gray-100 px-2.5 py-1 text-[11px] text-gray-500 hover:border-gray-400 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-gray-700 dark:bg-gray-900 dark:hover:border-gray-600 dark:hover:text-gray-300"
             >
               📷 Snapshot
             </button>
@@ -411,18 +411,18 @@ const ACCENT_STYLES: Record<
     dropRing: 'ring-2 ring-inset ring-orange-600/60 bg-orange-950/20',
   },
   gray: {
-    header: 'text-gray-400',
-    badge: 'bg-gray-800 text-gray-400 border-gray-700',
-    card: 'hover:border-gray-600',
-    count: 'text-gray-600',
-    dropRing: 'ring-2 ring-inset ring-gray-500/40 bg-gray-800/20',
+    header: 'text-gray-600 dark:text-gray-400',
+    badge: 'bg-gray-200 text-gray-600 border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700',
+    card: 'hover:border-gray-400 dark:hover:border-gray-600',
+    count: 'text-gray-500 dark:text-gray-600',
+    dropRing: 'ring-2 ring-inset ring-gray-500/40 bg-gray-200/20 dark:bg-gray-800/20',
   },
 };
 
 const BORDER_CLASSES: Record<Position, string> = {
-  'top-left': 'border-r border-b border-gray-800',
-  'top-right': 'border-b border-gray-800',
-  'bottom-left': 'border-r border-gray-800',
+  'top-left': 'border-r border-b border-gray-200 dark:border-gray-800',
+  'top-right': 'border-b border-gray-200 dark:border-gray-800',
+  'bottom-left': 'border-r border-gray-200 dark:border-gray-800',
   'bottom-right': '',
 };
 
@@ -481,11 +481,11 @@ function QuadrantPanel({
       }}
     >
       {/* Panel header */}
-      <div className="flex items-baseline gap-2 border-b border-gray-800/60 px-4 py-2.5">
+      <div className="flex items-baseline gap-2 border-b border-gray-200/60 px-4 py-2.5 dark:border-gray-800/60">
         <span className={`text-sm font-semibold ${styles.header}`}>
           {label}
         </span>
-        <span className="text-[10px] text-gray-600">{importance}</span>
+        <span className="text-[10px] text-gray-500 dark:text-gray-600">{importance}</span>
         <span className={`ml-auto text-xs font-mono ${styles.count}`}>
           {tasks.length}
         </span>
@@ -574,15 +574,15 @@ function MatrixTaskCard({
         onDragStart(task.id);
       }}
       onDragEnd={onDragEnd}
-      className={`cursor-pointer rounded-lg border px-3 py-2 transition-all active:cursor-grabbing focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-950 ${
+      className={`cursor-pointer rounded-lg border px-3 py-2 transition-all active:cursor-grabbing focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-950 ${
         isSelected
           ? 'border-emerald-600 bg-emerald-900/20 ring-1 ring-inset ring-emerald-700/60'
-          : `border-gray-800 bg-gray-900/60 ${styles.card}`
+          : `border-gray-200 bg-gray-100/50 dark:border-gray-800 dark:bg-gray-900/60 ${styles.card}`
       } ${isDragging ? 'scale-95 opacity-40' : 'opacity-100'}`}
     >
       {/* Title */}
-      <p className="truncate text-sm leading-snug text-gray-200">
-        {task.title || <em className="text-gray-600">Untitled</em>}
+      <p className="truncate text-sm leading-snug text-gray-800 dark:text-gray-200">
+        {task.title || <em className="text-gray-500 dark:text-gray-600">Untitled</em>}
       </p>
 
       {/* Meta row */}
@@ -638,24 +638,23 @@ function ConfirmMoveModal({
 }): JSX.Element {
   return (
     <div
-      className="absolute inset-0 flex items-center justify-center"
-      style={{ background: 'rgba(0,0,0,0.55)' }}
+      className="absolute inset-0 flex items-center justify-center bg-black/55"
     >
-      <div className="w-80 rounded-xl border border-gray-700 bg-gray-900 p-5 shadow-2xl">
-        <h3 className="mb-1 text-sm font-semibold text-white">
+      <div className="w-80 rounded-xl border border-gray-300 bg-white p-5 shadow-2xl dark:border-gray-700 dark:bg-gray-900">
+        <h3 className="mb-1 text-sm font-semibold text-gray-900 dark:text-white">
           Move to {QUADRANT_LABEL[to]}?
         </h3>
-        <p className="mb-4 text-xs text-gray-400">
+        <p className="mb-4 text-xs text-gray-600 dark:text-gray-400">
           Moving{' '}
-          <span className="font-medium text-gray-200">
+          <span className="font-medium text-gray-800 dark:text-gray-200">
             "{taskTitle || 'Untitled'}"
           </span>{' '}
           from{' '}
-          <span className="font-medium text-gray-300">
+          <span className="font-medium text-gray-700 dark:text-gray-300">
             {QUADRANT_LABEL[from]}
           </span>{' '}
           to{' '}
-          <span className="font-medium text-gray-300">
+          <span className="font-medium text-gray-700 dark:text-gray-300">
             {QUADRANT_LABEL[to]}
           </span>{' '}
           changes both priority and due date. Continue?
@@ -663,7 +662,7 @@ function ConfirmMoveModal({
         <div className="flex justify-end gap-2">
           <button
             onClick={onCancel}
-            className="rounded-md px-3 py-1.5 text-xs text-gray-400 hover:bg-gray-800 hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-600"
+            className="rounded-md px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-200 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-600 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
           >
             Cancel
           </button>

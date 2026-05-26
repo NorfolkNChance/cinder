@@ -163,8 +163,8 @@ export function NoteList(): JSX.Element {
           className={clsx(
             'pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 rounded-lg border-2 transition-colors',
             dropState === 'valid'
-              ? 'border-emerald-500 bg-emerald-950/60'
-              : 'border-red-700 bg-red-950/40',
+              ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/60'
+              : 'border-red-700 bg-red-50 dark:bg-red-950/40',
           )}
         >
           <span className="text-2xl">
@@ -190,14 +190,14 @@ export function NoteList(): JSX.Element {
 
       {/* Importing spinner */}
       {importing && (
-        <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-gray-950/70">
+        <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-white/70 dark:bg-gray-950/70">
           <span className="text-sm text-gray-400">Importing…</span>
         </div>
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-gray-800 px-4 py-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-400">
+      <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-800">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
           Notes
         </h2>
         <button
@@ -210,7 +210,7 @@ export function NoteList(): JSX.Element {
       </div>
 
       {/* Search */}
-      <div className="border-b border-gray-800 px-3 py-2">
+      <div className="border-b border-gray-200 px-3 py-2 dark:border-gray-800">
         <input
           type="search"
           aria-label="Search notes"
@@ -220,13 +220,13 @@ export function NoteList(): JSX.Element {
           onKeyDown={(e) => {
             if (e.key === 'Escape') setSearchInput('');
           }}
-          className="w-full rounded-md bg-gray-900 px-3 py-1.5 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          className="w-full rounded-md bg-gray-200 px-3 py-1.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-gray-900 dark:text-gray-200 dark:placeholder-gray-500"
         />
       </div>
 
       {/* Import errors */}
       {importErrors.length > 0 && (
-        <div className="border-b border-red-900 bg-red-950/40 px-4 py-2">
+        <div className="border-b border-red-300 bg-red-50 px-4 py-2 dark:border-red-900 dark:bg-red-950/40">
           {importErrors.map((err, i) => (
             <p key={i} className="text-xs text-red-400">
               {err}
@@ -253,23 +253,23 @@ export function NoteList(): JSX.Element {
                 : 'No notes yet.'}
             </p>
             {!isSearching && (
-              <p className="text-xs text-gray-700">
-                Press <kbd className="rounded border border-gray-700 bg-gray-900 px-1 font-mono text-[10px]">⌘N</kbd> to create one,
+              <p className="text-xs text-gray-400 dark:text-gray-700">
+                Press <kbd className="rounded border border-gray-300 bg-gray-100 px-1 font-mono text-[10px] text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400">⌘N</kbd> to create one,
                 or drag a <span className="text-gray-500">.md</span> or{' '}
                 <span className="text-gray-500">.html</span> file here to import.
               </p>
             )}
           </div>
         ) : (
-          <ul className="divide-y divide-gray-900" role="list" aria-label="Notes">
+          <ul className="divide-y divide-gray-100 dark:divide-gray-900" role="list" aria-label="Notes">
             {notes.map((note) => (
               <li
                 key={note.id}
                 className={clsx(
                   'group relative flex items-start gap-2 transition',
                   selectedNoteId === note.id
-                    ? 'bg-gray-900'
-                    : 'hover:bg-gray-900/50',
+                    ? 'bg-gray-200 dark:bg-gray-900'
+                    : 'hover:bg-gray-100/50 dark:hover:bg-gray-900/50',
                 )}
               >
                 <button
@@ -279,8 +279,8 @@ export function NoteList(): JSX.Element {
                   className={clsx(
                     'min-w-0 flex-1 px-4 py-3 text-left focus:outline-none focus:ring-2 focus:ring-inset focus:ring-emerald-500',
                     selectedNoteId === note.id
-                      ? 'text-white'
-                      : 'text-gray-300',
+                      ? 'text-gray-900 dark:text-white'
+                      : 'text-gray-700 dark:text-gray-300',
                   )}
                 >
                   <div className="truncate text-sm font-medium" aria-hidden="true">
@@ -305,10 +305,10 @@ export function NoteList(): JSX.Element {
       </div>
 
       {/* Drop hint at bottom */}
-      <div className="border-t border-gray-800/50 px-4 py-2 text-center">
-        <p className="text-[11px] text-gray-700">
-          Drag <span className="text-gray-600">.md</span> or{' '}
-          <span className="text-gray-600">.html</span> files to import
+      <div className="border-t border-gray-200/50 px-4 py-2 text-center dark:border-gray-800/50">
+        <p className="text-[11px] text-gray-400 dark:text-gray-700">
+          Drag <span className="text-gray-500 dark:text-gray-600">.md</span> or{' '}
+          <span className="text-gray-500 dark:text-gray-600">.html</span> files to import
         </p>
       </div>
     </div>

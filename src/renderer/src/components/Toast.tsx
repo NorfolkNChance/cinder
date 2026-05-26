@@ -35,8 +35,8 @@ export function Toast(): JSX.Element | null {
       aria-live="polite"
       className={`fixed bottom-6 left-1/2 z-[60] flex -translate-x-1/2 items-center gap-3 rounded-lg border px-4 py-3 shadow-xl text-sm font-medium ${
         isSuccess
-          ? 'border-emerald-700 bg-emerald-950 text-emerald-300'
-          : 'border-red-700 bg-red-950 text-red-300'
+          ? 'border-emerald-700 bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+          : 'border-red-700 bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300'
       }`}
     >
       <span className="text-base leading-none">

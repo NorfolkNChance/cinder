@@ -427,25 +427,24 @@ export function CommandPalette(): JSX.Element | null {
   return (
     // Backdrop
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] bg-black/60"
       onMouseDown={(e) => {
         // Close when clicking the backdrop (not the panel).
         if (e.target === e.currentTarget) close();
       }}
-      style={{ background: 'rgba(0,0,0,0.6)' }}
     >
       {/* Panel */}
       <div
         ref={panelRef}
-        className="w-full max-w-xl overflow-hidden rounded-xl border border-gray-700 bg-gray-900 shadow-2xl"
+        className="w-full max-w-xl overflow-hidden rounded-xl border border-gray-300 bg-gray-100 shadow-2xl dark:border-gray-700 dark:bg-gray-900"
         role="dialog"
         aria-label="Command palette"
         aria-modal="true"
         id="command-palette-panel"
       >
         {/* Input */}
-        <div className="flex items-center gap-3 border-b border-gray-700 px-4 py-3">
-          <span className="text-gray-500" aria-hidden="true">⌘</span>
+        <div className="flex items-center gap-3 border-b border-gray-300 px-4 py-3 dark:border-gray-700">
+          <span className="text-gray-500 dark:text-gray-500" aria-hidden="true">⌘</span>
           <input
             ref={inputRef}
             value={query}
@@ -463,12 +462,12 @@ export function CommandPalette(): JSX.Element | null {
             aria-activedescendant={
               filtered[activeIndex] ? `cmd-option-${filtered[activeIndex].id}` : undefined
             }
-            className="flex-1 bg-transparent text-sm text-gray-100 placeholder-gray-600 focus:outline-none"
+            className="flex-1 bg-transparent text-sm text-gray-900 placeholder-gray-500 focus:outline-none dark:text-gray-100 dark:placeholder-gray-600"
           />
           {query.length > 0 && (
             <button
               onClick={() => setQuery('')}
-              className="text-xs text-gray-600 hover:text-gray-400"
+              className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-600 dark:hover:text-gray-400"
             >
               clear
             </button>
@@ -484,7 +483,7 @@ export function CommandPalette(): JSX.Element | null {
           aria-label="Commands"
         >
           {filtered.length === 0 ? (
-            <li className="px-4 py-6 text-center text-sm text-gray-600">
+            <li className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-600">
               No commands match "{query}"
             </li>
           ) : (
@@ -503,7 +502,7 @@ export function CommandPalette(): JSX.Element | null {
         </ul>
 
         {/* Footer hint */}
-        <div className="flex items-center gap-4 border-t border-gray-800 px-4 py-2 text-[11px] text-gray-600">
+        <div className="flex items-center gap-4 border-t border-gray-200 px-4 py-2 text-[11px] text-gray-500 dark:border-gray-800 dark:text-gray-600">
           <span><kbd className="font-mono">↑↓</kbd> navigate</span>
           <span><kbd className="font-mono">↵</kbd> select</span>
           <span><kbd className="font-mono">esc</kbd> close</span>
@@ -553,7 +552,7 @@ function CommandGroup({
   return (
     <>
       <li
-        className="px-4 pb-0.5 pt-2 text-[10px] font-semibold uppercase tracking-widest text-gray-600"
+        className="px-4 pb-0.5 pt-2 text-[10px] font-semibold uppercase tracking-widest text-gray-500 dark:text-gray-600"
         role="presentation"
       >
         {group}
@@ -571,8 +570,8 @@ function CommandGroup({
             onClick={() => execute(globalIndex)}
             className={`flex cursor-pointer items-center gap-3 px-4 py-2 text-sm ${
               isActive
-                ? 'bg-gray-800 text-white'
-                : 'text-gray-300 hover:bg-gray-800/50'
+                ? 'bg-gray-200 text-gray-900 dark:bg-gray-800 dark:text-white'
+                : 'text-gray-700 hover:bg-gray-200/50 dark:text-gray-300 dark:hover:bg-gray-800/50'
             }`}
           >
             <span className="w-5 text-center text-base leading-none" aria-hidden="true">
@@ -580,7 +579,7 @@ function CommandGroup({
             </span>
             <span className="flex-1">{cmd.label}</span>
             {cmd.hint !== undefined && (
-              <span className="text-xs text-gray-600" aria-label={`shortcut: ${cmd.hint}`}>{cmd.hint}</span>
+              <span className="text-xs text-gray-500 dark:text-gray-600" aria-label={`shortcut: ${cmd.hint}`}>{cmd.hint}</span>
             )}
           </li>
         );

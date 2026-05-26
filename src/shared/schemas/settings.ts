@@ -38,6 +38,11 @@ const DefaultTaskScope = z.enum(['inbox', 'today', 'upcoming']);
 /** Whether the task list shows completed tasks by default. */
 const ShowCompleted = z.boolean();
 
+// ── Appearance ───────────────────────────────────────────────────────────────
+
+/** UI colour scheme preference. */
+const AppearanceTheme = z.enum(['auto', 'light', 'dark']);
+
 // ── Aggregated schema ────────────────────────────────────────────────────────
 
 export const AppSettingsSchema = z.object({
@@ -45,6 +50,7 @@ export const AppSettingsSchema = z.object({
   'matrix.importanceCutoff': MatrixImportanceCutoff,
   'tasks.defaultScope': DefaultTaskScope,
   'tasks.showCompleted': ShowCompleted,
+  'appearance.theme': AppearanceTheme,
 });
 
 export type AppSettings = z.infer<typeof AppSettingsSchema>;
@@ -55,6 +61,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   'matrix.importanceCutoff': 2,
   'tasks.defaultScope': 'inbox',
   'tasks.showCompleted': false,
+  'appearance.theme': 'auto',
 };
 
 // ── IPC input/output schemas ─────────────────────────────────────────────────

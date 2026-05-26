@@ -226,7 +226,7 @@ export function TasksSidebar(): JSX.Element {
                 else if (e.key === 'Escape') cancelNewProject();
               }}
               placeholder="Project name…"
-              className="w-full rounded-md bg-gray-900 px-3 py-1.5 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full rounded-md bg-gray-200 px-3 py-1.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-gray-900 dark:text-gray-200 dark:placeholder-gray-500"
             />
             <p className="mt-1 px-1 text-xs text-gray-600">
               Enter to create, Esc to cancel.
@@ -284,7 +284,7 @@ export function TasksSidebar(): JSX.Element {
                 else if (e.key === 'Escape') cancelNewLabel();
               }}
               placeholder="urgent"
-              className="w-full rounded-md bg-gray-900 px-3 py-1.5 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full rounded-md bg-gray-200 px-3 py-1.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-gray-900 dark:text-gray-200 dark:placeholder-gray-500"
             />
             <p
               className={clsx(
@@ -340,7 +340,7 @@ export function TasksSidebar(): JSX.Element {
                 if (e.key === 'Escape') cancelNewFilter();
               }}
               placeholder="Filter name"
-              className="w-full rounded-md bg-gray-900 px-3 py-1.5 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full rounded-md bg-gray-200 px-3 py-1.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-gray-900 dark:text-gray-200 dark:placeholder-gray-500"
             />
             <input
               value={newFilterExpr}
@@ -411,7 +411,7 @@ function SectionHeader({
   action?: React.ReactNode;
 }): JSX.Element {
   return (
-    <div className="flex items-center justify-between border-b border-gray-800 px-4 py-2">
+    <div className="flex items-center justify-between border-b border-gray-200 px-4 py-2 dark:border-gray-800">
       <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500">
         {label}
       </h3>
@@ -435,8 +435,8 @@ function SmartItem({
       className={clsx(
         'block w-full px-4 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-inset focus:ring-emerald-500',
         active
-          ? 'bg-gray-900 text-white'
-          : 'text-gray-300 hover:bg-gray-900/50',
+          ? 'bg-gray-200 text-gray-900 dark:bg-gray-900 dark:text-white'
+          : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-900/50',
       )}
     >
       {label}
@@ -461,14 +461,14 @@ function ProjectRow({
     <li
       className={clsx(
         'group relative flex items-center gap-2',
-        active ? 'bg-gray-900' : 'hover:bg-gray-900/50',
+        active ? 'bg-gray-200 dark:bg-gray-900' : 'hover:bg-gray-100 dark:hover:bg-gray-900/50',
       )}
     >
       <button
         onClick={onSelect}
         className={clsx(
           'flex min-w-0 flex-1 items-center gap-2 px-4 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-inset focus:ring-emerald-500',
-          active ? 'text-white' : 'text-gray-300',
+          active ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300',
         )}
       >
         <span
@@ -507,14 +507,14 @@ function LabelRow({
     <li
       className={clsx(
         'group relative flex items-center gap-2',
-        active ? 'bg-gray-900' : 'hover:bg-gray-900/50',
+        active ? 'bg-gray-200 dark:bg-gray-900' : 'hover:bg-gray-100 dark:hover:bg-gray-900/50',
       )}
     >
       <button
         onClick={onSelect}
         className={clsx(
           'flex min-w-0 flex-1 items-center gap-2 px-4 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-inset focus:ring-emerald-500',
-          active ? 'text-white' : 'text-gray-300',
+          active ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300',
         )}
       >
         <span
@@ -557,7 +557,7 @@ function SavedFilterRow({
     <li
       className={clsx(
         'group relative flex items-center gap-2',
-        active ? 'bg-gray-900' : 'hover:bg-gray-900/50',
+        active ? 'bg-gray-200 dark:bg-gray-900' : 'hover:bg-gray-100 dark:hover:bg-gray-900/50',
       )}
     >
       <button
@@ -565,7 +565,7 @@ function SavedFilterRow({
         title={expression}
         className={clsx(
           'flex min-w-0 flex-1 items-center gap-2 px-4 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-inset focus:ring-emerald-500',
-          active ? 'text-white' : 'text-gray-300',
+          active ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300',
         )}
       >
         <span

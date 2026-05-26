@@ -143,10 +143,10 @@ export function TaskItem({
     return (
       <li
         className={clsx(
-          'border-b border-gray-900 px-5 py-3 transition',
+          'border-b border-gray-100 px-5 py-3 transition dark:border-gray-900',
           isSelected
             ? 'bg-emerald-900/30 ring-1 ring-inset ring-emerald-700'
-            : 'bg-gray-900/20',
+            : 'bg-gray-100 dark:bg-gray-900/20',
         )}
       >
         <div className="flex items-start gap-3">
@@ -183,7 +183,7 @@ export function TaskItem({
               }}
               placeholder="Task title"
               aria-label="Task title"
-              className="w-full rounded-md border border-gray-600 bg-gray-900 px-3 py-1.5 text-sm text-gray-200 placeholder-gray-600 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+              className="w-full rounded-md border border-gray-400 bg-gray-100 px-3 py-1.5 text-sm text-gray-800 placeholder-gray-500 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 dark:placeholder-gray-600"
             />
             <textarea
               value={descDraft}
@@ -197,7 +197,7 @@ export function TaskItem({
               placeholder="Add a description… (optional)"
               aria-label="Task description"
               rows={2}
-              className="w-full resize-none rounded-md border border-gray-700 bg-gray-900 px-3 py-1.5 text-sm text-gray-300 placeholder-gray-600 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+              className="w-full resize-none rounded-md border border-gray-300 bg-gray-100 px-3 py-1.5 text-sm text-gray-700 placeholder-gray-500 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:placeholder-gray-600"
             />
 
             {/* Description preview (only when non-empty before editing) */}
@@ -210,7 +210,7 @@ export function TaskItem({
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); closeEdit(); }}
-                className="rounded-md px-3 py-1 text-xs text-gray-500 hover:bg-gray-800 hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-600"
+                className="rounded-md px-3 py-1 text-xs text-gray-500 hover:bg-gray-200 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
               >
                 Cancel
               </button>
@@ -229,10 +229,10 @@ export function TaskItem({
     <li
       onClick={onRowClick}
       className={clsx(
-        'group flex cursor-default items-center gap-3 border-b border-gray-900 px-5 py-2.5 transition',
+        'group flex cursor-default items-center gap-3 border-b border-gray-100 px-5 py-2.5 transition dark:border-gray-900',
         isSelected
           ? 'bg-emerald-900/30 ring-1 ring-inset ring-emerald-700'
-          : 'hover:bg-gray-900/40',
+          : 'hover:bg-gray-100 dark:hover:bg-gray-900/40',
       )}
     >
       <button
@@ -258,7 +258,7 @@ export function TaskItem({
         }}
         className={clsx(
           'min-w-0 flex-1 truncate text-sm',
-          isComplete ? 'text-gray-500 line-through' : 'text-gray-200',
+          isComplete ? 'text-gray-500 line-through' : 'text-gray-800 dark:text-gray-200',
         )}
         title={
           task.description
@@ -317,7 +317,7 @@ export function TaskItem({
         onClick={(e) => e.stopPropagation()}
         aria-label="Priority"
         title="Priority (1 = highest)"
-        className="rounded-md border border-gray-800 bg-gray-900 px-1.5 py-0.5 text-xs text-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        className="rounded-md border border-gray-200 bg-gray-100 px-1.5 py-0.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
       >
         <option value={1}>P1</option>
         <option value={2}>P2</option>
@@ -366,9 +366,9 @@ function DueDateChip({
   return (
     <label
       className={clsx(
-        'relative inline-flex shrink-0 cursor-pointer items-center rounded-md border border-gray-800 px-2 py-0.5 text-xs transition hover:border-gray-600',
+        'relative inline-flex shrink-0 cursor-pointer items-center rounded-md border border-gray-200 px-2 py-0.5 text-xs transition hover:border-gray-400 dark:border-gray-800 dark:hover:border-gray-600',
         overdue && 'border-red-700 text-red-400',
-        !overdue && hasDate && 'text-gray-300',
+        !overdue && hasDate && 'text-gray-700 dark:text-gray-300',
         !hasDate && 'text-gray-600',
       )}
       title={`Due date for ${taskTitle || 'this task'}`}
