@@ -46,6 +46,11 @@ export const Task = z.object({
   createdAt: ISO_8601,
   updatedAt: ISO_8601,
   deletedAt: ISO_8601.nullable(),
+  /**
+   * 1 = in triage (awaiting acknowledgement); 0 = normal task.
+   * Stored as INTEGER in SQLite because SQLite has no native boolean.
+   */
+  triage: z.number().int().min(0).max(1),
 });
 export type Task = z.infer<typeof Task>;
 
@@ -76,6 +81,11 @@ export const TaskCreateInput = z.object({
    * `labels:setForTask` round-trip for the common quick-add flow.
    */
   labelIds: z.array(Uuid).max(50).optional(),
+  /**
+   * Set to 1 to place this task in the Triage queue (e.g. created from a
+   * note). Omit (or pass 0) for a normal task that goes straight to Inbox.
+   */
+  triage: z.union([z.literal(0), z.literal(1)]).optional(),
 });
 export type TaskCreateInput = z.infer<typeof TaskCreateInput>;
 
@@ -91,6 +101,11 @@ export const TaskListInput = z.object({
   parentTaskId: Uuid.nullable().optional(),
   /** Per-label view filter — matches tasks with this label attached. */
   labelId: Uuid.optional(),
+  /**
+   * When true, return ONLY triage tasks (triage = 1).
+   * When unset (default), triage tasks are hidden from all results.
+   */
+  triageOnly: z.boolean().optional(),
   /**
    * Filter DSL expression — compiled to a SQL fragment at the service
    * layer. See src/shared/filter/. When set, this REPLACES the simple
@@ -122,6 +137,8 @@ export const TaskUpdateInput = z.object({
       dueRecurrence: z.string().max(500).nullable().optional(),
       priority: Priority.optional(),
       order: z.number().int().optional(),
+      /** Set to 0 to acknowledge a triage task and move it to normal flow. */
+      triage: z.union([z.literal(0), z.literal(1)]).optional(),
     })
     .strict(),
 });

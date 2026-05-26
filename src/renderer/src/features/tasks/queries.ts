@@ -91,6 +91,8 @@ function scopeToFilter(
   savedFilterExpression: string | null,
 ): TaskListInput {
   switch (scope.kind) {
+    case 'triage':
+      return { triageOnly: true };
     case 'inbox':
       return { projectId: null };
     case 'today': {
@@ -194,6 +196,19 @@ export function useAllTasksList(): ReturnType<
     queryKey: [...queryKeys.tasks.all, 'list', 'all'],
     queryFn: () => window.api.tasks.list({}),
   });
+}
+
+/**
+ * Returns the number of tasks currently sitting in the Triage queue.
+ * Used by the sidebar to show a live badge next to the Triage item.
+ * Shares the same cache as `useTasksList({ kind: 'triage' })`.
+ */
+export function useTriageCount(): number {
+  const { data } = useQuery({
+    queryKey: [...queryKeys.tasks.all, 'list', 'triage'],
+    queryFn: () => window.api.tasks.list({ triageOnly: true }),
+  });
+  return data?.length ?? 0;
 }
 
 export function useDeleteTask(): ReturnType<

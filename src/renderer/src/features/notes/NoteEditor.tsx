@@ -3,6 +3,7 @@ import { TipTapEditor } from './TipTapEditor';
 import { useNote, useUpdateNote } from './queries';
 import { useDebouncedCallback } from '../../hooks/useDebouncedCallback';
 import { ExportMenu } from '../export/ExportMenu';
+import { AddTriageTodo } from './AddTriageTodo';
 
 interface NoteEditorProps {
   noteId: string;
@@ -144,6 +145,7 @@ export function NoteEditor({ noteId }: NoteEditorProps): JSX.Element {
           >
             {draft.dirty ? 'Unsaved…' : 'Saved'}
           </span>
+          <AddTriageTodo noteTitle={draft.title} />
           <ExportMenu noteId={note.id} />
         </div>
       </div>

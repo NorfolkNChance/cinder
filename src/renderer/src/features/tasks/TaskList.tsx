@@ -8,6 +8,7 @@ import {
   useTasksList,
 } from './queries';
 import { TaskItem } from './TaskItem';
+import { TriageCard } from './TriageCard';
 import { formatDueDate, localDateString } from '../../lib/dates';
 import { parseQuickAdd, type ParsedQuickAdd } from './quickAdd';
 import { describeRecurrence } from '../../../../shared/recurrence';
@@ -40,6 +41,11 @@ export function TaskList(): JSX.Element {
 
   const header = useMemo<{ title: string; subtitle?: string }>(() => {
     switch (taskScope.kind) {
+      case 'triage':
+        return {
+          title: 'Triage',
+          subtitle: 'Tasks added from notes — set them up and acknowledge each one.',
+        };
       case 'inbox':
         return { title: 'Inbox' };
       case 'today':
@@ -129,6 +135,8 @@ export function TaskList(): JSX.Element {
     setDraft('');
   }, [draft, parsed, createTask, taskScope]);
 
+  const isTriage = taskScope.kind === 'triage';
+
   return (
     <div className="flex h-full flex-col">
       <header className="border-b border-gray-200 px-6 py-4 dark:border-gray-800">
@@ -136,40 +144,54 @@ export function TaskList(): JSX.Element {
           {header.title}
         </h2>
         {header.subtitle !== undefined && (
-          <p className="mt-0.5 font-mono text-xs text-gray-500">
+          <p className={`mt-0.5 text-xs text-gray-500 ${isTriage ? '' : 'font-mono'}`}>
             {header.subtitle}
           </p>
         )}
       </header>
 
-      <div className="border-b border-gray-200 px-5 py-3 dark:border-gray-800">
-        <input
-          ref={quickAddRef}
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') void submitNewTask();
-            else if (e.key === 'Escape') {
-              setDraft('');
-              quickAddRef.current?.blur();
-            }
-          }}
-          placeholder="Press q to focus — try “tomorrow at 5pm p1 #work”…"
-          aria-label="New task quick-add"
-          className="w-full rounded-md bg-gray-200 px-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-gray-900 dark:text-gray-200 dark:placeholder-gray-500"
-        />
-        {draft.length > 0 && (
-          <QuickAddPreview parsed={parsed} projects={projects ?? []} />
-        )}
-      </div>
+      {/* Quick-add is hidden in Triage — tasks arrive from notes, not typed here */}
+      {!isTriage && (
+        <div className="border-b border-gray-200 px-5 py-3 dark:border-gray-800">
+          <input
+            ref={quickAddRef}
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') void submitNewTask();
+              else if (e.key === 'Escape') {
+                setDraft('');
+                quickAddRef.current?.blur();
+              }
+            }}
+            placeholder={'Press q to focus — try "tomorrow at 5pm p1 #work"…'}
+            aria-label="New task quick-add"
+            className="w-full rounded-md bg-gray-200 px-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-gray-900 dark:text-gray-200 dark:placeholder-gray-500"
+          />
+          {draft.length > 0 && (
+            <QuickAddPreview parsed={parsed} projects={projects ?? []} />
+          )}
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto">
         {isLoading ? (
           <p className="px-5 py-4 text-sm text-gray-500">Loading…</p>
         ) : !tasks || tasks.length === 0 ? (
-          <p className="px-5 py-4 text-sm text-gray-500">
-            Nothing here yet. Add a task above.
-          </p>
+          <div className="px-5 py-8 text-center">
+            <p className="text-sm text-gray-500">
+              {isTriage
+                ? 'No tasks in triage — add a todo from a note to get started.'
+                : 'Nothing here yet. Add a task above.'}
+            </p>
+          </div>
+        ) : isTriage ? (
+          /* Triage view: expanded TriageCard per task */
+          <ul className="space-y-3 p-4" aria-label="Triage tasks">
+            {tasks.map((task) => (
+              <TriageCard key={task.id} task={task} />
+            ))}
+          </ul>
         ) : (
           <ul role="list" aria-label="Tasks">
             {tasks.map((task) => (
@@ -188,7 +210,7 @@ export function TaskList(): JSX.Element {
         )}
       </div>
 
-      <ShortcutHint />
+      {!isTriage && <ShortcutHint />}
     </div>
   );
 }

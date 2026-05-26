@@ -29,6 +29,7 @@ export type Mode = 'notes' | 'tasks' | 'matrix';
  * directly.
  */
 export type TaskScope =
+  | { kind: 'triage' }
   | { kind: 'inbox' }
   | { kind: 'today' }
   | { kind: 'upcoming' }

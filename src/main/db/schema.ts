@@ -175,6 +175,13 @@ export const tasks = sqliteTable(
     createdAt: text('created_at').notNull(),
     updatedAt: text('updated_at').notNull(),
     deletedAt: text('deleted_at'),
+    /**
+     * Triage flag — 1 when the task was created via the quick "Add Todo"
+     * action in the Notes editor and has not yet been acknowledged by the
+     * user. Triage tasks are hidden from all normal task views until they
+     * are set up and acknowledged in the dedicated Triage scope.
+     */
+    triage: integer('triage').notNull().default(0),
   },
   (table) => ({
     projectIdx: index('tasks_project_idx').on(table.projectId),
@@ -183,6 +190,7 @@ export const tasks = sqliteTable(
     dueDateIdx: index('tasks_due_date_idx').on(table.dueDate),
     completedAtIdx: index('tasks_completed_at_idx').on(table.completedAt),
     deletedAtIdx: index('tasks_deleted_at_idx').on(table.deletedAt),
+    triageIdx: index('tasks_triage_idx').on(table.triage),
   }),
 );
 

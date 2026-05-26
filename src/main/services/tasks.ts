@@ -67,6 +67,7 @@ export const tasksService = {
       createdAt: now,
       updatedAt: now,
       deletedAt: null,
+      triage: input.triage ?? 0,
     };
     await db.insert(tasks).values(row);
 
@@ -108,6 +109,15 @@ export const tasksService = {
     // Soft-delete and completion filters default to hiding both.
     if (!input.includeDeleted) conditions.push(isNull(tasks.deletedAt));
     if (!input.includeCompleted) conditions.push(isNull(tasks.completedAt));
+
+    // Triage filter: when triageOnly = true, show only triage tasks.
+    // Otherwise (default), hide triage tasks from all normal views so they
+    // don't pollute Inbox/Today/etc. until the user acknowledges them.
+    if (input.triageOnly === true) {
+      conditions.push(eq(tasks.triage, 1));
+    } else {
+      conditions.push(eq(tasks.triage, 0));
+    }
 
     // Scope filters. `projectId: null` is the "Inbox" predicate (no project),
     // distinct from `projectId: undefined` (any project).
@@ -266,7 +276,7 @@ async function listByFilter(
   // Compile — throws FilterSyntaxError for bad input; the handler
   // surfaces the message to the renderer as a rejected promise.
   const compiled = filterToSql(input.filter);
-  const baseConditions: string[] = ['deleted_at IS NULL'];
+  const baseConditions: string[] = ['deleted_at IS NULL', 'triage = 0'];
   // Suppress the default "active tasks only" filter if the user
   // explicitly mentioned completion status anywhere in the expression
   // (e.g. `completed & today`, `!completed`).
@@ -284,7 +294,8 @@ async function listByFilter(
                       priority, "order" AS "order",
                       completed_at AS completedAt,
                       created_at AS createdAt, updated_at AS updatedAt,
-                      deleted_at AS deletedAt
+                      deleted_at AS deletedAt,
+                      triage
                  FROM tasks
                 WHERE ${where}
                 ORDER BY "order" ASC, created_at ASC

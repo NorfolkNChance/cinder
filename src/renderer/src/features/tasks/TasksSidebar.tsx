@@ -10,6 +10,7 @@ import {
   useLabelsList,
   useProjectsList,
   useSavedFiltersList,
+  useTriageCount,
 } from './queries';
 import { useUI } from '../../state/ui';
 import { lex } from '../../../../shared/filter/lex';
@@ -171,9 +172,16 @@ export function TasksSidebar(): JSX.Element {
     await deleteProject.mutateAsync(id);
   };
 
+  const triageCount = useTriageCount();
+
   return (
     <>
       <SectionHeader label="Smart views" />
+      <TriageItem
+        active={taskScope.kind === 'triage'}
+        count={triageCount}
+        onClick={() => setTaskScope({ kind: 'triage' })}
+      />
       <SmartItem
         label="Inbox"
         active={taskScope.kind === 'inbox'}
@@ -417,6 +425,47 @@ function SectionHeader({
       </h3>
       {action}
     </div>
+  );
+}
+
+/**
+ * Special sidebar item for the Triage smart view.
+ * Shows an amber badge with the current triage task count when > 0.
+ */
+function TriageItem({
+  active,
+  count,
+  onClick,
+}: {
+  active: boolean;
+  count: number;
+  onClick: () => void;
+}): JSX.Element {
+  return (
+    <button
+      onClick={onClick}
+      className={clsx(
+        'flex w-full items-center justify-between px-4 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-inset focus:ring-emerald-500',
+        active
+          ? 'bg-gray-200 text-gray-900 dark:bg-gray-900 dark:text-white'
+          : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-900/50',
+      )}
+    >
+      <span>Triage</span>
+      {count > 0 && (
+        <span
+          className={clsx(
+            'inline-flex min-w-[1.25rem] items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-none',
+            active
+              ? 'bg-amber-500 text-white'
+              : 'bg-amber-100 text-amber-700 dark:bg-amber-900/60 dark:text-amber-300',
+          )}
+          aria-label={`${count} tasks need triage`}
+        >
+          {count}
+        </span>
+      )}
+    </button>
   );
 }
 
