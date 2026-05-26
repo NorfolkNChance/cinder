@@ -85,9 +85,9 @@ notes: {
 
 ## Database
 
-- **Engine**: `better-sqlite3-multiple-ciphers` (SQLCipher, 256-bit key)
-- **Key**: generated once with `crypto.randomBytes(32)`, encrypted via `safeStorage`, stored in `userData/db.key`. Never plaintext on disk.
-- **ORM**: Drizzle + Drizzle Kit for migrations
+- **Engine**: `@journeyapps/sqlcipher` (SQLCipher, AES-256). The driver is **async / callback-based** — there is no sync `.all()` API. All Drizzle queries must use `await`.
+- **Key**: generated once with `crypto.randomBytes(32)`, encrypted via `safeStorage` (macOS Keychain), stored as an encrypted blob in `userData/db.key`. Never plaintext on disk.
+- **ORM**: Drizzle via the `sqlite-proxy` adapter (required for async drivers)
 - **IDs**: UUIDv7 everywhere (time-sortable, sync-friendly)
 - **Timestamps**: UTC ISO-8601 as TEXT
 - **Soft deletes**: `deleted_at` column on notes and tasks
@@ -131,7 +131,7 @@ Strict mode is mandatory. All five extra safety flags are on (`noUncheckedIndexe
 | Choice | Reason |
 |--------|--------|
 | `sandbox: true` non-negotiable | Defense-in-depth; cheap to keep, expensive to retrofit |
-| `better-sqlite3` (sync API) | Simplifies IPC handlers — no async callback complexity |
+| `@journeyapps/sqlcipher` (async) | SQLCipher encryption; async driver wrapped by Drizzle's sqlite-proxy adapter |
 | Drizzle over Prisma | No separate Rust binary to package with Electron |
 | TipTap (ProseMirror) | Mature markdown round-trip; rich extension ecosystem |
 | UUIDv7 over auto-increment | Time-sortable, sync-friendly, no central allocator |

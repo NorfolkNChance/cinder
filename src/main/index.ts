@@ -27,15 +27,56 @@ import {
 // late changes. See protocol/attachment.ts for the rationale.
 registerAttachmentSchemePrivileges();
 
+/**
+ * Return the canonical app URL for the current environment.
+ *
+ * In dev:  the Vite dev-server origin (e.g. http://localhost:5173)
+ * In prod: the exact file:// URL of the bundled index.html
+ */
+function getAppUrl(): string {
+  return is.dev
+    ? process.env['ELECTRON_RENDERER_URL'] ?? 'http://localhost:5173'
+    : `file://${join(__dirname, '../renderer/index.html')}`;
+}
+
+/**
+ * Returns true when `url` is a safe navigation target for the app.
+ *
+ * Uses the URL API rather than string prefix matching to prevent the
+ * basic-auth bypass: `http://localhost:5173@evil.com` passes a naive
+ * startsWith check but has origin `http://evil.com`.
+ *
+ * - Dev:  allow any path under the same origin (Vite HMR may add paths).
+ * - Prod: allow only the exact file:// href of index.html (no navigation
+ *         should ever happen in a production SPA served from a file).
+ * - Any URL that fails to parse is blocked.
+ */
+function isAllowedNavigation(url: string): boolean {
+  const appUrl = getAppUrl();
+  try {
+    const dest = new URL(url);
+    const allowed = new URL(appUrl);
+
+    if (is.dev) {
+      // Compare origins. For http:// URLs, origin includes protocol + host + port.
+      return dest.origin === allowed.origin;
+    } else {
+      // file:// URLs have origin === 'null' (string), so compare full href.
+      return dest.href === allowed.href;
+    }
+  } catch {
+    // Unparseable URL — block it.
+    return false;
+  }
+}
+
 // Harden the app against remote module usage and navigation exploits
 app.on('web-contents-created', (_event, contents) => {
-  // Block all navigation away from the app origin
+  // Block all navigation away from the app origin.
+  // Uses URL API origin comparison to prevent the basic-auth bypass
+  // (e.g. http://localhost:5173@evil.com passes startsWith but is evil.com).
   contents.on('will-navigate', (event, url) => {
-    const appUrl = is.dev
-      ? process.env['ELECTRON_RENDERER_URL'] ?? 'http://localhost:5173'
-      : `file://${join(__dirname, '../renderer/index.html')}`;
-
-    if (!url.startsWith(appUrl)) {
+    if (!isAllowedNavigation(url)) {
       event.preventDefault();
     }
   });
@@ -53,13 +94,9 @@ app.on('web-contents-created', (_event, contents) => {
     event.preventDefault();
   });
 
-  // Block cross-origin redirects
+  // Block cross-origin redirects — same logic as will-navigate.
   contents.on('will-redirect', (event, url) => {
-    const appUrl = is.dev
-      ? process.env['ELECTRON_RENDERER_URL'] ?? 'http://localhost:5173'
-      : `file://${join(__dirname, '../renderer/index.html')}`;
-
-    if (!url.startsWith(appUrl)) {
+    if (!isAllowedNavigation(url)) {
       event.preventDefault();
     }
   });

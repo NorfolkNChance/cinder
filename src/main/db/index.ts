@@ -1,5 +1,5 @@
 import sqlite3 from '@journeyapps/sqlcipher';
-import { app, safeStorage } from 'electron';
+import { app, dialog, safeStorage } from 'electron';
 import { randomBytes } from 'crypto';
 import { readFileSync, writeFileSync, existsSync, chmodSync } from 'fs';
 import { join } from 'path';
@@ -11,7 +11,28 @@ function getOrCreateDbKey(): string {
 
   if (existsSync(keyFilePath)) {
     const encryptedBlob = readFileSync(keyFilePath);
-    return safeStorage.decryptString(encryptedBlob);
+    try {
+      return safeStorage.decryptString(encryptedBlob);
+    } catch (err) {
+      // safeStorage.decryptString throws when the macOS Keychain is
+      // inaccessible — e.g. after a password change, data migration, or
+      // manual deletion of the Keychain entry. Without the key the encrypted
+      // database is unreadable, so we surface a clear error and exit rather
+      // than crashing silently with an unhandled rejection.
+      dialog.showErrorBox(
+        'Cinder — Cannot Decrypt Database Key',
+        'The database encryption key could not be read from the macOS Keychain.\n\n' +
+          'This can happen after a macOS password change, a migration to a new Mac, ' +
+          'or if the Keychain entry was manually deleted.\n\n' +
+          'Your notes and tasks cannot be accessed without the original key. ' +
+          'Restore the Keychain entry or replace the database with a backup.\n\n' +
+          `Technical detail: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      app.exit(1);
+      // app.exit() is synchronous on macOS but TypeScript still needs a
+      // return path — this line is never reached.
+      throw new Error('unreachable');
+    }
   }
 
   // First run: generate a 32-byte (256-bit) random key, encrypt it via
