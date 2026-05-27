@@ -29,6 +29,7 @@ Full architectural spec: [`../ARCHITECTURE.md`](../ARCHITECTURE.md) — read it 
 | + | CI/CD pipelines — GitHub Actions CI (PR/push) and Release (signed + notarised DMG on version tag) |
 | + | App icon — `build/icon.icns` wired into `electron-builder.yml` |
 | + | Security hardening — assertMainFrame reference identity, SHA-pinned actions, Dependabot, SECURITY.md |
+| + | Daily Notes — fourth mode with calendar date tree, auto-create on first access, reuses NoteEditor |
 
 ---
 
@@ -235,6 +236,32 @@ Key pieces:
 
 ---
 
+## Daily Notes
+
+Daily Notes is a fourth mode (alongside Notes, Tasks, Matrix) where every calendar day has exactly one note, auto-created on first access.
+
+**Architecture — reuse the `notes` table, not a separate table:**
+
+- A `daily_date TEXT` column (migration `0009_daily_notes.sql`) distinguishes daily notes from regular notes:
+  - `daily_date IS NULL` → regular note (main Notes list, unaffected)
+  - `daily_date = 'YYYY-MM-DD'` → daily note (Daily mode only)
+- `notesService.list()` **always filters by `daily_date IS NULL` by default** — regular consumers never see daily notes. Pass `dailyOnly: true` in `NoteListInput` to fetch them.
+- `notesService.getOrCreateDaily({ date })` is idempotent — calling it twice with the same date returns the same note ID. It creates a blank note only on the first call. Used for "Today →" and any sidebar date click.
+- The year/month/day tree in `DailySidebar` is a **pure display concern** — there are no folder records in the DB. The tree is computed from `daily_date` strings in the renderer via `useDailyNotesList()`.
+- `DailyMainPane` is a thin wrapper that renders `<NoteEditor noteId={...} />` — the editor is reused completely unchanged. Autosave, attachments, triage "+ Todo", and FTS5 search all work without modification.
+
+**Key files:**
+- `src/main/db/migrations/0009_daily_notes.sql` — column + partial index
+- `src/main/services/notes.ts` — `getOrCreateDaily()`, updated `list()`, `formatDailyTitle()`
+- `src/renderer/src/features/dailyNotes/DailySidebar.tsx` — tree UI + Today button
+- `src/renderer/src/features/dailyNotes/DailyMainPane.tsx` — wrapper around NoteEditor
+- `src/renderer/src/features/notes/queries.ts` — `useDailyNotesList()`, `useGetOrCreateDaily()`
+
+**`selectedDailyDate` vs `selectedNoteId`:**
+Both are tracked in Zustand. `selectedDailyDate` drives which date is highlighted in the sidebar tree. `selectedNoteId` is the note actually open in the editor — set to the result of `getOrCreateDaily` when a date is clicked. Switching away from Daily mode and back restores both (neither is cleared on mode switch).
+
+---
+
 ## Due-task notifications
 
 Handled entirely in the main process by `src/main/services/notifier.ts`.
@@ -287,6 +314,7 @@ src/
   renderer/src/
     features/
       notes/      ← NoteList, NoteEditor, TipTapEditor, EditorToolbar, AddTriageTodo, fileImport
+      dailyNotes/ ← DailySidebar (year/month/day tree), DailyMainPane (wraps NoteEditor)
       tasks/      ← TasksSidebar, TaskList, TaskItem, TriageCard, quickAdd, queries
       quickCapture/ ← QuickCaptureApp (rendered instead of App when ?mode=capture)
       matrix/     ← MatrixView, MatrixSidebar, MatrixTaskDetail
@@ -383,6 +411,12 @@ These have burned us before. Check here before debugging similar symptoms.
 
 **`vite` is pinned to v7 — do not upgrade to v8 without migrating plugin-react**
 - `@vitejs/plugin-react@4` declares peer support for vite `^4–7` only. Upgrading vite to v8 breaks `npm ci` with an `ERESOLVE` peer conflict. The migration path to vite 8 requires `@vitejs/plugin-react@6`, which in turn requires `babel-plugin-react-compiler` as a peer dep — a deliberate migration, not a routine bump. Do not run `npm update` blindly.
+
+**`notesService.list()` excludes daily notes by default**
+- Since migration 0009, `list()` always appends `AND daily_date IS NULL` unless `dailyOnly: true` is passed. This means any code that calls `list({})` and expects to see all notes (e.g. export, FTS index rebuild) will silently skip daily notes. If a future feature needs all notes regardless of type, pass `includeAllTypes: true` — but first add that flag to the schema. Do not remove the default filter; it keeps the main Notes list clean.
+
+**`new Date('YYYY-MM-DD')` is off-by-one in timezones west of UTC**
+- `new Date('2026-05-27')` is parsed as UTC midnight, which is the *previous* day in `America/New_York` (UTC−5) when `.toLocaleDateString()` is called. To get the correct local date, always parse as noon-local: `new Date('2026-05-27T12:00:00')`. This is what `formatDailyTitle()` and `DailySidebar`'s `buildTree()` do. Apply the same pattern anywhere a YYYY-MM-DD string must be turned into a JS `Date` for display or weekday calculation.
 
 **Capture window and `window-all-closed`**
 - The capture popup is an always-hidden utility window. When the user closes the main window on macOS, `window-all-closed` fires but the app should keep running (tray icon stays). This works because macOS already skips `app.quit()` in the `window-all-closed` handler. The capture window is destroyed in `cleanupTray()` during `will-quit`. Do not add `captureWin` to any "visible windows" count that could trigger `app.quit()`.
