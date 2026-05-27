@@ -137,6 +137,7 @@ describe('Note (canonical shape)', () => {
       title: 'Hello',
       body: 'world',
       folderId: null,
+      dailyDate: null,
       createdAt: VALID_ISO,
       updatedAt: VALID_ISO,
       deletedAt: null,

@@ -4,6 +4,7 @@ import {
   NoteCreateInput,
   NoteDeleteInput,
   NoteGetInput,
+  NoteGetOrCreateDailyInput,
   NoteListInput,
   NoteSearchInput,
   NoteUpdateInput,
@@ -12,6 +13,7 @@ import {
   NOTES_CREATE,
   NOTES_DELETE,
   NOTES_GET,
+  NOTES_GET_OR_CREATE_DAILY,
   NOTES_LIST,
   NOTES_SEARCH,
   NOTES_UPDATE,
@@ -65,5 +67,11 @@ export function registerNotesHandlers(): void {
     assertMainFrame(event);
     const input = NoteSearchInput.parse(raw);
     return notesService.search(input);
+  });
+
+  ipcMain.handle(NOTES_GET_OR_CREATE_DAILY, async (event, raw) => {
+    assertMainFrame(event);
+    const input = NoteGetOrCreateDailyInput.parse(raw);
+    return notesService.getOrCreateDaily(input);
   });
 }

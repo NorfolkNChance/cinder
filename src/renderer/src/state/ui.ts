@@ -15,7 +15,7 @@ import { DEFAULT_MATRIX_PREFS } from '../../../shared/matrix/classify';
  * modes doesn't clobber the other side's state.
  */
 
-export type Mode = 'notes' | 'tasks' | 'matrix';
+export type Mode = 'notes' | 'tasks' | 'matrix' | 'daily';
 
 /**
  * The scope a Tasks-mode view is showing.
@@ -43,6 +43,10 @@ interface UIState {
 
   selectedNoteId: string | null;
   setSelectedNoteId: (id: string | null) => void;
+
+  /** The currently-selected YYYY-MM-DD date in Daily mode. null = none selected. */
+  selectedDailyDate: string | null;
+  setSelectedDailyDate: (date: string | null) => void;
 
   taskScope: TaskScope;
   setTaskScope: (s: TaskScope) => void;
@@ -87,6 +91,9 @@ export const useUI = create<UIState>((set) => ({
 
   selectedNoteId: null,
   setSelectedNoteId: (id) => set({ selectedNoteId: id }),
+
+  selectedDailyDate: null,
+  setSelectedDailyDate: (date) => set({ selectedDailyDate: date }),
 
   taskScope: { kind: 'inbox' },
   setTaskScope: (s) => set({ taskScope: s }),

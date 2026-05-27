@@ -15,6 +15,7 @@ import { z } from 'zod';
 const ISO_8601 = z.string().datetime({ offset: false });
 const NoteId = z.string().uuid();
 const FolderId = z.string().uuid().nullable();
+const DailyDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
 // ── Canonical note shape (returned by the service) ──────────────────────────
 export const Note = z.object({
@@ -22,6 +23,8 @@ export const Note = z.object({
   title: z.string(),
   body: z.string(),
   folderId: FolderId,
+  /** NULL for regular notes; 'YYYY-MM-DD' for daily notes. */
+  dailyDate: DailyDate.nullable(),
   createdAt: ISO_8601,
   updatedAt: ISO_8601,
   deletedAt: ISO_8601.nullable(),
@@ -39,6 +42,8 @@ export const NoteCreateInput = z.object({
   // empty string is applied by the service so an explicit "" is unambiguous.
   body: z.string().max(1_000_000).optional(),
   folderId: FolderId.optional(),
+  /** Omit for regular notes; supply 'YYYY-MM-DD' to create a daily note. */
+  dailyDate: DailyDate.nullable().optional(),
 });
 export type NoteCreateInput = z.infer<typeof NoteCreateInput>;
 
@@ -53,8 +58,23 @@ export const NoteListInput = z.object({
   // Filter by folder. `null` means "notes not in any folder"; omit to match any.
   folderId: FolderId.optional(),
   limit: z.number().int().min(1).max(1000).optional(),
+  /**
+   * When true: return only daily notes (daily_date IS NOT NULL).
+   * When false/omitted: return only regular notes (daily_date IS NULL).
+   */
+  dailyOnly: z.boolean().optional(),
 });
 export type NoteListInput = z.infer<typeof NoteListInput>;
+
+/**
+ * Get or create the daily note for a specific calendar date.
+ * Returns the existing note if one already exists, otherwise creates a
+ * blank note and returns it. Idempotent — safe to call on every navigation.
+ */
+export const NoteGetOrCreateDailyInput = z.object({
+  date: DailyDate,
+});
+export type NoteGetOrCreateDailyInput = z.infer<typeof NoteGetOrCreateDailyInput>;
 
 export const NoteUpdateInput = z.object({
   id: NoteId,

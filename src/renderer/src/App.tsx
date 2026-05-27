@@ -6,6 +6,8 @@ import { TasksSidebar } from './features/tasks/TasksSidebar';
 import { TaskList } from './features/tasks/TaskList';
 import { MatrixSidebar } from './features/matrix/MatrixSidebar';
 import { MatrixView } from './features/matrix/MatrixView';
+import { DailySidebar } from './features/dailyNotes/DailySidebar';
+import { DailyMainPane } from './features/dailyNotes/DailyMainPane';
 import { CommandPalette } from './features/commandPalette/CommandPalette';
 import { HelpModal } from './features/help/HelpModal';
 import { SettingsModal } from './features/settings/SettingsModal';
@@ -108,6 +110,8 @@ export default function App(): JSX.Element {
               ? 'Notes sidebar'
               : mode === 'tasks'
               ? 'Tasks sidebar'
+              : mode === 'daily'
+              ? 'Daily notes sidebar'
               : 'Matrix sidebar'
           }
           className="flex h-full w-64 flex-col border-r border-gray-200 bg-gray-100 dark:border-gray-800 dark:bg-gray-950"
@@ -116,6 +120,8 @@ export default function App(): JSX.Element {
             <NoteList />
           ) : mode === 'tasks' ? (
             <TasksSidebar />
+          ) : mode === 'daily' ? (
+            <DailySidebar />
           ) : (
             <MatrixSidebar />
           )}
@@ -125,6 +131,8 @@ export default function App(): JSX.Element {
             <NotesMainPane />
           ) : mode === 'tasks' ? (
             <TaskList />
+          ) : mode === 'daily' ? (
+            <DailyMainPane />
           ) : (
             <MatrixView />
           )}
@@ -192,6 +200,9 @@ function TopBar(): JSX.Element {
       </ModeButton>
       <ModeButton active={mode === 'matrix'} onClick={() => setMode('matrix')}>
         Matrix
+      </ModeButton>
+      <ModeButton active={mode === 'daily'} onClick={() => setMode('daily')}>
+        Daily
       </ModeButton>
       <div className="flex-1" />
       <button

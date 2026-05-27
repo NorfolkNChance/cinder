@@ -3,6 +3,7 @@ import type {
   NoteCreateInput,
   NoteDeleteInput,
   NoteGetInput,
+  NoteGetOrCreateDailyInput,
   NoteListInput,
   NoteSearchInput,
   NoteUpdateInput,
@@ -86,6 +87,7 @@ declare global {
         update: (input: NoteUpdateInput) => Promise<Note | null>;
         delete: (input: NoteDeleteInput) => Promise<void>;
         search: (input: NoteSearchInput) => Promise<readonly Note[]>;
+        getOrCreateDaily: (input: NoteGetOrCreateDailyInput) => Promise<Note>;
       };
       attachments: {
         save: (input: AttachmentSaveInput) => Promise<AttachmentSaveResult>;

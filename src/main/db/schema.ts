@@ -40,6 +40,12 @@ export const notes = sqliteTable(
     title: text('title').notNull(),
     body: text('body').notNull().default(''),
     folderId: text('folder_id'),
+    /**
+     * `daily_date` is set for daily notes (Daily mode) and NULL for regular
+     * notes. Format: 'YYYY-MM-DD'. Daily notes are excluded from the main
+     * Notes list and only visible in Daily mode.
+     */
+    dailyDate: text('daily_date'),
     createdAt: text('created_at').notNull(),
     updatedAt: text('updated_at').notNull(),
     deletedAt: text('deleted_at'),
@@ -47,6 +53,7 @@ export const notes = sqliteTable(
   (table) => ({
     deletedAtIdx: index('notes_deleted_at_idx').on(table.deletedAt),
     updatedAtIdx: index('notes_updated_at_idx').on(table.updatedAt),
+    dailyDateIdx: index('notes_daily_date_idx').on(table.dailyDate),
   }),
 );
 

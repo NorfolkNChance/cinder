@@ -1,11 +1,12 @@
 import { v7 as uuidv7 } from 'uuid';
-import { and, desc, eq, isNull, type SQL } from 'drizzle-orm';
+import { and, desc, eq, isNotNull, isNull, type SQL } from 'drizzle-orm';
 import { getDb } from '../db/index';
 import { getDrizzle } from '../db/drizzle';
 import { notes } from '../db/schema';
 import type {
   Note,
   NoteCreateInput,
+  NoteGetOrCreateDailyInput,
   NoteListInput,
   NoteSearchInput,
   NoteUpdateInput,
@@ -32,6 +33,24 @@ function nowIso(): string {
   return new Date().toISOString();
 }
 
+/**
+ * Produce a human-readable title for a daily note from a YYYY-MM-DD string.
+ * Examples: "Tuesday, 27 May 2026", "Monday, 1 January 2025".
+ *
+ * Parsing `date + 'T12:00:00'` (noon, no timezone suffix) avoids the
+ * off-by-one that `new Date('2026-05-27')` causes in timezones west of UTC
+ * (which would parse as the previous day in local time).
+ */
+function formatDailyTitle(date: string): string {
+  const d = new Date(`${date}T12:00:00`);
+  return d.toLocaleDateString('en-GB', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+}
+
 async function getById(id: string): Promise<Note | null> {
   const db = getDrizzle();
   const rows = await db.select().from(notes).where(eq(notes.id, id)).limit(1);
@@ -47,6 +66,7 @@ export const notesService = {
       title: input.title,
       body: input.body ?? '',
       folderId: input.folderId ?? null,
+      dailyDate: input.dailyDate ?? null,
       createdAt: now,
       updatedAt: now,
       deletedAt: null,
@@ -70,6 +90,14 @@ export const notesService = {
           ? isNull(notes.folderId)
           : eq(notes.folderId, input.folderId),
       );
+    }
+    // Separate daily notes from regular notes — callers opt in to daily-only.
+    // Default (dailyOnly omitted/false): exclude daily notes (main Notes list).
+    // dailyOnly: true → include only daily notes (Daily mode sidebar).
+    if (input.dailyOnly) {
+      conditions.push(isNotNull(notes.dailyDate));
+    } else {
+      conditions.push(isNull(notes.dailyDate));
     }
 
     const where = conditions.length === 0 ? undefined : and(...conditions);
@@ -102,6 +130,39 @@ export const notesService = {
     await db.update(notes).set({ deletedAt: nowIso() }).where(eq(notes.id, id));
   },
 
+  /**
+   * Return the existing daily note for `date` (YYYY-MM-DD), or create a
+   * blank one and return it. Idempotent — calling twice with the same date
+   * always returns the same note id.
+   */
+  async getOrCreateDaily(input: NoteGetOrCreateDailyInput): Promise<Note> {
+    const db = getDrizzle();
+
+    // Look for an existing non-deleted daily note for this date.
+    const existing = await db
+      .select()
+      .from(notes)
+      .where(and(eq(notes.dailyDate, input.date), isNull(notes.deletedAt)))
+      .limit(1);
+
+    if (existing[0]) return existing[0] as Note;
+
+    // Create a blank daily note.
+    const now = nowIso();
+    const row: Note = {
+      id: uuidv7(),
+      title: formatDailyTitle(input.date),
+      body: '',
+      folderId: null,
+      dailyDate: input.date,
+      createdAt: now,
+      updatedAt: now,
+      deletedAt: null,
+    };
+    await db.insert(notes).values(row);
+    return row;
+  },
+
   search(input: NoteSearchInput): Promise<readonly Note[]> {
     const ftsQuery = buildFtsQuery(input.query);
     if (ftsQuery === null) return Promise.resolve([]);
@@ -122,6 +183,7 @@ export const notesService = {
                 notes.title        AS title,
                 notes.body         AS body,
                 notes.folder_id    AS folderId,
+                notes.daily_date   AS dailyDate,
                 notes.created_at   AS createdAt,
                 notes.updated_at   AS updatedAt,
                 notes.deleted_at   AS deletedAt

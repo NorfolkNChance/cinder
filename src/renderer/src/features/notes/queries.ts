@@ -6,6 +6,9 @@ import type {
   NoteUpdateInput,
 } from '../../../../shared/schemas/notes';
 
+/** Query key for the flat list of all daily notes. */
+const dailyNotesQueryKey = [...queryKeys.notes.all, 'daily'] as const;
+
 /**
  * TanStack Query hooks for the notes domain.
  *
@@ -88,6 +91,41 @@ export function useDeleteNote(): ReturnType<
     mutationFn: (id: string) => window.api.notes.delete({ id }),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: queryKeys.notes.all });
+    },
+  });
+}
+
+// ── Daily Notes ───────────────────────────────────────────────────────────────
+
+/**
+ * Fetch the flat list of all daily notes (daily_date IS NOT NULL).
+ * The DailySidebar groups them into a year → month → day tree.
+ */
+export function useDailyNotesList(): ReturnType<typeof useQuery<readonly Note[]>> {
+  return useQuery({
+    queryKey: dailyNotesQueryKey,
+    queryFn: () => window.api.notes.list({ dailyOnly: true, limit: 1000 }),
+  });
+}
+
+/**
+ * Get-or-create the daily note for a YYYY-MM-DD date string.
+ *
+ * Fires as a mutation (not a query) because it may have a write-side effect.
+ * On success:
+ *   - Invalidates the daily notes list so the sidebar tree reflects the new
+ *     note immediately.
+ *   - Returns the Note so the caller can open it in the editor.
+ */
+export function useGetOrCreateDaily(): ReturnType<
+  typeof useMutation<Note, Error, string>
+> {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (date: string) =>
+      window.api.notes.getOrCreateDaily({ date }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: dailyNotesQueryKey });
     },
   });
 }

@@ -5,6 +5,7 @@ import {
   NOTES_CREATE,
   NOTES_DELETE,
   NOTES_GET,
+  NOTES_GET_OR_CREATE_DAILY,
   NOTES_LIST,
   NOTES_SEARCH,
   NOTES_UPDATE,
@@ -53,6 +54,7 @@ import type {
   NoteCreateInput,
   NoteDeleteInput,
   NoteGetInput,
+  NoteGetOrCreateDailyInput,
   NoteListInput,
   NoteSearchInput,
   NoteUpdateInput,
@@ -140,6 +142,8 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke(NOTES_DELETE, input),
     search: (input: NoteSearchInput): Promise<readonly Note[]> =>
       ipcRenderer.invoke(NOTES_SEARCH, input),
+    getOrCreateDaily: (input: NoteGetOrCreateDailyInput): Promise<Note> =>
+      ipcRenderer.invoke(NOTES_GET_OR_CREATE_DAILY, input),
   },
   attachments: {
     save: (input: AttachmentSaveInput): Promise<AttachmentSaveResult> =>
