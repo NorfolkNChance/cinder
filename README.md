@@ -1,8 +1,10 @@
 # Cinder
 
+[![CI](https://github.com/NorfolkNChance/cinder/actions/workflows/ci.yml/badge.svg)](https://github.com/NorfolkNChance/cinder/actions/workflows/ci.yml)
+
 A local-first macOS notes-and-todos app. Markdown notes with WYSIWYG editing, a Todoist-equivalent todo system, and an Eisenhower matrix view — all in a hardened Electron shell.
 
-> **Status:** feature-complete through Phase 5. All core functionality is working and tested. Not yet distributed — see [Development](#development) to run locally.
+> **Status:** feature-complete and shipping. Download the latest signed and notarised DMG from [Releases](https://github.com/NorfolkNChance/cinder/releases), or see [Development](#development) to run locally.
 
 ---
 
@@ -50,8 +52,10 @@ Most notes-and-todos products require you to send your content to someone else's
 
 ### Settings
 - Persistent preferences stored in the encrypted database
+- **Appearance:** Auto / Light / Dark theme with live system-preference tracking
 - **Matrix:** urgency window (days ahead that count as urgent) and importance cutoff (which priorities are "important")
 - **Tasks:** default scope on startup (Inbox / Today / Upcoming), show-completed toggle
+- **Notifications:** enable or disable due-task macOS alerts
 - Changes take effect immediately; matrix updates live while the panel is open
 - Open with ⌘, or the ⚙ button in the toolbar
 
@@ -61,6 +65,18 @@ Most notes-and-todos products require you to send your content to someone else's
 - Export all tasks as `.csv` (includes project, labels, priority, recurrence, dates)
 - Full database backup as a `.db` snapshot
 - All operations use native macOS Save/Open dialogs — the app never touches arbitrary file paths
+
+### Triage queue
+- **"+ Todo"** button in the note editor captures a task without breaking your writing flow — the task is held in a Triage queue rather than going straight to Inbox
+- **⌘⇧Space** global shortcut opens a lightweight capture popup from the macOS menu-bar tray icon, even when Cinder is in the background
+- Each triage task is shown as a card with inline editing for title, description, priority, due date, and project; captured-from-note tasks show a clickable backlink to the source note
+- **Acknowledge** promotes the task into normal flow (Inbox or its assigned project) in one click; **Discard** hard-deletes noise captures
+- Normal views (Inbox, Today, Matrix, filters) stay clean — triage tasks are invisible until acknowledged
+
+### Due-task notifications
+- macOS native notifications for tasks due today and overdue tasks, checked every 15 minutes
+- Clicking a notification brings Cinder to the front and navigates to Tasks › Today
+- Toggled in Settings › Notifications (on by default)
 
 ### Auto-update
 - Checks for updates automatically 10 seconds after launch (production builds only)
@@ -129,7 +145,7 @@ npm ci
 | `npm test` | Vitest unit tests (279 tests across 15 suites) |
 | `npm run release` | Production build + electron-builder publish to GitHub Releases (requires `GH_TOKEN`) |
 
-For the signed and notarised release build pipeline, see [`docs/CI_CD_SETUP.md`](./docs/CI_CD_SETUP.md).
+For the signed and notarised release build pipeline, see the workflow files in [`.github/workflows/`](./.github/workflows/).
 
 ---
 
@@ -176,7 +192,7 @@ The renderer is treated as hostile. Every IPC channel is a public API and valida
 
 The full model is in [`ARCHITECTURE.md`](./ARCHITECTURE.md) §3.
 
-If you find a security issue, please report it privately rather than opening a public issue.
+If you find a security issue, please report it privately via [SECURITY.md](./SECURITY.md) rather than opening a public issue.
 
 ---
 
