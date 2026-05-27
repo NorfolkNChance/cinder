@@ -48,6 +48,7 @@
   "devDependencies": {
     "@electron-toolkit/preload": "^3.0.1",
     "@electron-toolkit/utils": "^3.0.0",
+    "@electron/notarize": "^3.1.1",
     "@electron/rebuild": "^3.7.1",
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^20.17.10",
