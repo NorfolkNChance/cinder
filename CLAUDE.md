@@ -44,15 +44,16 @@ npm run release      # production build + publish to GitHub Releases (needs GH_T
 After every feature session:
 
 1. **Verify** — `npm run typecheck && npm run lint` must both pass clean before committing.
-2. **Commit** — one commit per logical feature. Stage files selectively so each commit is self-contained. Prefer small focused commits over one large "session" commit.
-3. **Update CLAUDE.md** — add the feature to the "Current status" table and document any new patterns, gotchas, or architectural sections that would save time next session.
+2. **Update CLAUDE.md** — before staging, update:
+   - "Current status" table with the new feature
+   - Any new architectural sections, patterns, or gotchas discovered
+   - This file goes in the **same commit** as the feature code, not a separate one.
+3. **Commit** — one commit per logical feature. Stage files selectively so each commit is self-contained. Prefer small focused commits over one large "session" commit.
 
 ```sh
-git add <files>
+git add <feature files> CLAUDE.md
 git commit -m "feat: short description of what shipped"
 ```
-
-> **Bundler config filename gotcha:** electron-vite looks for `electron.vite.config.ts` (dot, not dash). A file named `electron-vite.config.ts` is silently ignored and defaults are used — leading to massive bundles (~20 MB) with native modules incorrectly inlined. If the main-process bundle size looks wrong, check the filename first.
 
 ---
 
@@ -92,6 +93,32 @@ These are enforced by ESLint and must never regress.
 7. **Node built-ins** (`fs`, `child_process`, `net`, `path`, `crypto`) must never be imported in renderer code. Architecturally impossible with `sandbox: true`, but ESLint catches it at the source.
 
 8. **Navigation guards** — `will-navigate` and `will-redirect` use the `URL` API to compare origins, not `String.startsWith()`. The `startsWith` approach is bypassable via basic-auth syntax (`http://localhost:5173@evil.com` passes a prefix check but navigates to `evil.com`). See `isAllowedNavigation()` in `src/main/index.ts`.
+
+---
+
+## Adding a new setting
+
+No migration required — the settings service fills missing DB rows from `DEFAULT_SETTINGS` at read time. Just:
+
+```ts
+// 1. src/shared/schemas/settings.ts — add the Zod validator, add to schema + defaults
+const MyFlag = z.boolean();
+
+export const AppSettingsSchema = z.object({
+  // ... existing keys ...
+  'feature.myFlag': MyFlag,
+});
+
+export const DEFAULT_SETTINGS: AppSettings = {
+  // ... existing defaults ...
+  'feature.myFlag': true,
+};
+
+// 2. src/renderer/src/features/settings/SettingsModal.tsx — add a Section + SidebarItem
+// 3. Done. The IPC layer (settings:getAll / settings:set) requires no changes.
+```
+
+**Do not** add a SQL migration for new settings keys — the `settings` table is a generic key/value store and the service handles missing rows automatically.
 
 ---
 
@@ -182,10 +209,15 @@ TanStack Query keys live in `src/renderer/src/lib/query-client.ts`. Mutations al
 
 ## Triage workflow
 
-Tasks created via the **"+ Todo"** button in the NoteEditor are stamped `triage = 1` and hidden from all normal views (Inbox, Today, matrix, filter DSL, etc.) until acknowledged.
+Tasks stamped `triage = 1` are hidden from all normal views (Inbox, Today, matrix, filter DSL, etc.) until acknowledged. Two entry points produce triage tasks:
+
+- **"+ Todo"** button in the NoteEditor header — also stores `sourceNoteId` so TriageCard can link back to the originating note.
+- **⌘⇧Space quick-capture** popup — no source note context; `sourceNoteId` is null.
+
+Key pieces:
 
 - **Triage view** in the Tasks sidebar shows only `triage = 1` tasks with an amber badge count.
-- **TriageCard** (`src/renderer/src/features/tasks/TriageCard.tsx`) renders each task with inline priority, due-date, and project controls.
+- **TriageCard** (`src/renderer/src/features/tasks/TriageCard.tsx`) renders each task with inline priority, due-date, project controls, and an `↗ [Note title]` backlink when `sourceNoteId` is set.
 - **Acknowledge** saves all setup fields and sets `triage = 0` in one mutation — the task then appears in Inbox or its assigned project.
 - The `tasksService.list()` always adds `AND triage = 0` by default; pass `triageOnly: true` in `TaskListInput` to fetch triage tasks.
 
@@ -233,7 +265,7 @@ src/
       schema.ts   ← Drizzle table definitions
       drizzle.ts  ← Drizzle instance (sqlite-proxy adapter)
       migrate.ts  ← migration runner
-    services/     ← business logic (notes, tasks, export, settings, updater, …)
+    services/     ← business logic (notes, tasks, export, settings, updater, notifier, …)
     security/     ← csp.ts, ipc-guard.ts, open-external-safe.ts
     protocol/     ← attachment:// custom protocol handler
     index.ts      ← BrowserWindow factory, navigation guards, app lifecycle
@@ -289,9 +321,12 @@ const input = { title, projectId: projectId ?? undefined };
 
 These have burned us before. Check here before debugging similar symptoms.
 
+**Bundler config filename**
+- electron-vite looks for `electron.vite.config.ts` (dot, not dash). A file named `electron-vite.config.ts` is silently ignored and defaults are used — leading to massive bundles (~20 MB) with native modules incorrectly inlined. If the main-process bundle size looks wrong, check the filename first.
+
 **Drizzle / async driver**
 - `@journeyapps/sqlcipher` is callback-based. Drizzle wraps it via `sqlite-proxy` making all queries async. Do **not** call `.all()` — it does not exist. Every query is `await db.select().from(table)...`.
-- The `listByFilter` function in `tasks.ts` drops to raw SQL via `db.all()` on the underlying `node-sqlite3` driver (not Drizzle) — that is the one place raw `.all()` is valid and intentional.
+- The `listByFilter` function in `tasks.ts` drops to raw SQL via `db.all()` on the underlying `node-sqlite3` driver — that is the one place raw `.all()` is valid and intentional. **When you add a new column to the `tasks` table, you must also add it to the explicit column list in `listByFilter`'s raw SQL string.** Drizzle's type inference won't catch the omission — the column will silently be absent from filter-DSL query results (the bug only surfaces when using a saved filter, not in normal list views).
 
 **Drag-and-drop in sandboxed Electron**
 - `DataTransferItem.getAsFile()` returns `null` during `dragenter` and `dragover` — file names and contents are only accessible in the `drop` handler. During `dragenter`, check `item.kind === 'file'` optimistically. Run the real extension check only in `handleDrop` via `importDroppedFiles`.
