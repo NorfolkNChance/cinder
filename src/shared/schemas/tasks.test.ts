@@ -176,6 +176,8 @@ describe('Task (canonical shape)', () => {
       createdAt: ISO,
       updatedAt: ISO,
       deletedAt: null,
+      triage: 0,
+      sourceNoteId: null,
     };
     expect(Task.parse(task)).toEqual(task);
   });

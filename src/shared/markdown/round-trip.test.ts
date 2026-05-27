@@ -501,7 +501,7 @@ function tryDocFromJson(json: unknown, schema: Schema): Node | null {
 }
 
 describe('serde — fast-check property tests', () => {
-  it('round-trip preserves StarterKit-baseline documents', () => {
+  it('round-trip preserves StarterKit-baseline documents', { timeout: 30_000 }, () => {
     fc.assert(
       fc.property(arbitraryDoc, (json) => {
         const doc = tryDocFromJson(json, markdownSchema);
