@@ -2,13 +2,16 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
   <dict>
-    <!-- Allow the app to run on Apple Silicon and Intel via hardened runtime -->
+    <!-- Required for V8 JIT compilation under hardened runtime.
+         Without this, Electron crashes at startup with
+         "Failed to reserve virtual memory for CodeRange". -->
     <key>com.apple.security.cs.allow-jit</key>
-    <false/>
+    <true/>
 
-    <!-- Enforce library validation: only Apple-signed or app-signed code loads -->
+    <!-- Native modules (e.g. @journeyapps/sqlcipher) are not Apple-signed,
+         so library validation must be relaxed to allow them to load. -->
     <key>com.apple.security.cs.disable-library-validation</key>
-    <false/>
+    <true/>
 
     <!-- Disallow DYLD environment variable injection -->
     <key>com.apple.security.cs.allow-dyld-environment-variables</key>
@@ -18,7 +21,7 @@
     <key>com.apple.security.cs.debugger</key>
     <false/>
 
-    <!-- Network access (required for update checks, if any) -->
+    <!-- Network access (required for update checks) -->
     <key>com.apple.security.network.client</key>
     <true/>
 
