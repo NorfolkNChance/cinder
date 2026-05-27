@@ -28,6 +28,7 @@ Full architectural spec: [`../ARCHITECTURE.md`](../ARCHITECTURE.md) — read it 
 | + | ADR process — `docs/adr/` with template, index, and ADR-0001–0003 |
 | + | CI/CD pipelines — GitHub Actions CI (PR/push) and Release (signed + notarised DMG on version tag) |
 | + | App icon — `build/icon.icns` wired into `electron-builder.yml` |
+| + | Security hardening — assertMainFrame reference identity, SHA-pinned actions, Dependabot, SECURITY.md |
 
 ---
 
@@ -359,6 +360,13 @@ These have burned us before. Check here before debugging similar symptoms.
 
 **`file://` URL origins**
 - `new URL('file:///path/to/file.html').origin` returns the *string* `"null"` (not the value `null`). Do not compare origins for `file://` URLs — compare the full `.href` instead.
+
+**`assertMainFrame` uses reference identity, not URL equality**
+- The guard in `src/main/security/ipc-guard.ts` checks `!event.senderFrame || event.senderFrame !== event.senderFrame.top`. Do not revert this to URL comparison — URL equality has two bypasses: a destroyed frame makes both sides `undefined` (which passes the `!==` check), and a subframe loaded from the same URL as the top frame also passes. Reference identity is unforgeable.
+
+**GitHub Actions: pin to commit SHAs, not mutable tags**
+- Both workflow files pin `actions/checkout`, `setup-node`, and `setup-python` to immutable commit SHAs with a `# vX.Y.Z` comment. The release workflow has access to signing certs and a `contents: write` token — mutable tags are the exact threat model where SHA pinning matters. Dependabot will keep the SHAs current via weekly PRs. Do not revert to `@v4`-style tags.
+- CI workflow has `permissions: contents: read` at the workflow level. Release workflow has `permissions: contents: write` (required to create GitHub Releases). Do not widen permissions beyond what each workflow actually needs.
 
 **Hardened runtime entitlements — non-negotiable for Electron**
 - `com.apple.security.cs.allow-jit` **must be `true`** in `build/entitlements.mac.plist`. V8 needs to map executable memory for JIT compilation. Setting it to `false` causes an immediate startup crash: `Fatal process out of memory: Failed to reserve virtual memory for CodeRange`. This is not optional — every Electron app requires it.
