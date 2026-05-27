@@ -25,6 +25,9 @@ Full architectural spec: [`../ARCHITECTURE.md`](../ARCHITECTURE.md) — read it 
 | + | Menu-bar quick-capture — tray icon + ⌘⇧Space global shortcut, frameless popup |
 | + | Due-task notifications — macOS alerts for tasks due today/overdue, 15-min checks |
 | + | Note → Task source link — triage tasks link back to the note they came from |
+| + | ADR process — `docs/adr/` with template, index, and ADR-0001–0003 |
+| + | CI/CD pipelines — GitHub Actions CI (PR/push) and Release (signed + notarised DMG on version tag) |
+| + | App icon — `build/icon.icns` wired into `electron-builder.yml` |
 
 ---
 
@@ -357,8 +360,64 @@ These have burned us before. Check here before debugging similar symptoms.
 **`file://` URL origins**
 - `new URL('file:///path/to/file.html').origin` returns the *string* `"null"` (not the value `null`). Do not compare origins for `file://` URLs — compare the full `.href` instead.
 
+**Hardened runtime entitlements — non-negotiable for Electron**
+- `com.apple.security.cs.allow-jit` **must be `true`** in `build/entitlements.mac.plist`. V8 needs to map executable memory for JIT compilation. Setting it to `false` causes an immediate startup crash: `Fatal process out of memory: Failed to reserve virtual memory for CodeRange`. This is not optional — every Electron app requires it.
+- `com.apple.security.cs.disable-library-validation` **must also be `true`**. Native modules like `@journeyapps/sqlcipher` are not Apple-signed; with library validation enforced the dynamic linker refuses to load them under hardened runtime.
+
+**`electron` must be in `devDependencies`, not `dependencies`**
+- electron-builder enforces this and fails the build with a hard error if `electron` appears under `dependencies`. It is a build tool, not a runtime dependency of the packaged app. Always install with `npm install --save-dev electron@...`.
+
+**electron-builder does not compile — run `npm run build` first**
+- `npx electron-builder` only packages already-compiled output. It does not invoke electron-vite. If `out/main/index.js` does not exist when electron-builder runs, it fails with `Application entry file was not found in this archive`. The release workflow runs `npm run build` (electron-vite compile) as a separate step before `npx electron-builder`.
+
+**`vite` is pinned to v7 — do not upgrade to v8 without migrating plugin-react**
+- `@vitejs/plugin-react@4` declares peer support for vite `^4–7` only. Upgrading vite to v8 breaks `npm ci` with an `ERESOLVE` peer conflict. The migration path to vite 8 requires `@vitejs/plugin-react@6`, which in turn requires `babel-plugin-react-compiler` as a peer dep — a deliberate migration, not a routine bump. Do not run `npm update` blindly.
+
 **Capture window and `window-all-closed`**
 - The capture popup is an always-hidden utility window. When the user closes the main window on macOS, `window-all-closed` fires but the app should keep running (tray icon stays). This works because macOS already skips `app.quit()` in the `window-all-closed` handler. The capture window is destroyed in `cleanupTray()` during `will-quit`. Do not add `captureWin` to any "visible windows" count that could trigger `app.quit()`.
+
+---
+
+## CI / CD and release process
+
+**Workflows** (`.github/workflows/`):
+
+| File | Trigger | What it does |
+|------|---------|--------------|
+| `ci.yml` | PR + push to `main` | typecheck → lint → test → unsigned build |
+| `release.yml` | Push of `v*.*.*` tag | typecheck → lint → `npm run build` → electron-builder (sign + notarise + publish) |
+
+**Cutting a release:**
+```sh
+npm version patch   # or minor / major — updates package.json, commits, tags
+git push origin main --follow-tags
+```
+Then go to GitHub → Releases, add release notes, and publish the draft.
+
+**Required GitHub secrets** (Settings → Secrets and variables → Actions):
+
+| Secret | Purpose |
+|--------|---------|
+| `CSC_LINK` | Base64-encoded `.p12` Developer ID certificate |
+| `CSC_KEY_PASSWORD` | Password for the `.p12` |
+| `APPLE_ID` | Apple ID email for notarisation |
+| `APPLE_APP_SPECIFIC_PASSWORD` | App-specific password from appleid.apple.com |
+| `APPLE_TEAM_ID` | 10-character team ID from developer.apple.com |
+
+`GITHUB_TOKEN` is injected automatically — no secret needed.
+
+**Verifying a signed build:**
+```sh
+spctl --assess --verbose=4 /Applications/Cinder.app        # should print "accepted, source=Notarized Developer ID"
+codesign -dv --verbose=4 /Applications/Cinder.app          # confirm Authority= and Notarization Ticket=stapled
+xcrun stapler validate /Applications/Cinder.app            # should print "The validate action worked!"
+```
+
+**Running the installed app with logs:**
+```sh
+/Applications/Cinder.app/Contents/MacOS/Cinder 2>&1 | tee ~/Desktop/cinder.log
+```
+Renderer logs go to DevTools (not stdout) — add `mainWindow.webContents.openDevTools()` in `src/main/index.ts` temporarily if needed.
 
 ---
 
