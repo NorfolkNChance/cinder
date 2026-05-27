@@ -71,6 +71,17 @@ export const SETTINGS_GET_ALL = 'settings:getAll' as const;
 /** Persist a single setting by key and return the updated settings object. */
 export const SETTINGS_SET = 'settings:set' as const;
 
+// ── Notifications ────────────────────────────────────────────────────────────
+/**
+ * Main → Renderer (push): one or more due/overdue tasks need attention.
+ * Renderer navigates to Tasks › Today in response.
+ */
+export const NOTIFY_TASK_DUE = 'notify:taskDue' as const;
+
+// ── Capture window ───────────────────────────────────────────────────────────
+/** Renderer (capture window) → Main: hide the capture popup. */
+export const CAPTURE_HIDE = 'capture:hide' as const;
+
 // ── Export ───────────────────────────────────────────────────────────────────
 /** Export a single note as a .md file — opens a Save dialog. */
 export const EXPORT_NOTE = 'export:note' as const;

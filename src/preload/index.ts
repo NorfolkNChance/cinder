@@ -45,6 +45,8 @@ import {
   UPDATE_CHECK,
   UPDATE_INSTALL,
   UPDATE_STATUS,
+  CAPTURE_HIDE,
+  NOTIFY_TASK_DUE,
 } from '../shared/ipc/channels';
 import type {
   Note,
@@ -224,6 +226,26 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke(SETTINGS_GET_ALL),
     set: (input: SettingsSetInput): Promise<AppSettings> =>
       ipcRenderer.invoke(SETTINGS_SET, input),
+  },
+  capture: {
+    /**
+     * Tell the main process to hide the capture popup window.
+     * Called by the capture renderer after task creation or Escape.
+     */
+    hide: (): Promise<void> => ipcRenderer.invoke(CAPTURE_HIDE),
+  },
+  notify: {
+    /**
+     * Subscribe to due/overdue task notifications pushed from the main process.
+     * The callback fires when the user clicks a system notification — navigate
+     * to Tasks › Today in response.
+     * Returns a cleanup function to unsubscribe.
+     */
+    onTaskDue: (cb: () => void): (() => void) => {
+      const handler = (_e: IpcRendererEvent): void => cb();
+      ipcRenderer.on(NOTIFY_TASK_DUE, handler);
+      return () => ipcRenderer.off(NOTIFY_TASK_DUE, handler);
+    },
   },
   update: {
     /**

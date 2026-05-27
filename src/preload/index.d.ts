@@ -142,6 +142,12 @@ declare global {
         getAll: () => Promise<AppSettings>;
         set: (input: SettingsSetInput) => Promise<AppSettings>;
       };
+      capture: {
+        hide: () => Promise<void>;
+      };
+      notify: {
+        onTaskDue: (cb: () => void) => () => void;
+      };
       update: {
         check: () => Promise<void>;
         install: () => Promise<void>;

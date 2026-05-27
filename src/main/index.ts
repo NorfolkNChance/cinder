@@ -17,7 +17,10 @@ import { registerSavedFiltersHandlers } from './ipc/savedFilters';
 import { registerExportHandlers } from './ipc/export';
 import { registerSettingsHandlers } from './ipc/settings';
 import { registerUpdateHandlers } from './ipc/update';
+import { registerCaptureHandlers } from './ipc/capture';
+import { initTray, cleanupTray } from './tray';
 import { initUpdater } from './services/updater';
+import { initNotifier, cleanupNotifier } from './services/notifier';
 import {
   registerAttachmentProtocol,
   registerAttachmentSchemePrivileges,
@@ -102,6 +105,12 @@ app.on('web-contents-created', (_event, contents) => {
   });
 });
 
+/**
+ * Current main window reference. Updated whenever a new window is created
+ * so that long-lived services (notifier) always resolve the right instance.
+ */
+let mainWindowRef: BrowserWindow | null = null;
+
 function createWindow(): BrowserWindow {
   const mainWindow = new BrowserWindow({
     width: 1280,
@@ -168,13 +177,16 @@ app.whenReady().then(async () => {
   registerExportHandlers();
   registerSettingsHandlers();
   registerUpdateHandlers();
+  registerCaptureHandlers();
 
-  const mainWindow = createWindow();
-  initUpdater(mainWindow);
+  mainWindowRef = createWindow();
+  initTray();
+  initUpdater(mainWindowRef);
+  initNotifier(() => mainWindowRef);
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
+      mainWindowRef = createWindow();
     }
   });
 });
@@ -183,6 +195,11 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
+});
+
+app.on('will-quit', () => {
+  cleanupNotifier();
+  cleanupTray();
 });
 
 // Block opening of new windows at the app level as a belt-and-suspenders measure
