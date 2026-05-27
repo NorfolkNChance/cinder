@@ -1,0 +1,29 @@
+version: 2
+updates:
+  # npm — covers Electron, electron-updater, TipTap/ProseMirror, SQLCipher binding, etc.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 10
+    groups:
+      # Batch TipTap extensions together — they version in lockstep
+      tiptap:
+        patterns:
+          - '@tiptap/*'
+      # Batch Electron core + tooling together
+      electron:
+        patterns:
+          - electron
+          - electron-builder
+          - electron-updater
+          - '@electron/*'
+
+  # GitHub Actions — covers checkout, setup-node, setup-python
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
