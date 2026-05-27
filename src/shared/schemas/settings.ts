@@ -38,6 +38,11 @@ const DefaultTaskScope = z.enum(['inbox', 'today', 'upcoming']);
 /** Whether the task list shows completed tasks by default. */
 const ShowCompleted = z.boolean();
 
+// ── Notifications ────────────────────────────────────────────────────────────
+
+/** Whether macOS notifications are enabled for due/overdue tasks. */
+const NotificationsEnabled = z.boolean();
+
 // ── Appearance ───────────────────────────────────────────────────────────────
 
 /** UI colour scheme preference. */
@@ -51,6 +56,7 @@ export const AppSettingsSchema = z.object({
   'tasks.defaultScope': DefaultTaskScope,
   'tasks.showCompleted': ShowCompleted,
   'appearance.theme': AppearanceTheme,
+  'notifications.enabled': NotificationsEnabled,
 });
 
 export type AppSettings = z.infer<typeof AppSettingsSchema>;
@@ -62,6 +68,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   'tasks.defaultScope': 'inbox',
   'tasks.showCompleted': false,
   'appearance.theme': 'auto',
+  'notifications.enabled': true,
 };
 
 // ── IPC input/output schemas ─────────────────────────────────────────────────

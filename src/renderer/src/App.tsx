@@ -38,6 +38,16 @@ export default function App(): JSX.Element {
   const openHelp = useUI((s) => s.openHelp);
   const openSettings = useUI((s) => s.openSettings);
   const helpOpen = useUI((s) => s.helpOpen);
+  const setMode = useUI((s) => s.setMode);
+  const setTaskScope = useUI((s) => s.setTaskScope);
+
+  // Navigate to Tasks › Today when the user clicks a due-task notification.
+  useEffect(() => {
+    return window.api.notify.onTaskDue(() => {
+      setMode('tasks');
+      setTaskScope({ kind: 'today' });
+    });
+  }, [setMode, setTaskScope]);
 
   // Global shortcuts — ⌘K, ⌘/, ?, ⌘,
   useEffect(() => {

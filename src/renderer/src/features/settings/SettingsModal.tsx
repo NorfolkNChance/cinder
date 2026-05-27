@@ -71,6 +71,7 @@ export function SettingsModal(): JSX.Element | null {
             Settings
           </p>
           <SidebarItem label="Appearance" icon="🎨" />
+          <SidebarItem label="Notifications" icon="🔔" />
           <SidebarItem label="Matrix" icon="🔲" />
           <SidebarItem label="Tasks" icon="✅" />
         </nav>
@@ -96,6 +97,8 @@ export function SettingsModal(): JSX.Element | null {
             ) : (
               <>
                 <AppearanceSection settings={settings} set={setWithSync} />
+                <div className="my-6 border-t border-gray-200 dark:border-gray-800" />
+                <NotificationsSection settings={settings} set={setWithSync} />
                 <div className="my-6 border-t border-gray-200 dark:border-gray-800" />
                 <MatrixSection settings={settings} set={setWithSync} />
                 <div className="my-6 border-t border-gray-200 dark:border-gray-800" />
@@ -177,6 +180,42 @@ function AppearanceSection({
             </button>
           ))}
         </div>
+      </Field>
+    </section>
+  );
+}
+
+// ── Notifications section ─────────────────────────────────────────────────────
+
+function NotificationsSection({
+  settings,
+  set,
+}: {
+  settings: AppSettings;
+  set: SetFn;
+}): JSX.Element {
+  const enabled = settings['notifications.enabled'];
+  return (
+    <section>
+      <SectionHeading icon="🔔" title="Notifications" />
+      <Field
+        label="Due-task alerts"
+        description="Show a macOS notification when tasks are due today or overdue. Checks every 15 minutes while the app is running."
+      >
+        <button
+          role="switch"
+          aria-checked={enabled}
+          onClick={() => set('notifications.enabled', !enabled)}
+          className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900 ${
+            enabled ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-700'
+          }`}
+        >
+          <span
+            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+              enabled ? 'translate-x-4' : 'translate-x-0'
+            }`}
+          />
+        </button>
       </Field>
     </section>
   );
