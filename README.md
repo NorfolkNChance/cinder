@@ -28,6 +28,12 @@ Most notes-and-todos products require you to send your content to someone else's
 - **Drag-and-drop import** — drop `.md`, `.markdown`, `.html`, or `.htm` files directly into the sidebar or the empty state; HTML is converted to Markdown automatically via Turndown
 - **Export** — export any note as a `.md` file, or all notes to a folder of `.md` files, via a native Save dialog
 
+### Daily Notes
+- **One note per calendar day**, auto-created on first access — no setup required
+- **Today → shortcut** in the sidebar always opens the current day's note
+- **Collapsible year → month → day tree** shows every day you've written; navigate with a single click
+- **Fully integrated** — daily notes support attachments, the triage "+ Todo" button, FTS5 search, and Markdown export; they're invisible in the main Notes list to keep both areas clean
+
 ### Tasks
 - **Full task CRUD** with title, description, priority (P1–P4), due date, and project assignment
 - **Projects and sections** — hierarchical organisation with manual ordering
@@ -48,7 +54,7 @@ Most notes-and-todos products require you to send your content to someone else's
 
 ### ⌘K Command Palette
 - Fuzzy-match search across all navigation targets, task scopes, projects, labels, saved filters, and actions
-- Navigate to Notes, Tasks, or Matrix; jump to any project or label; create notes; open Help, Settings, or trigger exports — all from the keyboard
+- Navigate to Notes, Tasks, Matrix, or Daily; jump to any project or label; create notes; open Help, Settings, or trigger exports — all from the keyboard
 
 ### Settings
 - Persistent preferences stored in the encrypted database

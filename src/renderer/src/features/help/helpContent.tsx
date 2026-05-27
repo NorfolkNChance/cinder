@@ -138,14 +138,14 @@ export const HELP_SECTIONS: HelpSection[] = [
           leaves your device.
         </P>
 
-        <H3>Two modes</H3>
+        <H3>Four modes</H3>
         <P>
-          Switch between <strong className="text-gray-800 dark:text-gray-200">Notes</strong> and{' '}
-          <strong className="text-gray-800 dark:text-gray-200">Tasks</strong> using the buttons at
-          the top, or open the{' '}
-          <strong className="text-gray-800 dark:text-gray-200">Matrix</strong> for an Eisenhower
-          view of your tasks. The keyboard shortcut{' '}
-          <Kbd>⌘K</Kbd> opens the command palette from anywhere.
+          Switch between{' '}
+          <strong className="text-gray-800 dark:text-gray-200">Notes</strong>,{' '}
+          <strong className="text-gray-800 dark:text-gray-200">Tasks</strong>,{' '}
+          <strong className="text-gray-800 dark:text-gray-200">Matrix</strong>, and{' '}
+          <strong className="text-gray-800 dark:text-gray-200">Daily</strong> using the buttons at
+          the top. <Kbd>⌘K</Kbd> opens the command palette from anywhere.
         </P>
 
         <H3>Five things to try first</H3>
@@ -164,7 +164,7 @@ export const HELP_SECTIONS: HelpSection[] = [
             Open Matrix mode to see all tasks sorted into quadrants.
           </li>
           <li>
-            Press <Kbd>⌘K</Kbd> and start typing to jump anywhere instantly.
+            Switch to Daily and click <strong className="text-gray-800 dark:text-gray-200">Today →</strong> to open today&apos;s journal entry.
           </li>
         </ol>
       </div>
@@ -176,7 +176,7 @@ export const HELP_SECTIONS: HelpSection[] = [
     id: 'notes',
     title: 'Notes',
     icon: '📝',
-    keywords: ['markdown', 'editor', 'tiptap', 'prosemirror', 'write', 'new note'],
+    keywords: ['markdown', 'editor', 'tiptap', 'prosemirror', 'write', 'new note', 'search', 'attach', 'image', 'import'],
     render: () => (
       <div>
         <H2>Notes</H2>
@@ -192,6 +192,7 @@ export const HELP_SECTIONS: HelpSection[] = [
             { keys: ['⌘N'], description: 'Create a new note' },
             { keys: ['⌘⌫'], description: 'Delete the selected note' },
             { keys: ['↑↓'], description: 'Navigate the note list' },
+            { keys: ['⌘S'], description: 'Save immediately (autosave also runs after 500 ms)' },
           ]}
         />
 
@@ -213,9 +214,92 @@ export const HELP_SECTIONS: HelpSection[] = [
           ]}
         />
 
+        <H3>Search</H3>
+        <P>
+          The search bar at the top of the Notes sidebar does full-text search
+          across all note titles and bodies. Results update as you type (with a
+          short debounce). Click any result to open the note.
+        </P>
+
+        <H3>Attachments</H3>
+        <P>
+          Paste or drag an image directly into the editor to embed it. Images
+          are stored in your app data folder and served via a private{' '}
+          <Code>attachment://</Code> protocol — they never leave your machine.
+        </P>
+
+        <H3>Importing files</H3>
+        <P>
+          Drop <Code>.md</Code>, <Code>.markdown</Code>, <Code>.html</Code>, or{' '}
+          <Code>.htm</Code> files onto the sidebar or the empty main pane to
+          import them as notes. HTML files are automatically converted to
+          Markdown via Turndown.
+        </P>
+
+        <H3>Capturing a task from a note</H3>
+        <P>
+          The <strong className="text-gray-800 dark:text-gray-200">+ Todo</strong> button in the
+          editor toolbar creates a task linked to the current note and places
+          it in the Triage queue — so it won't clutter Inbox until you decide
+          what to do with it. See the <em>Triage &amp; Capture</em> section for details.
+        </P>
+
         <Callout type="tip">
           Note titles are taken from the first line of content. Keep your first
           line short and descriptive — it's what appears in the sidebar list.
+        </Callout>
+      </div>
+    ),
+  },
+
+  // ── Daily Notes ──────────────────────────────────────────────────────────
+  {
+    id: 'daily-notes',
+    title: 'Daily Notes',
+    icon: '📅',
+    keywords: ['daily', 'journal', 'diary', 'today', 'date', 'calendar', 'day'],
+    render: () => (
+      <div>
+        <H2>Daily Notes</H2>
+        <P>
+          Daily Notes is a fourth mode (alongside Notes, Tasks, and Matrix)
+          designed for journalling and day-by-day writing. Each calendar day gets
+          exactly one note, created automatically the first time you open it.
+        </P>
+
+        <H3>Opening a day</H3>
+        <P>
+          Click the <strong className="text-gray-800 dark:text-gray-200">Daily</strong> button in
+          the toolbar, then click{' '}
+          <strong className="text-gray-800 dark:text-gray-200">Today →</strong> to open
+          today&apos;s note. If no note exists for today, one is created instantly
+          with the date as its title (e.g. <em>Wednesday, 27 May 2026</em>).
+        </P>
+
+        <H3>Navigating the sidebar tree</H3>
+        <P>
+          Past days with existing notes appear in a collapsible tree organised
+          by year → month → day. Click any date row to open that note. The most
+          recent year and month are expanded by default; older periods are
+          collapsed.
+        </P>
+
+        <H3>How daily notes relate to regular notes</H3>
+        <P>
+          Daily notes are stored in the same database as regular notes but are
+          kept entirely separate:
+        </P>
+        <ul className="mb-3 ml-4 list-disc space-y-1.5 text-sm text-gray-600 dark:text-gray-400">
+          <li>They do <strong className="text-gray-700 dark:text-gray-300">not</strong> appear in the main Notes list.</li>
+          <li>They <strong className="text-gray-700 dark:text-gray-300">are</strong> included in full-text search.</li>
+          <li>They can be exported as <Code>.md</Code> files via the export menu.</li>
+          <li>The <strong className="text-gray-700 dark:text-gray-300">+ Todo</strong> button works inside daily notes — triage tasks link back to the daily note they came from.</li>
+        </ul>
+
+        <Callout type="tip">
+          There is one note per calendar day — clicking <strong className="text-gray-800 dark:text-gray-200">Today →</strong> always
+          opens the same note regardless of how many times you click it. You
+          cannot accidentally create duplicates.
         </Callout>
       </div>
     ),
@@ -309,6 +393,105 @@ Weekly review every monday p2
     ),
   },
 
+  // ── Triage & Capture ─────────────────────────────────────────────────────
+  {
+    id: 'triage',
+    title: 'Triage & Capture',
+    icon: '📥',
+    keywords: ['triage', 'capture', 'quick capture', 'todo', 'tray', 'menu bar', 'global shortcut', 'acknowledge', 'discard', 'inbox'],
+    render: () => (
+      <div>
+        <H2>Triage &amp; Capture</H2>
+        <P>
+          Triage is a holding area for newly captured tasks. Tasks land here
+          before entering Inbox so you can add context (priority, due date,
+          project) without interrupting what you were doing.
+        </P>
+
+        <H3>Two ways to capture a task</H3>
+        <div className="mb-4 overflow-hidden rounded-lg border border-gray-200 text-sm dark:border-gray-800">
+          <div className="flex items-start gap-3 border-b border-gray-200/50 px-3 py-2.5 dark:border-gray-800/50">
+            <span className="w-36 shrink-0 font-medium text-gray-700 dark:text-gray-300">+ Todo button</span>
+            <span className="text-gray-500">Appears in the editor toolbar while writing a note. Creates a task linked to that note — the triage card shows a backlink so you can jump back.</span>
+          </div>
+          <div className="flex items-start gap-3 px-3 py-2.5">
+            <span className="w-36 shrink-0 font-medium text-gray-700 dark:text-gray-300"><Kbd>⌘⇧Space</Kbd></span>
+            <span className="text-gray-500">Global shortcut — works even when Cinder is in the background. Opens a lightweight popup from the macOS menu-bar tray icon. The same natural-language parser as quick-add is available here.</span>
+          </div>
+        </div>
+
+        <H3>Triage view</H3>
+        <P>
+          In Tasks mode, click <strong className="text-gray-800 dark:text-gray-200">Triage</strong>{' '}
+          in the sidebar (shown with an amber badge count when tasks are waiting).
+          Each card lets you set title, description, priority, due date, and
+          project before deciding what to do with it.
+        </P>
+
+        <H3>Acknowledge and Discard</H3>
+        <ul className="mb-3 ml-4 list-disc space-y-1.5 text-sm text-gray-600 dark:text-gray-400">
+          <li>
+            <strong className="text-gray-700 dark:text-gray-300">Acknowledge</strong> — promotes the task into normal flow (Inbox, or its assigned project if you set one). It then appears in all normal views.
+          </li>
+          <li>
+            <strong className="text-gray-700 dark:text-gray-300">Discard</strong> — hard-deletes the task. Use this for noise captures you decide you don't need.
+          </li>
+        </ul>
+
+        <Callout type="tip">
+          Triage tasks are completely invisible in Inbox, Today, Upcoming, Matrix,
+          and saved filters until acknowledged — they won't pollute your normal
+          workflow while they sit unprocessed.
+        </Callout>
+      </div>
+    ),
+  },
+
+  // ── Export & Backup ──────────────────────────────────────────────────────
+  {
+    id: 'export',
+    title: 'Export & Backup',
+    icon: '💾',
+    keywords: ['export', 'backup', 'csv', 'markdown', 'download', 'save', 'file'],
+    render: () => (
+      <div>
+        <H2>Export &amp; Backup</H2>
+        <P>
+          All export and backup operations open a native macOS Save dialog — the
+          app never reads or writes arbitrary file paths.
+        </P>
+
+        <H3>Export options</H3>
+        <div className="mb-4 overflow-hidden rounded-lg border border-gray-200 text-sm dark:border-gray-800">
+          {[
+            ['Export note', 'Save the currently open note as a .md file.'],
+            ['Export all notes', 'Save every note as a .md file into a folder you choose. Filenames are collision-safe.'],
+            ['Export tasks', 'Save all active tasks as a .csv file with project, labels, priority, recurrence, and date columns.'],
+            ['Backup database', 'Copy the encrypted .db file to a location you choose. Restoring: replace the database file in the app data folder.'],
+          ].map(([name, desc]) => (
+            <div key={name} className="flex items-start gap-3 border-b border-gray-200/50 px-3 py-2 dark:border-gray-800/50 last:border-b-0">
+              <span className="w-36 shrink-0 font-medium text-gray-700 dark:text-gray-300">{name}</span>
+              <span className="text-gray-500">{desc}</span>
+            </div>
+          ))}
+        </div>
+
+        <H3>Accessing the export menu</H3>
+        <P>
+          Click the export icon in the toolbar, or press <Kbd>⌘K</Kbd> and
+          search for "export".
+        </P>
+
+        <Callout>
+          The database backup is the encrypted SQLite file. The encryption key
+          lives in your macOS Keychain and is <strong className="text-blue-300">not</strong>{' '}
+          included in the backup — keep a note of your device or ensure iCloud
+          Keychain is syncing if you plan to restore on a new machine.
+        </Callout>
+      </div>
+    ),
+  },
+
   // ── Keyboard Shortcuts ───────────────────────────────────────────────────
   {
     id: 'shortcuts',
@@ -374,6 +557,15 @@ Weekly review every monday p2
             { keys: ['Click card'], description: 'Open task detail side panel' },
             { keys: ['📷 Snapshot'], description: 'Freeze quadrant membership' },
             { keys: ['🔴 Live'], description: 'Resume live classification' },
+          ]}
+        />
+
+        <H3>Daily mode</H3>
+        <ShortcutTable
+          rows={[
+            { keys: ['Today →'], description: 'Open (or create) today\'s note' },
+            { keys: ['Click date row'], description: 'Open that day\'s note' },
+            { keys: ['▶ year / month'], description: 'Expand or collapse a group' },
           ]}
         />
       </div>
