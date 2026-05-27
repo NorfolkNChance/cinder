@@ -59,10 +59,13 @@ After every feature session:
    - "Current status" table with the new feature
    - Any new architectural sections, patterns, or gotchas discovered
    - This file goes in the **same commit** as the feature code, not a separate one.
-4. **Commit** — one commit per logical feature. Stage files selectively so each commit is self-contained. Prefer small focused commits over one large "session" commit.
+4. **Update in-app help** — every user-visible feature must be documented in `src/renderer/src/features/help/helpContent.tsx`. Add a new `HelpSection` entry or extend an existing one. See the "In-app help" section below for the structure.
+5. **Update README.md** — add the feature to the "What works today" section so the project page stays current.
+6. **Commit** — one commit per logical feature. Stage files selectively so each commit is self-contained. Prefer small focused commits over one large "session" commit.
 
 ```sh
-git add <feature files> docs/adr/NNNN-*.md docs/adr/README.md CLAUDE.md
+git add <feature files> docs/adr/NNNN-*.md docs/adr/README.md CLAUDE.md \
+        src/renderer/src/features/help/helpContent.tsx README.md
 git commit -m "feat: short description of what shipped"
 ```
 
@@ -233,6 +236,34 @@ Key pieces:
 - **TriageCard** (`src/renderer/src/features/tasks/TriageCard.tsx`) renders each task with inline priority, due-date, project controls, and an `↗ [Note title]` backlink when `sourceNoteId` is set.
 - **Acknowledge** saves all setup fields and sets `triage = 0` in one mutation — the task then appears in Inbox or its assigned project.
 - The `tasksService.list()` always adds `AND triage = 0` by default; pass `triageOnly: true` in `TaskListInput` to fetch triage tasks.
+
+---
+
+## In-app help
+
+The full in-app documentation lives in a single file:
+**`src/renderer/src/features/help/helpContent.tsx`**
+
+It exports `HELP_SECTIONS: HelpSection[]` — an array of section objects. Each section has:
+
+```ts
+{
+  id: string;       // unique, used as anchor/key
+  title: string;    // shown in the section list and search results
+  icon: string;     // emoji displayed next to the title
+  keywords: string[]; // extra search terms beyond the title
+  render: () => JSX.Element; // full section content
+}
+```
+
+**Shared style helpers** (`H2`, `H3`, `P`, `Code`, `CodeBlock`, `Kbd`, `Callout`, `ShortcutTable`) are defined at the top of the file — use them for consistent typography. Do not write raw `<h2>`, `<p>`, etc.
+
+**Adding a new section:**
+1. Add a new object to `HELP_SECTIONS` in the appropriate position (sections appear in list order).
+2. Add relevant `keywords` — the search filter matches against both `title` and `keywords`.
+3. Run `npm run typecheck` — the `render` return type is checked.
+
+**Rule:** Every user-visible feature must have a help section or be covered within an existing one. When shipping a feature, updating the help file is part of the definition of done (step 4 of the development workflow above).
 
 ---
 
