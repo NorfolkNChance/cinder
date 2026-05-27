@@ -44,16 +44,24 @@ npm run release      # production build + publish to GitHub Releases (needs GH_T
 After every feature session:
 
 1. **Verify** — `npm run typecheck && npm run lint` must both pass clean before committing.
-2. **Update CLAUDE.md** — before staging, update:
+2. **Write an ADR** — if the session involved a significant architectural decision (new pattern, non-obvious trade-off, or a choice between competing approaches that was discussed and resolved through prompting), capture it as an ADR **before** committing:
+   - Copy `docs/adr/template.md` to `docs/adr/NNNN-short-title.md` (next sequential number).
+   - Fill in Context, Decision, Alternatives considered, and Consequences.
+   - Add a row to the index table in `docs/adr/README.md`.
+   - Include the ADR file(s) in the **same commit** as the feature code.
+   - ADRs are write-once. If a decision is later reversed, mark the old record `Superseded by [NNNN](NNNN-...)` and write a new one.
+3. **Update CLAUDE.md** — before staging, update:
    - "Current status" table with the new feature
    - Any new architectural sections, patterns, or gotchas discovered
    - This file goes in the **same commit** as the feature code, not a separate one.
-3. **Commit** — one commit per logical feature. Stage files selectively so each commit is self-contained. Prefer small focused commits over one large "session" commit.
+4. **Commit** — one commit per logical feature. Stage files selectively so each commit is self-contained. Prefer small focused commits over one large "session" commit.
 
 ```sh
-git add <feature files> CLAUDE.md
+git add <feature files> docs/adr/NNNN-*.md docs/adr/README.md CLAUDE.md
 git commit -m "feat: short description of what shipped"
 ```
+
+**When does an ADR apply?** Roughly: if you would put the decision in a "Key tech decisions" table row, or if a future developer would reasonably ask "why was this done this way?", write the ADR. Routine implementation choices (component structure, variable naming) do not need one.
 
 ---
 

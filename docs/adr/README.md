@@ -25,3 +25,5 @@ Status: Proposed | Accepted | Deprecated | Superseded by [NNNN](NNNN-...)
 | # | Title | Status |
 |---|-------|--------|
 | [0001](0001-sqlcipher-binding.md) | SQLCipher binding: `@journeyapps/sqlcipher` | Accepted |
+| [0002](0002-triage-queue-for-note-captured-tasks.md) | Triage queue for note-captured tasks | Accepted |
+| [0003](0003-capture-window-url-query-param.md) | Shared renderer bundle for capture popup via `?mode=capture` | Accepted |
