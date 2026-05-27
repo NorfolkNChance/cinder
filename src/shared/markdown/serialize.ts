@@ -148,7 +148,7 @@ function renderInline(node: Node): string {
       const altPart = escapeImageAlt(alt);
       const titlePart =
         title !== null && title !== undefined && title.length > 0
-          ? ` "${title.replace(/"/g, '\\"')}"`
+          ? ` "${title.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
           : '';
       out += `![${altPart}](<${src}>${titlePart})`;
     }
