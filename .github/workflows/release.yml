@@ -33,7 +33,10 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Build, sign, notarise and publish
+      - name: Compile (electron-vite)
+        run: npm run build
+
+      - name: Package, sign, notarise and publish
         env:
           # Signing — picked up automatically by electron-builder
           CSC_LINK: ${{ secrets.CSC_LINK }}
