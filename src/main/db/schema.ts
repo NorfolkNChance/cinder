@@ -182,6 +182,15 @@ export const tasks = sqliteTable(
      * are set up and acknowledged in the dedicated Triage scope.
      */
     triage: integer('triage').notNull().default(0),
+    /**
+     * The note this task was created from, if any. Set when a task is
+     * created via the "+ Todo" button in the NoteEditor or the quick-
+     * capture popup while viewing a note. ON DELETE SET NULL so the task
+     * survives if the source note is later deleted.
+     */
+    sourceNoteId: text('source_note_id').references(() => notes.id, {
+      onDelete: 'set null',
+    }),
   },
   (table) => ({
     projectIdx: index('tasks_project_idx').on(table.projectId),
@@ -191,6 +200,7 @@ export const tasks = sqliteTable(
     completedAtIdx: index('tasks_completed_at_idx').on(table.completedAt),
     deletedAtIdx: index('tasks_deleted_at_idx').on(table.deletedAt),
     triageIdx: index('tasks_triage_idx').on(table.triage),
+    sourceNoteIdx: index('tasks_source_note_idx').on(table.sourceNoteId),
   }),
 );
 

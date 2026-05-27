@@ -1,7 +1,9 @@
 import { useState, useCallback } from 'react';
 import clsx from 'clsx';
 import { useUpdateTask, useDeleteTask, useProjectsList } from './queries';
+import { useNote } from '../notes/queries';
 import { formatDueDate } from '../../lib/dates';
+import { useUI } from '../../state/ui';
 import type { TaskWithLabels } from '../../../../shared/schemas/tasks';
 
 interface TriageCardProps {
@@ -149,9 +151,7 @@ export function TriageCard({ task }: TriageCardProps): JSX.Element {
 
       {/* Actions */}
       <div className="flex items-center justify-between">
-        <p className="text-[11px] text-gray-400 dark:text-gray-600">
-          Added from a note — set it up, then acknowledge to move it into your workflow.
-        </p>
+        <SourceNoteLink sourceNoteId={task.sourceNoteId} />
         <div className="flex items-center gap-2">
           <button
             onClick={onDelete}
@@ -170,6 +170,46 @@ export function TriageCard({ task }: TriageCardProps): JSX.Element {
         </div>
       </div>
     </li>
+  );
+}
+
+/**
+ * Shows a clickable link back to the source note when the task was created
+ * via the NoteEditor "+ Todo" button.
+ *
+ * Rendered as a separate component so `useNote` is only called (and the
+ * IPC query is only fired) when there is actually a sourceNoteId — React
+ * mounts/unmounts this based on the conditional in TriageCard.
+ */
+function SourceNoteLink({
+  sourceNoteId,
+}: {
+  sourceNoteId: string | null;
+}): JSX.Element {
+  const { data: note } = useNote(sourceNoteId);
+  const setMode = useUI((s) => s.setMode);
+  const setSelectedNoteId = useUI((s) => s.setSelectedNoteId);
+
+  if (sourceNoteId === null || note === null || note === undefined) {
+    return (
+      <p className="text-[11px] text-gray-400 dark:text-gray-600">
+        Set it up, then acknowledge to move it into your workflow.
+      </p>
+    );
+  }
+
+  return (
+    <button
+      onClick={() => {
+        setMode('notes');
+        setSelectedNoteId(sourceNoteId);
+      }}
+      className="flex items-center gap-1 text-[11px] text-indigo-500 hover:text-indigo-600 hover:underline focus:outline-none focus:ring-1 focus:ring-indigo-400 rounded dark:text-indigo-400 dark:hover:text-indigo-300"
+      title="Open source note"
+    >
+      <span aria-hidden="true">↗</span>
+      {note.title !== '' ? note.title : 'Untitled note'}
+    </button>
   );
 }
 

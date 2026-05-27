@@ -51,6 +51,12 @@ export const Task = z.object({
    * Stored as INTEGER in SQLite because SQLite has no native boolean.
    */
   triage: z.number().int().min(0).max(1),
+  /**
+   * The note this task was created from, or null.
+   * Set at creation time by the NoteEditor "+ Todo" button.
+   * Remains set after acknowledgement so the link persists in TaskItem.
+   */
+  sourceNoteId: Uuid.nullable(),
 });
 export type Task = z.infer<typeof Task>;
 
@@ -86,6 +92,11 @@ export const TaskCreateInput = z.object({
    * note). Omit (or pass 0) for a normal task that goes straight to Inbox.
    */
   triage: z.union([z.literal(0), z.literal(1)]).optional(),
+  /**
+   * ID of the note this task was created from, if any. Set by the
+   * NoteEditor "+ Todo" button. Null for tasks created elsewhere.
+   */
+  sourceNoteId: Uuid.nullable().optional(),
 });
 export type TaskCreateInput = z.infer<typeof TaskCreateInput>;
 

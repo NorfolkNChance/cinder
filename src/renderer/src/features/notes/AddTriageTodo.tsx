@@ -3,6 +3,8 @@ import { useUI } from '../../state/ui';
 import { useCreateTask } from '../tasks/queries';
 
 interface AddTriageTodoProps {
+  /** ID of the current note — stored on the task as sourceNoteId. */
+  noteId: string;
   /** Title of the current note — offered as default task title. */
   noteTitle: string;
 }
@@ -17,7 +19,7 @@ interface AddTriageTodoProps {
  * The popover closes on Escape, on Enter (after creation), or when the
  * user clicks outside.
  */
-export function AddTriageTodo({ noteTitle }: AddTriageTodoProps): JSX.Element {
+export function AddTriageTodo({ noteId, noteTitle }: AddTriageTodoProps): JSX.Element {
   const [open, setOpen] = useState(false);
   const [taskTitle, setTaskTitle] = useState('');
   const createTask = useCreateTask();
@@ -51,7 +53,7 @@ export function AddTriageTodo({ noteTitle }: AddTriageTodoProps): JSX.Element {
 
   const submit = useCallback(async () => {
     const title = taskTitle.trim() || noteTitle.trim() || 'Untitled todo';
-    await createTask.mutateAsync({ title, triage: 1 });
+    await createTask.mutateAsync({ title, triage: 1, sourceNoteId: noteId });
     setOpen(false);
     showToast('Added to Triage — open Tasks › Triage to review', 'success');
   }, [taskTitle, noteTitle, createTask, showToast]);

@@ -145,7 +145,7 @@ export function NoteEditor({ noteId }: NoteEditorProps): JSX.Element {
           >
             {draft.dirty ? 'Unsaved…' : 'Saved'}
           </span>
-          <AddTriageTodo noteTitle={draft.title} />
+          <AddTriageTodo noteId={note.id} noteTitle={draft.title} />
           <ExportMenu noteId={note.id} />
         </div>
       </div>

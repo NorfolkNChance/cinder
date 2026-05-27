@@ -68,6 +68,7 @@ export const tasksService = {
       updatedAt: now,
       deletedAt: null,
       triage: input.triage ?? 0,
+      sourceNoteId: input.sourceNoteId ?? null,
     };
     await db.insert(tasks).values(row);
 
@@ -295,7 +296,8 @@ async function listByFilter(
                       completed_at AS completedAt,
                       created_at AS createdAt, updated_at AS updatedAt,
                       deleted_at AS deletedAt,
-                      triage
+                      triage,
+                      source_note_id AS sourceNoteId
                  FROM tasks
                 WHERE ${where}
                 ORDER BY "order" ASC, created_at ASC
