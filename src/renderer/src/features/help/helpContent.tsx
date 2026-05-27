@@ -1,3 +1,5 @@
+import { useState, useEffect } from 'react';
+
 /**
  * Help documentation content.
  *
@@ -946,5 +948,67 @@ Take vitamins every day`}</CodeBlock>
         />
       </div>
     ),
+  },
+
+  // ── About ────────────────────────────────────────────────────────────────
+  {
+    id: 'about',
+    title: 'About',
+    icon: 'ℹ️',
+    keywords: ['version', 'about', 'info', 'cinder', 'build', 'release'],
+    render: function AboutSection() {
+      const [version, setVersion] = useState<string | null>(null);
+
+      useEffect(() => {
+        void window.api.app.getVersion().then(setVersion);
+      }, []);
+
+      return (
+        <div>
+          <H2>About Cinder</H2>
+          <P>
+            A local-first notes and tasks app for macOS. All data is stored
+            on your machine in an AES-256 encrypted SQLite database — no
+            account, no server, nothing leaves your device.
+          </P>
+
+          <div className="mb-6 overflow-hidden rounded-lg border border-gray-200 text-sm dark:border-gray-800">
+            {(
+              [
+                ['Version', version ?? '…'],
+                ['Platform', 'macOS'],
+                ['Storage', 'Encrypted SQLite (AES-256, SQLCipher)'],
+                ['Key storage', 'macOS Keychain'],
+              ] as const
+            ).map(([label, value]) => (
+              <div
+                key={label}
+                className="flex items-center gap-3 border-b border-gray-200/50 px-3 py-2 last:border-b-0 dark:border-gray-800/50"
+              >
+                <span className="w-28 shrink-0 font-medium text-gray-700 dark:text-gray-300">
+                  {label}
+                </span>
+                <span
+                  className={`font-mono text-[12px] ${
+                    label === 'Version'
+                      ? 'text-emerald-700 dark:text-emerald-300'
+                      : 'text-gray-600 dark:text-gray-400'
+                  }`}
+                >
+                  {value}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <Callout type="tip">
+            Updates are delivered automatically in the background and
+            verified against the code-signing certificate before
+            installation. You&apos;ll see a banner at the bottom of the
+            screen when a new version is ready to apply.
+          </Callout>
+        </div>
+      );
+    },
   },
 ];
