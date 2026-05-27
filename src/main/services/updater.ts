@@ -79,7 +79,24 @@ export function initUpdater(win: BrowserWindow): void {
   });
 
   autoUpdater.on('error', (err: Error) => {
-    push(win, { phase: 'error', message: err.message });
+    // A 404 for latest-mac.yml is a transient condition that occurs in the
+    // ~5 minute window between a tag being pushed and the GitHub Actions
+    // release workflow finishing its upload. The release page exists but the
+    // update manifest hasn't been published yet. Treat it as "no update
+    // available" rather than surfacing a confusing error to the user.
+    const msg = err.message;
+    const isManifestNotReady =
+      msg.includes('latest-mac.yml') ||
+      (msg.includes('404') && msg.includes('releases/download'));
+    if (isManifestNotReady) {
+      push(win, { phase: 'not-available' });
+      return;
+    }
+
+    // For genuine errors, send only the first line of the message so the
+    // banner doesn't display a wall of raw HTTP headers.
+    const firstLine = msg.split('\n')[0] ?? msg;
+    push(win, { phase: 'error', message: firstLine });
   });
 
   // Check automatically on startup, 10 seconds after the window is ready

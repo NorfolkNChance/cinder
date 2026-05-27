@@ -109,11 +109,18 @@ function BannerContent({
   }
 
   if (status.phase === 'error') {
+    // Truncate to 120 chars as a second line of defence — the main process
+    // already trims to the first line, but keep this guard here so the banner
+    // is always clean even if the main-process filtering ever misses a case.
+    const displayMessage =
+      status.message.length > 120
+        ? `${status.message.slice(0, 120)}…`
+        : status.message;
     return (
       <>
         <span className="text-red-300">
           <span className="mr-2">⚠</span>
-          Update failed: {status.message}
+          Update failed: {displayMessage}
         </span>
         <button
           onClick={onRetry}
