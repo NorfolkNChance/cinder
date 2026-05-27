@@ -8,6 +8,7 @@ files:
   - package.json
 
 mac:
+  icon: build/icon.icns
   category: public.app-category.productivity
   hardenedRuntime: true
   gatekeeperAssess: false
