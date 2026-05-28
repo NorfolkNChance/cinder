@@ -8,6 +8,7 @@ import {
 } from './queries';
 import { formatDueDate, isOverdue } from '../../lib/dates';
 import { describeRecurrence } from '../../../../shared/recurrence';
+import { DatePicker } from '../../components/DatePicker';
 
 interface TaskItemProps {
   task: TaskWithLabels;
@@ -118,8 +119,7 @@ export function TaskItem({
     deleteTask.mutate(task.id);
   };
 
-  const onDueDateChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    const value = e.target.value;
+  const onDueDateChange = (value: string): void => {
     updateTask.mutate({
       id: task.id,
       patch: { dueDate: value === '' ? null : value },
@@ -303,13 +303,20 @@ export function TaskItem({
         </span>
       )}
 
-      <DueDateChip
-        inputValue={dueDateInputValue}
-        formattedLabel={formatDueDate(task.dueDate)}
-        overdue={!isComplete && isOverdue(task.dueDate)}
-        onChange={onDueDateChange}
-        taskTitle={task.title}
-      />
+      {/* Stop row-click propagation so opening the picker doesn't select the task */}
+      <span onClick={(e) => e.stopPropagation()}>
+        <DatePicker
+          value={dueDateInputValue}
+          onChange={onDueDateChange}
+          label={`Due date for ${task.title || 'this task'}`}
+          placeholder="📅"
+          formatValue={(v) => formatDueDate(v)}
+          className={clsx(
+            'shrink-0 px-2 py-0.5',
+            !isComplete && isOverdue(task.dueDate) && '!border-red-700 !text-red-400',
+          )}
+        />
+      </span>
 
       <select
         value={task.priority}
@@ -344,47 +351,6 @@ export function TaskItem({
         ✕
       </button>
     </li>
-  );
-}
-
-// ── DueDateChip ──────────────────────────────────────────────────────────────
-
-function DueDateChip({
-  inputValue,
-  formattedLabel,
-  overdue,
-  onChange,
-  taskTitle,
-}: {
-  inputValue: string;
-  formattedLabel: string;
-  overdue: boolean;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  taskTitle: string;
-}): JSX.Element {
-  const hasDate = inputValue !== '';
-  return (
-    <label
-      className={clsx(
-        'relative inline-flex shrink-0 cursor-pointer items-center rounded-md border border-gray-200 px-2 py-0.5 text-xs transition hover:border-gray-400 dark:border-gray-800 dark:hover:border-gray-600',
-        overdue && 'border-red-700 text-red-400',
-        !overdue && hasDate && 'text-gray-700 dark:text-gray-300',
-        !hasDate && 'text-gray-600',
-      )}
-      title={`Due date for ${taskTitle || 'this task'}`}
-      onClick={(e) => e.stopPropagation()}
-    >
-      <span aria-hidden className="select-none">
-        {hasDate ? formattedLabel : '📅'}
-      </span>
-      <input
-        type="date"
-        value={inputValue}
-        onChange={onChange}
-        aria-label="Due date"
-        className="absolute inset-0 cursor-pointer opacity-0"
-      />
-    </label>
   );
 }
 

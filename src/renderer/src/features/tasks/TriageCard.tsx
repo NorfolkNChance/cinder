@@ -5,6 +5,7 @@ import { useNote } from '../notes/queries';
 import { formatDueDate } from '../../lib/dates';
 import { useUI } from '../../state/ui';
 import type { TaskWithLabels } from '../../../../shared/schemas/tasks';
+import { DatePicker } from '../../components/DatePicker';
 
 interface TriageCardProps {
   task: TaskWithLabels;
@@ -107,25 +108,14 @@ export function TriageCard({ task }: TriageCardProps): JSX.Element {
           <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-500">
             Due date
           </p>
-          <label className="relative inline-flex cursor-pointer items-center gap-1.5 rounded border border-gray-300 px-2 py-0.5 text-xs text-gray-600 hover:border-gray-400 dark:border-gray-600 dark:text-gray-400 dark:hover:border-gray-500">
-            <span>{dueDate !== '' ? formatDueDate(dueDate) : 'No date'}</span>
-            <input
-              type="date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-              aria-label="Due date"
-              className="absolute inset-0 cursor-pointer opacity-0"
-            />
-          </label>
-          {dueDate !== '' && (
-            <button
-              onClick={() => setDueDate('')}
-              aria-label="Clear due date"
-              className="ml-1.5 text-[10px] text-gray-400 underline hover:text-gray-600 dark:hover:text-gray-300"
-            >
-              clear
-            </button>
-          )}
+          <DatePicker
+            value={dueDate}
+            onChange={setDueDate}
+            label="Due date"
+            placeholder="No date"
+            formatValue={(v) => formatDueDate(v)}
+            className="px-2 py-0.5"
+          />
         </div>
 
         {/* Project */}

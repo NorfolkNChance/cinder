@@ -8,6 +8,7 @@ import {
 import { formatDueDate } from '../../lib/dates';
 import type { TaskWithLabels } from '../../../../shared/schemas/tasks';
 import { describeRecurrence } from '../../../../shared/recurrence';
+import { DatePicker } from '../../components/DatePicker';
 
 /**
  * Task detail side panel for the Eisenhower matrix view.
@@ -52,8 +53,7 @@ export function MatrixTaskDetail({
     });
   };
 
-  const onDueDateChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    const value = e.target.value;
+  const onDueDateChange = (value: string): void => {
     updateTask.mutate({
       id: task.id,
       patch: { dueDate: value === '' ? null : value },
@@ -148,17 +148,14 @@ export function MatrixTaskDetail({
           <label className="mb-1 block text-[11px] font-medium uppercase tracking-widest text-gray-500 dark:text-gray-600">
             Due date
           </label>
-          <input
-            type="date"
+          <DatePicker
             value={dueDateInputValue}
             onChange={onDueDateChange}
-            className="w-full rounded-md border border-gray-300 bg-gray-100 px-2 py-1.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
+            label="Due date"
+            placeholder="No date"
+            formatValue={(v) => formatDueDate(v)}
+            className="w-full px-3 py-1.5 text-sm"
           />
-          {task.dueDate !== null && (
-            <p className="mt-0.5 text-xs text-gray-600">
-              {formatDueDate(task.dueDate)}
-            </p>
-          )}
         </div>
 
         {/* Project */}
