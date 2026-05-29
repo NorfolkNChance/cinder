@@ -9,13 +9,13 @@ import { NoteEditor } from '../notes/NoteEditor';
  * work exactly as in regular Notes mode.
  */
 export function DailyMainPane(): JSX.Element {
-  const selectedNoteId = useUI((s) => s.selectedNoteId);
+  const dailySelectedNoteId = useUI((s) => s.dailySelectedNoteId);
 
-  if (selectedNoteId === null) {
+  if (dailySelectedNoteId === null) {
     return <DailyEmptyState />;
   }
 
-  return <NoteEditor noteId={selectedNoteId} />;
+  return <NoteEditor noteId={dailySelectedNoteId} />;
 }
 
 function DailyEmptyState(): JSX.Element {

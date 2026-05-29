@@ -41,8 +41,13 @@ interface UIState {
   mode: Mode;
   setMode: (m: Mode) => void;
 
+  /** The note open in Notes mode. Independent from Daily mode's selection. */
   selectedNoteId: string | null;
   setSelectedNoteId: (id: string | null) => void;
+
+  /** The note open in Daily mode. Independent from Notes mode's selection. */
+  dailySelectedNoteId: string | null;
+  setDailySelectedNoteId: (id: string | null) => void;
 
   /** The currently-selected YYYY-MM-DD date in Daily mode. null = none selected. */
   selectedDailyDate: string | null;
@@ -91,6 +96,9 @@ export const useUI = create<UIState>((set) => ({
 
   selectedNoteId: null,
   setSelectedNoteId: (id) => set({ selectedNoteId: id }),
+
+  dailySelectedNoteId: null,
+  setDailySelectedNoteId: (id) => set({ dailySelectedNoteId: id }),
 
   selectedDailyDate: null,
   setSelectedDailyDate: (date) => set({ selectedDailyDate: date }),

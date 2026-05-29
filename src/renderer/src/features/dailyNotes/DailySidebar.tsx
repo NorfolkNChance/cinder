@@ -114,7 +114,7 @@ function buildTree(notes: readonly Note[]): YearEntry[] {
 export function DailySidebar(): JSX.Element {
   const { data: dailyNotes } = useDailyNotesList();
   const getOrCreate = useGetOrCreateDaily();
-  const setSelectedNoteId = useUI((s) => s.setSelectedNoteId);
+  const setDailySelectedNoteId = useUI((s) => s.setDailySelectedNoteId);
   const setSelectedDailyDate = useUI((s) => s.setSelectedDailyDate);
   const selectedDailyDate = useUI((s) => s.selectedDailyDate);
 
@@ -154,7 +154,7 @@ export function DailySidebar(): JSX.Element {
   function openDate(date: string): void {
     getOrCreate.mutate(date, {
       onSuccess: (note) => {
-        setSelectedNoteId(note.id);
+        setDailySelectedNoteId(note.id);
         setSelectedDailyDate(date);
       },
     });
