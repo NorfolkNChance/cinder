@@ -49,6 +49,10 @@ import {
   UPDATE_STATUS,
   CAPTURE_HIDE,
   NOTIFY_TASK_DUE,
+  VAULT_PICK_FOLDER,
+  VAULT_SCAN,
+  VAULT_IMPORT,
+  VAULT_PROGRESS,
 } from '../shared/ipc/channels';
 import type {
   Note,
@@ -120,6 +124,13 @@ import type {
   SettingsSetInput,
 } from '../shared/schemas/settings';
 import type { UpdateStatus } from '../shared/schemas/update';
+import type {
+  VaultScanInput,
+  VaultScanResult,
+  VaultImportPlan,
+  VaultImportResult,
+  VaultProgress,
+} from '../shared/schemas/vault';
 
 /**
  * Preload — the only path from the sandboxed renderer to the main process.
@@ -253,6 +264,20 @@ contextBridge.exposeInMainWorld('api', {
       const handler = (_e: IpcRendererEvent): void => cb();
       ipcRenderer.on(NOTIFY_TASK_DUE, handler);
       return () => ipcRenderer.off(NOTIFY_TASK_DUE, handler);
+    },
+  },
+  vault: {
+    pickFolder: (): Promise<string | null> =>
+      ipcRenderer.invoke(VAULT_PICK_FOLDER),
+    scan: (input: VaultScanInput): Promise<VaultScanResult> =>
+      ipcRenderer.invoke(VAULT_SCAN, input),
+    import: (plan: VaultImportPlan): Promise<VaultImportResult> =>
+      ipcRenderer.invoke(VAULT_IMPORT, plan),
+    onProgress: (cb: (progress: VaultProgress) => void): (() => void) => {
+      const handler = (_e: IpcRendererEvent, progress: VaultProgress): void =>
+        cb(progress);
+      ipcRenderer.on(VAULT_PROGRESS, handler);
+      return () => ipcRenderer.off(VAULT_PROGRESS, handler);
     },
   },
   update: {

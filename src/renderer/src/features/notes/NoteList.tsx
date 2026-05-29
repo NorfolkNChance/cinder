@@ -201,13 +201,23 @@ export function NoteList(): JSX.Element {
         <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
           Notes
         </h2>
-        <button
-          onClick={() => void createNew()}
-          title="New note (⌘N)"
-          className="rounded-md bg-emerald-600 px-2 py-1 text-xs font-medium text-white hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-400"
-        >
-          + New
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={useUI.getState().openVaultImport}
+            title="Import Obsidian vault"
+            aria-label="Import Obsidian vault"
+            className="rounded-md border border-gray-300 px-2 py-1 text-xs text-gray-500 hover:border-gray-400 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 dark:border-gray-700 dark:text-gray-500 dark:hover:border-gray-600 dark:hover:text-gray-300"
+          >
+            ↓ Import
+          </button>
+          <button
+            onClick={() => void createNew()}
+            title="New note (⌘N)"
+            className="rounded-md bg-emerald-600 px-2 py-1 text-xs font-medium text-white hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+          >
+            + New
+          </button>
+        </div>
       </div>
 
       {/* Search */}

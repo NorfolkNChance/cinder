@@ -10,6 +10,7 @@ import { DailySidebar } from './features/dailyNotes/DailySidebar';
 import { DailyMainPane } from './features/dailyNotes/DailyMainPane';
 import { CommandPalette } from './features/commandPalette/CommandPalette';
 import { HelpModal } from './features/help/HelpModal';
+import { VaultImportModal } from './features/vaultImport/VaultImportModal';
 import { SettingsModal } from './features/settings/SettingsModal';
 import { UpdateBanner } from './features/update/UpdateBanner';
 import { Toast } from './components/Toast';
@@ -142,6 +143,7 @@ export default function App(): JSX.Element {
       <CommandPalette />
       <HelpModal />
       <SettingsModal />
+      <VaultImportModal />
       <UpdateBanner />
       <Toast />
     </div>

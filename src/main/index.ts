@@ -19,6 +19,7 @@ import { registerExportHandlers } from './ipc/export';
 import { registerSettingsHandlers } from './ipc/settings';
 import { registerUpdateHandlers } from './ipc/update';
 import { registerCaptureHandlers } from './ipc/capture';
+import { registerVaultHandlers } from './ipc/vault';
 import { initTray, cleanupTray } from './tray';
 import { initUpdater } from './services/updater';
 import { initNotifier, cleanupNotifier } from './services/notifier';
@@ -204,6 +205,7 @@ app.whenReady().then(async () => {
   registerSettingsHandlers();
   registerUpdateHandlers();
   registerCaptureHandlers();
+  registerVaultHandlers();
 
   mainWindowRef = createWindow();
   initTray();

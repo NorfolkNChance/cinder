@@ -68,6 +68,13 @@ import type {
   SettingsSetInput,
 } from '../shared/schemas/settings';
 import type { UpdateStatus } from '../shared/schemas/update';
+import type {
+  VaultScanInput,
+  VaultScanResult,
+  VaultImportPlan,
+  VaultImportResult,
+  VaultProgress,
+} from '../shared/schemas/vault';
 
 export {};
 
@@ -151,6 +158,12 @@ declare global {
       };
       notify: {
         onTaskDue: (cb: () => void) => () => void;
+      };
+      vault: {
+        pickFolder: () => Promise<string | null>;
+        scan: (input: VaultScanInput) => Promise<VaultScanResult>;
+        import: (plan: VaultImportPlan) => Promise<VaultImportResult>;
+        onProgress: (cb: (progress: VaultProgress) => void) => () => void;
       };
       update: {
         check: () => Promise<void>;

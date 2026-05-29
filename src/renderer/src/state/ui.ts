@@ -81,6 +81,11 @@ interface UIState {
   openSettings: () => void;
   closeSettings: () => void;
 
+  /** Whether the Obsidian vault import modal is open. */
+  vaultImportOpen: boolean;
+  openVaultImport: () => void;
+  closeVaultImport: () => void;
+
   /**
    * Ephemeral toast notification (auto-dismissed).
    * null means nothing is showing.
@@ -125,6 +130,10 @@ export const useUI = create<UIState>((set) => ({
   settingsOpen: false,
   openSettings: () => set({ settingsOpen: true }),
   closeSettings: () => set({ settingsOpen: false }),
+
+  vaultImportOpen: false,
+  openVaultImport: () => set({ vaultImportOpen: true }),
+  closeVaultImport: () => set({ vaultImportOpen: false }),
 
   toast: null,
   showToast: (message, kind) => {

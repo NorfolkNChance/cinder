@@ -1,0 +1,218 @@
+/**
+ * Vault importer.
+ *
+ * Executes a confirmed VaultImportPlan: reads note files from disk, transforms
+ * their content according to the chosen options, and writes them to the Cinder
+ * database via notesService. Pushes VaultProgress events to the renderer after
+ * each batch so the UI can show a live progress bar.
+ *
+ * This module intentionally has no UI dependency — it is pure main-process code.
+ */
+
+import { readFile } from 'fs/promises';
+import path from 'path';
+import type { WebContents } from 'electron';
+import { notesService } from './notes';
+import { extractTitle, stripFrontmatter } from './vaultScanner';
+import type { VaultImportPlan, VaultImportResult, VaultProgress } from '../../shared/schemas/vault';
+import { VAULT_PROGRESS } from '../../shared/ipc/channels';
+
+// ── Content transformations ───────────────────────────────────────────────────
+
+/**
+ * Convert [[wiki links]] to plain text according to the chosen strategy.
+ *   [[Note Name]]              → "Note Name"
+ *   [[Note Name|Display Text]] → "Display Text"
+ */
+function applyWikiLinks(
+  body: string,
+  strategy: 'plain-text' | 'leave-as-is',
+): string {
+  if (strategy === 'leave-as-is') return body;
+  return body.replace(
+    /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g,
+    (_match, target: string, display?: string) =>
+      (display ?? target).trim(),
+  );
+}
+
+/**
+ * Build the note title with an optional folder prefix.
+ *   'none'      → "Meeting notes"
+ *   'top-level' → "Projects / Meeting notes"
+ *   'full-path' → "Projects/Work / Meeting notes"
+ */
+function buildTitle(
+  rawTitle: string,
+  relativePath: string,
+  strategy: 'top-level' | 'full-path' | 'none',
+): string {
+  if (strategy === 'none') return rawTitle;
+
+  // Strip filename from path to get the folder portion.
+  const dir = path.dirname(relativePath).replace(/\\/g, '/');
+  if (!dir || dir === '.') return rawTitle;
+
+  const parts = dir.split('/');
+  const prefix =
+    strategy === 'top-level'
+      ? (parts[0] ?? '')
+      : parts.join('/');
+
+  return prefix ? `${prefix} / ${rawTitle}` : rawTitle;
+}
+
+// ── Progress helper ───────────────────────────────────────────────────────────
+
+function push(sender: WebContents, progress: VaultProgress): void {
+  if (!sender.isDestroyed()) {
+    sender.send(VAULT_PROGRESS, progress);
+  }
+}
+
+// ── Main export ───────────────────────────────────────────────────────────────
+
+/**
+ * Execute the import plan. Reads each file from disk, applies content
+ * transformations, and creates notes in the database. Fires VaultProgress
+ * push events during execution so the renderer can show live progress.
+ *
+ * @param plan    - The confirmed import plan from the preview modal.
+ * @param sender  - The renderer WebContents to push progress events to.
+ */
+export async function importVault(
+  plan: VaultImportPlan,
+  sender: WebContents,
+): Promise<VaultImportResult> {
+  const { vaultPath, noteRelativePaths, dailyNoteRelativePaths, options } = plan;
+  const errors: string[] = [];
+  let notesCreated = 0;
+  let dailyNotesCreated = 0;
+
+  // ── Import regular notes ─────────────────────────────────────────────────
+
+  push(sender, {
+    phase: 'notes',
+    current: 0,
+    total: noteRelativePaths.length,
+  });
+
+  for (let i = 0; i < noteRelativePaths.length; i++) {
+    const relativePath = noteRelativePaths[i];
+    if (!relativePath) continue;
+
+    try {
+      const absolutePath = path.join(vaultPath, relativePath);
+      const raw = await readFile(absolutePath, 'utf-8');
+
+      const rawTitle = extractTitle(raw, path.basename(relativePath, '.md'));
+      const rawBody = stripFrontmatter(raw);
+
+      const title = buildTitle(rawTitle, relativePath, options.folderPrefix);
+      const body = applyWikiLinks(rawBody, options.wikiLinks);
+
+      await notesService.create({ title, body, bodyType: 'markdown' });
+      notesCreated++;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      errors.push(`${relativePath}: ${msg}`);
+    }
+
+    // Push progress every item (debounced by renderer if needed).
+    push(sender, {
+      phase: 'notes',
+      current: i + 1,
+      total: noteRelativePaths.length,
+    });
+  }
+
+  // ── Import daily notes ────────────────────────────────────────────────────
+
+  push(sender, {
+    phase: 'daily-notes',
+    current: 0,
+    total: dailyNoteRelativePaths.length,
+  });
+
+  for (let i = 0; i < dailyNoteRelativePaths.length; i++) {
+    const relativePath = dailyNoteRelativePaths[i];
+    if (!relativePath) continue;
+
+    // Extract date from the relative path.
+    // The scanner already verified the date is parseable; re-extract here.
+    const dateMatch = relativePath.match(/(\d{4}-\d{2}-\d{2})/);
+    // Also try the YYYY/MM/DD pattern.
+    const dirParts = path.dirname(relativePath).replace(/\\/g, '/').split('/');
+    const stem = path.basename(relativePath, '.md');
+
+    let date: string | null = null;
+
+    // Try YYYY-MM-DD in filename first.
+    if (/^\d{4}-\d{2}-\d{2}$/.test(stem)) {
+      date = stem;
+    } else if (dateMatch?.[1]) {
+      date = dateMatch[1];
+    } else {
+      // Reconstruct from YYYY/MM/DD folder parts.
+      const numericParts = dirParts.filter((p) => /^\d+$/.test(p));
+      if (numericParts.length >= 3) {
+        const [yr, mo, dy] = numericParts.slice(-3);
+        if (yr && mo && dy) {
+          date = `${yr}-${mo.padStart(2, '0')}-${dy.padStart(2, '0')}`;
+        }
+      } else if (numericParts.length >= 2 && /^\d{1,2}$/.test(stem)) {
+        const [yr, mo] = numericParts.slice(-2);
+        if (yr && mo) {
+          date = `${yr}-${mo.padStart(2, '0')}-${stem.padStart(2, '0')}`;
+        }
+      }
+    }
+
+    if (!date) {
+      errors.push(`${relativePath}: Could not determine date.`);
+      push(sender, {
+        phase: 'daily-notes',
+        current: i + 1,
+        total: dailyNoteRelativePaths.length,
+      });
+      continue;
+    }
+
+    try {
+      const absolutePath = path.join(vaultPath, relativePath);
+      const raw = await readFile(absolutePath, 'utf-8');
+      const rawBody = stripFrontmatter(raw);
+      const body = applyWikiLinks(rawBody, options.wikiLinks);
+
+      // getOrCreateDaily is idempotent — if a note for this date already
+      // exists, it returns it instead of creating a duplicate.
+      const existing = await notesService.getOrCreateDaily({ date });
+
+      // If the existing note has no body yet, fill it in with the vault content.
+      if (existing.body.trim() === '' && body.trim() !== '') {
+        await notesService.update({ id: existing.id, patch: { body } });
+      }
+
+      dailyNotesCreated++;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      errors.push(`${relativePath}: ${msg}`);
+    }
+
+    push(sender, {
+      phase: 'daily-notes',
+      current: i + 1,
+      total: dailyNoteRelativePaths.length,
+    });
+  }
+
+  // ── Done ─────────────────────────────────────────────────────────────────
+
+  push(sender, {
+    phase: 'done',
+    current: notesCreated + dailyNotesCreated,
+    total: noteRelativePaths.length + dailyNoteRelativePaths.length,
+  });
+
+  return { notesCreated, dailyNotesCreated, errors };
+}

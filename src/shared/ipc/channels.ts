@@ -95,3 +95,13 @@ export const EXPORT_TASKS = 'export:tasks' as const;
 export const EXPORT_BACKUP = 'export:backup' as const;
 /** Export the database encryption key to a user-chosen text file. */
 export const EXPORT_KEY_BACKUP = 'export:keyBackup' as const;
+
+// ── Vault import ──────────────────────────────────────────────────────────────
+/** Show a folder picker and return the chosen path, or null if cancelled. */
+export const VAULT_PICK_FOLDER = 'vault:pickFolder' as const;
+/** Scan a vault folder and return metadata (no DB writes). */
+export const VAULT_SCAN = 'vault:scan' as const;
+/** Execute an import plan confirmed by the user (writes to DB). */
+export const VAULT_IMPORT = 'vault:import' as const;
+/** Main → Renderer push: import progress update. */
+export const VAULT_PROGRESS = 'vault:progress' as const;
