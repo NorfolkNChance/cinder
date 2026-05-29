@@ -390,32 +390,32 @@ const ACCENT_STYLES: Record<
   { header: string; badge: string; card: string; count: string; dropRing: string }
 > = {
   red: {
-    header: 'text-red-400',
-    badge: 'bg-red-900/40 text-red-300 border-red-800',
-    card: 'hover:border-red-700/50',
-    count: 'text-red-500',
-    dropRing: 'ring-2 ring-inset ring-red-600/60 bg-red-950/20',
+    header: 'text-red-600 dark:text-red-400',
+    badge: 'bg-red-100 text-red-700 border-red-300 dark:bg-red-900/40 dark:text-red-300 dark:border-red-800',
+    card: 'hover:border-red-400 dark:hover:border-red-700/50',
+    count: 'text-red-600 dark:text-red-500',
+    dropRing: 'ring-2 ring-inset ring-red-500/60 bg-red-50/50 dark:bg-red-950/20',
   },
   blue: {
-    header: 'text-blue-400',
-    badge: 'bg-blue-900/40 text-blue-300 border-blue-800',
-    card: 'hover:border-blue-700/50',
-    count: 'text-blue-500',
-    dropRing: 'ring-2 ring-inset ring-blue-600/60 bg-blue-950/20',
+    header: 'text-blue-600 dark:text-blue-400',
+    badge: 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-800',
+    card: 'hover:border-blue-400 dark:hover:border-blue-700/50',
+    count: 'text-blue-600 dark:text-blue-500',
+    dropRing: 'ring-2 ring-inset ring-blue-500/60 bg-blue-50/50 dark:bg-blue-950/20',
   },
   orange: {
-    header: 'text-orange-400',
-    badge: 'bg-orange-900/40 text-orange-300 border-orange-800',
-    card: 'hover:border-orange-700/50',
-    count: 'text-orange-500',
-    dropRing: 'ring-2 ring-inset ring-orange-600/60 bg-orange-950/20',
+    header: 'text-orange-600 dark:text-orange-400',
+    badge: 'bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900/40 dark:text-orange-300 dark:border-orange-800',
+    card: 'hover:border-orange-400 dark:hover:border-orange-700/50',
+    count: 'text-orange-600 dark:text-orange-500',
+    dropRing: 'ring-2 ring-inset ring-orange-500/60 bg-orange-50/50 dark:bg-orange-950/20',
   },
   gray: {
-    header: 'text-gray-600 dark:text-gray-400',
+    header: 'text-gray-500 dark:text-gray-400',
     badge: 'bg-gray-200 text-gray-600 border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700',
     card: 'hover:border-gray-400 dark:hover:border-gray-600',
     count: 'text-gray-500 dark:text-gray-600',
-    dropRing: 'ring-2 ring-inset ring-gray-500/40 bg-gray-200/20 dark:bg-gray-800/20',
+    dropRing: 'ring-2 ring-inset ring-gray-400/40 bg-gray-100/50 dark:bg-gray-800/20',
   },
 };
 
@@ -527,10 +527,10 @@ const PRIORITY_LABEL: Record<number, string> = {
   4: 'P4',
 };
 const PRIORITY_COLOR: Record<number, string> = {
-  1: 'text-red-400',
-  2: 'text-orange-400',
-  3: 'text-blue-400',
-  4: 'text-gray-600',
+  1: 'text-red-600 dark:text-red-400',
+  2: 'text-orange-600 dark:text-orange-400',
+  3: 'text-blue-600 dark:text-blue-400',
+  4: 'text-gray-500 dark:text-gray-600',
 };
 
 function MatrixTaskCard({
@@ -604,7 +604,7 @@ function MatrixTaskCard({
         {task.labels.map((l) => (
           <span
             key={l.id}
-            className="rounded border border-teal-800 px-1 py-0.5 text-[10px] text-teal-400"
+            className="rounded border border-teal-600 px-1 py-0.5 text-[10px] text-teal-700 dark:border-teal-800 dark:text-teal-400"
           >
             @{l.name}
           </span>
