@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: write   # required to create a GitHub Release and upload assets
+  checks: read      # required to poll the CI check-run status before releasing
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -30,12 +31,68 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # ── CI gate ─────────────────────────────────────────────────────────────
+      # Wait for the "validate" CI job to complete on this exact commit SHA
+      # before we invest 45 minutes building, signing, and notarising.
+      #
+      # Polling loop: checks every 20 s for up to 6 minutes (18 attempts).
+      # A typical CI run completes in ~1-2 min; the 6-min window handles any
+      # runner queue delay. If CI fails, is cancelled, or never starts, the
+      # release is aborted here rather than publishing a broken build.
+      #
+      # Note: `git push origin main --follow-tags` pushes the version-bump
+      # commit and the tag simultaneously. GitHub triggers the CI workflow on
+      # the commit push and this release workflow on the tag push at the same
+      # moment, so a short wait is always needed.
+      - name: Wait for CI to pass on this commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          SHA="${{ github.sha }}"
+          REPO="${{ github.repository }}"
+          echo "Waiting for CI (validate job) to pass on $SHA …"
+
+          for i in $(seq 1 18); do
+            RESULT=$(gh api "repos/$REPO/commits/$SHA/check-runs" \
+              --jq '[.check_runs[] | select(.name == "validate")] |
+                    if   length == 0                then "pending"
+                    elif .[0].status != "completed" then "running"
+                    else .[0].conclusion            end' 2>/dev/null \
+              || echo "pending")
+
+            echo "  attempt $i/18 — $RESULT"
+
+            case "$RESULT" in
+              success)
+                echo "CI passed — proceeding with release."
+                break
+                ;;
+              failure|cancelled|timed_out|action_required)
+                echo "CI did not pass ($RESULT). Aborting release."
+                exit 1
+                ;;
+              *)
+                # pending / running / unexpected — keep waiting
+                if [ "$i" -eq 18 ]; then
+                  echo "CI did not complete within 6 minutes. Aborting release."
+                  exit 1
+                fi
+                sleep 20
+                ;;
+            esac
+          done
+
+      # ── Validation (defence-in-depth — mirrors the CI workflow) ─────────────
       - name: Typecheck
         run: npm run typecheck
 
       - name: Lint
         run: npm run lint
 
+      - name: Test
+        run: npm test
+
+      # ── Build & publish ──────────────────────────────────────────────────────
       - name: Compile (electron-vite)
         run: npm run build
 

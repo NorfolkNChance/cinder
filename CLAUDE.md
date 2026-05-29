@@ -472,13 +472,24 @@ These have burned us before. Check here before debugging similar symptoms.
 | File | Trigger | What it does |
 |------|---------|--------------|
 | `ci.yml` | PR + push to `main` | typecheck → lint → test → unsigned build |
-| `release.yml` | Push of `v*.*.*` tag | typecheck → lint → `npm run build` → electron-builder (sign + notarise + publish) |
+| `release.yml` | Push of `v*.*.*` tag | **CI gate** → typecheck → lint → test → `npm run build` → electron-builder (sign + notarise + publish) |
 
-**Cutting a release:**
+**Cutting a release — CI must be green first:**
+
 ```sh
+# 1. Push your commit(s) to main and confirm CI goes green.
+git push origin main
+gh run watch   # streams the live CI run; Ctrl-C once it passes (or use GitHub UI)
+
+# 2. Once CI is green, bump the version and push the tag.
 npm version patch   # or minor / major — updates package.json, commits, tags
 git push origin main --follow-tags
 ```
+
+The release workflow has a **CI gate**: before doing any building it polls the GitHub Checks API and waits (up to 6 minutes) for the `validate` CI job to report `success` on the tagged commit's SHA. If CI failed, was cancelled, or never ran, the release workflow aborts immediately — no signed build is produced.
+
+The gate handles the race condition in `--follow-tags`: the commit push and tag push happen simultaneously, so CI and the release workflow both start at the same moment. The release workflow simply waits for CI to finish.
+
 Then go to GitHub → Releases, add release notes, and publish the draft.
 
 **Required GitHub secrets** (Settings → Secrets and variables → Actions):
