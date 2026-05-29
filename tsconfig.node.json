@@ -23,6 +23,7 @@
     "src/main/**/*",
     "src/preload/**/*",
     "src/shared/**/*",
+    "src/__mocks__/**/*",
     "electron-vite.config.ts",
     "vitest.config.ts",
     "drizzle.config.ts"
