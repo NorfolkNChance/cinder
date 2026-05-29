@@ -82,17 +82,10 @@ jobs:
             esac
           done
 
-      # ── Validation (defence-in-depth — mirrors the CI workflow) ─────────────
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Test
-        run: npm test
-
       # ── Build & publish ──────────────────────────────────────────────────────
+      # Typecheck / lint / test are intentionally omitted here: the CI gate
+      # above guarantees they already passed on this exact commit SHA. Running
+      # them again would add ~2–3 minutes with zero safety benefit.
       - name: Compile (electron-vite)
         run: npm run build
 

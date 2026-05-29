@@ -472,7 +472,7 @@ These have burned us before. Check here before debugging similar symptoms.
 | File | Trigger | What it does |
 |------|---------|--------------|
 | `ci.yml` | PR + push to `main` | typecheck → lint → test → unsigned build |
-| `release.yml` | Push of `v*.*.*` tag | **CI gate** → typecheck → lint → test → `npm run build` → electron-builder (sign + notarise + publish) |
+| `release.yml` | Push of `v*.*.*` tag | **CI gate** → `npm run build` → electron-builder (sign + notarise + publish) |
 
 **Cutting a release — CI must be green first:**
 
