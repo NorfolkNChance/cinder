@@ -1,11 +1,12 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, dialog } from 'electron';
 import { join } from 'path';
 import { is } from '@electron-toolkit/utils';
 import { installCSP } from './security/csp';
 import { openExternalSafe } from './security/open-external-safe';
-import { initDb } from './db/index';
+import { initDb, runIntegrityCheck } from './db/index';
 import { runMigrations } from './db/migrate';
 import { initDrizzle } from './db/drizzle';
+import { runAutoBackup } from './services/export';
 import { registerAppHandlers } from './ipc/app';
 import { registerNotesHandlers } from './ipc/notes';
 import { registerAttachmentsHandlers } from './ipc/attachments';
@@ -163,6 +164,31 @@ app.whenReady().then(async () => {
   // handlers start fielding requests that touch the DB.
   await initDb();
   await runMigrations();
+
+  // Integrity check — runs after migrations so the schema is always current.
+  // A fresh database always passes; a corrupt one surfaces here before the
+  // user starts writing more data into it.
+  const dbOk = await runIntegrityCheck();
+  if (!dbOk) {
+    const { response } = await dialog.showMessageBox({
+      type: 'error',
+      title: 'Database Problem Detected',
+      message: 'Cinder found a problem in your database.',
+      detail:
+        'Some data may be corrupted. Continuing may make things worse.\n\n' +
+        'Auto-backups (if enabled) are stored at:\n' +
+        `${app.getPath('userData')}/backups/\n\n` +
+        'Restore from a backup, then relaunch. If you have no backup, ' +
+        'you can continue but data loss is possible.',
+      buttons: ['Quit (recommended)', 'Continue anyway'],
+      defaultId: 0,
+      cancelId: 1,
+    });
+    if (response === 0) {
+      app.exit(1);
+    }
+  }
+
   initDrizzle();
 
   // Register IPC handlers
@@ -197,9 +223,29 @@ app.on('window-all-closed', () => {
   }
 });
 
-app.on('will-quit', () => {
-  cleanupNotifier();
-  cleanupTray();
+// Guard against re-entering the will-quit handler when app.quit() is called
+// from within the async auto-backup flow.
+let _quitting = false;
+
+app.on('will-quit', (event) => {
+  if (_quitting) return; // second pass — let it proceed
+
+  event.preventDefault();
+  _quitting = true;
+
+  void (async () => {
+    try {
+      await runAutoBackup();
+    } catch (err) {
+      // Auto-backup failures are logged but must never prevent the app
+      // from quitting — the user's intent to quit takes priority.
+      console.error('[cinder] Auto-backup on quit failed:', err);
+    } finally {
+      cleanupNotifier();
+      cleanupTray();
+      app.quit();
+    }
+  })();
 });
 
 // Block opening of new windows at the app level as a belt-and-suspenders measure

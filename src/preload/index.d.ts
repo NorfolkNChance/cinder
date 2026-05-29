@@ -60,6 +60,7 @@ import type {
   ExportAllNotesInput,
   ExportTasksInput,
   ExportBackupInput,
+  ExportKeyBackupInput,
   ExportResult,
 } from '../shared/schemas/export';
 import type {
@@ -139,6 +140,7 @@ declare global {
         allNotes: (input: ExportAllNotesInput) => Promise<ExportResult>;
         tasks: (input: ExportTasksInput) => Promise<ExportResult>;
         backup: (input: ExportBackupInput) => Promise<ExportResult>;
+        keyBackup: (input: ExportKeyBackupInput) => Promise<ExportResult>;
       };
       settings: {
         getAll: () => Promise<AppSettings>;

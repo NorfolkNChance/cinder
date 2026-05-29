@@ -43,6 +43,14 @@ const ShowCompleted = z.boolean();
 /** Whether macOS notifications are enabled for due/overdue tasks. */
 const NotificationsEnabled = z.boolean();
 
+// ── Backup ───────────────────────────────────────────────────────────────────
+
+/** Automatically back up the database when the app quits. */
+const BackupAutoOnQuit = z.boolean();
+
+/** Number of auto-backup files to keep before rotating old ones out (1–30). */
+const BackupKeepCount = z.number().int().min(1).max(30);
+
 // ── Appearance ───────────────────────────────────────────────────────────────
 
 /** UI colour scheme preference. */
@@ -57,6 +65,8 @@ export const AppSettingsSchema = z.object({
   'tasks.showCompleted': ShowCompleted,
   'appearance.theme': AppearanceTheme,
   'notifications.enabled': NotificationsEnabled,
+  'backup.autoOnQuit': BackupAutoOnQuit,
+  'backup.keepCount': BackupKeepCount,
 });
 
 export type AppSettings = z.infer<typeof AppSettingsSchema>;
@@ -69,6 +79,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   'tasks.showCompleted': false,
   'appearance.theme': 'auto',
   'notifications.enabled': true,
+  'backup.autoOnQuit': true,
+  'backup.keepCount': 7,
 };
 
 // ── IPC input/output schemas ─────────────────────────────────────────────────

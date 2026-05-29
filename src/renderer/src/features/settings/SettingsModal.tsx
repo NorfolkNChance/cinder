@@ -72,6 +72,7 @@ export function SettingsModal(): JSX.Element | null {
           </p>
           <SidebarItem label="Appearance" icon="🎨" />
           <SidebarItem label="Notifications" icon="🔔" />
+          <SidebarItem label="Backup" icon="💾" />
           <SidebarItem label="Matrix" icon="🔲" />
           <SidebarItem label="Tasks" icon="✅" />
         </nav>
@@ -99,6 +100,8 @@ export function SettingsModal(): JSX.Element | null {
                 <AppearanceSection settings={settings} set={setWithSync} />
                 <div className="my-6 border-t border-gray-200 dark:border-gray-800" />
                 <NotificationsSection settings={settings} set={setWithSync} />
+                <div className="my-6 border-t border-gray-200 dark:border-gray-800" />
+                <BackupSection settings={settings} set={setWithSync} />
                 <div className="my-6 border-t border-gray-200 dark:border-gray-800" />
                 <MatrixSection settings={settings} set={setWithSync} />
                 <div className="my-6 border-t border-gray-200 dark:border-gray-800" />
@@ -217,6 +220,87 @@ function NotificationsSection({
           />
         </button>
       </Field>
+    </section>
+  );
+}
+
+// ── Backup section ────────────────────────────────────────────────────────────
+
+function BackupSection({
+  settings,
+  set,
+}: {
+  settings: AppSettings;
+  set: SetFn;
+}): JSX.Element {
+  const autoOn = settings['backup.autoOnQuit'];
+  const keepCount = settings['backup.keepCount'];
+
+  return (
+    <section>
+      <SectionHeading icon="💾" title="Backup" />
+      <p className="mb-4 text-[12px] text-gray-500 dark:text-gray-500">
+        Your data is encrypted with AES-256 and stored in{' '}
+        <span className="font-mono text-[11px]">~/Library/Application Support/Cinder/</span>.
+        Time Machine backs this up automatically if enabled.
+      </p>
+
+      <Field
+        label="Auto-backup on quit"
+        description="Save an encrypted snapshot every time you close Cinder. Backups are stored in the Cinder data folder."
+      >
+        <button
+          role="switch"
+          aria-checked={autoOn}
+          onClick={() => set('backup.autoOnQuit', !autoOn)}
+          className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900 ${
+            autoOn ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-700'
+          }`}
+        >
+          <span
+            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+              autoOn ? 'translate-x-4' : 'translate-x-0'
+            }`}
+          />
+        </button>
+      </Field>
+
+      <Field
+        label="Backups to keep"
+        description="Older auto-backups are deleted automatically once this limit is reached."
+      >
+        <div className="flex items-center gap-2">
+          <input
+            type="range"
+            min={1}
+            max={30}
+            step={1}
+            value={keepCount}
+            onChange={(e) => set('backup.keepCount', Number(e.target.value))}
+            className="w-28 accent-indigo-500"
+            aria-label="Number of backups to keep"
+            disabled={!autoOn}
+          />
+          <span className="w-8 text-center text-sm tabular-nums text-gray-700 dark:text-gray-300">
+            {keepCount}
+          </span>
+        </div>
+      </Field>
+
+      <div className="mt-1 flex items-center gap-3">
+        <button
+          onClick={() => void window.api.export.backup({})}
+          className="rounded border border-gray-300 px-3 py-1.5 text-xs text-gray-600 transition-colors hover:border-gray-400 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-gray-700 dark:text-gray-400 dark:hover:border-gray-600 dark:hover:text-gray-200"
+        >
+          Back up now…
+        </button>
+        <button
+          onClick={() => void window.api.export.keyBackup({})}
+          className="rounded border border-gray-300 px-3 py-1.5 text-xs text-gray-600 transition-colors hover:border-gray-400 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-gray-700 dark:text-gray-400 dark:hover:border-gray-600 dark:hover:text-gray-200"
+        >
+          Export encryption key…
+        </button>
+      </div>
     </section>
   );
 }

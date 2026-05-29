@@ -5,18 +5,21 @@ import {
   EXPORT_ALL_NOTES,
   EXPORT_TASKS,
   EXPORT_BACKUP,
+  EXPORT_KEY_BACKUP,
 } from '../../shared/ipc/channels';
 import {
   ExportNoteInput,
   ExportAllNotesInput,
   ExportTasksInput,
   ExportBackupInput,
+  ExportKeyBackupInput,
 } from '../../shared/schemas/export';
 import {
   exportNote,
   exportAllNotes,
   exportTasks,
   exportBackup,
+  exportKeyBackup,
 } from '../services/export';
 
 export function registerExportHandlers(): void {
@@ -42,5 +45,11 @@ export function registerExportHandlers(): void {
     assertMainFrame(event);
     ExportBackupInput.parse(raw);
     return exportBackup();
+  });
+
+  ipcMain.handle(EXPORT_KEY_BACKUP, async (event, raw) => {
+    assertMainFrame(event);
+    ExportKeyBackupInput.parse(raw);
+    return exportKeyBackup();
   });
 }

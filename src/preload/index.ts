@@ -41,6 +41,7 @@ import {
   EXPORT_ALL_NOTES,
   EXPORT_TASKS,
   EXPORT_BACKUP,
+  EXPORT_KEY_BACKUP,
   SETTINGS_GET_ALL,
   SETTINGS_SET,
   UPDATE_CHECK,
@@ -111,6 +112,7 @@ import type {
   ExportAllNotesInput,
   ExportTasksInput,
   ExportBackupInput,
+  ExportKeyBackupInput,
   ExportResult,
 } from '../shared/schemas/export';
 import type {
@@ -224,6 +226,8 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke(EXPORT_TASKS, input),
     backup: (input: ExportBackupInput): Promise<ExportResult> =>
       ipcRenderer.invoke(EXPORT_BACKUP, input),
+    keyBackup: (input: ExportKeyBackupInput): Promise<ExportResult> =>
+      ipcRenderer.invoke(EXPORT_KEY_BACKUP, input),
   },
   settings: {
     getAll: (): Promise<AppSettings> =>

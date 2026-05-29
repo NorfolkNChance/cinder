@@ -2,24 +2,36 @@
  * Export service.
  *
  * Handles all data-export operations: single note → .md, all notes →
- * directory of .md files, tasks → .csv, and DB backup. Every function
- * shows a native Save/Open dialog so the renderer never deals with file
- * paths directly.
+ * directory of .md files, tasks → .csv, DB backup (VACUUM INTO), and
+ * encryption-key export. Every function shows a native Save/Open dialog so
+ * the renderer never deals with file paths or key material directly.
  *
  * Security properties:
  *   - All file I/O happens in the main (trusted) process.
  *   - The renderer only supplies logical IDs and filter flags — never
- *     raw file paths.
+ *     raw file paths or encryption keys.
  *   - dialog.showSaveDialog / showOpenDialog are called with explicit
  *     filters so the user cannot accidentally overwrite arbitrary files.
+ *   - The DB backup uses VACUUM INTO, which produces a fully-checkpointed,
+ *     consistent snapshot regardless of WAL state. copyFileSync is NOT used
+ *     because WAL-mode databases have three files; a naive file copy of only
+ *     the main file can be incomplete or corrupt.
  */
 
 import { dialog, app } from 'electron';
-import { copyFileSync, mkdirSync, writeFileSync } from 'fs';
+import {
+  mkdirSync,
+  writeFileSync,
+  readdirSync,
+  unlinkSync,
+  chmodSync,
+} from 'fs';
 import { join } from 'path';
 import { getDrizzle } from '../db/drizzle';
+import { getDb, getDbKey } from '../db/index';
 import { notes, tasks, taskLabels, labels, projects } from '../db/schema';
 import { and, asc, desc, eq, isNull, inArray } from 'drizzle-orm';
+import { getAll as getSettings } from './settings';
 import type {
   ExportNoteInput,
   ExportTasksInput,
@@ -57,10 +69,24 @@ function csvRow(cells: (string | number | null | undefined)[]): string {
   return cells.map(csvCell).join(',');
 }
 
-// Satisfy `mkdirSync` strict-mode — only used for the "all notes" export
-// where we write into a user-chosen existing directory; no mkdir needed there.
-// Kept here in case future callers need it.
-void mkdirSync;
+/**
+ * Run VACUUM INTO on the live database.
+ * Creates a fully-checkpointed, consistent encrypted snapshot at `destPath`
+ * regardless of WAL state. The output is encrypted with the same key.
+ *
+ * Single-quotes in the path are doubled to prevent SQL injection; this is
+ * the standard SQLite escaping for string literals (not a parameterised
+ * query — VACUUM INTO does not support bind parameters for the path).
+ */
+function vacuumInto(destPath: string): Promise<void> {
+  const escaped = destPath.replace(/'/g, "''");
+  return new Promise((resolve, reject) => {
+    getDb().run(`VACUUM INTO '${escaped}'`, (err: Error | null) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+}
 
 // ── Export a single note ──────────────────────────────────────────────────────
 
@@ -258,7 +284,6 @@ export async function exportTasks(input: ExportTasksInput): Promise<ExportResult
 // ── Database backup ───────────────────────────────────────────────────────────
 
 export async function exportBackup(): Promise<ExportResult> {
-  const dbPath = join(app.getPath('userData'), 'cinder.db');
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
   const defaultFilename = `cinder-backup-${timestamp}.db`;
 
@@ -273,11 +298,11 @@ export async function exportBackup(): Promise<ExportResult> {
     return { success: false, reason: 'cancelled' };
   }
 
-  // SQLite WAL: flush before copy.
-  // We do a simple file copy — safe because better-sqlite3 is synchronous
-  // and all mutations are serialised through the main process.
   try {
-    copyFileSync(dbPath, filePath);
+    // VACUUM INTO creates a fully-checkpointed, consistent snapshot of the
+    // live database — safe even while WAL writes are in flight. The output
+    // is encrypted with the same SQLCipher key as the source.
+    await vacuumInto(filePath);
   } catch (err) {
     return {
       success: false,
@@ -286,5 +311,128 @@ export async function exportBackup(): Promise<ExportResult> {
     };
   }
 
+  // Prompt the user to also export their encryption key so the backup is
+  // restorable on a different Mac or after a Keychain loss.
+  const { response } = await dialog.showMessageBox({
+    type: 'info',
+    title: 'Backup saved',
+    message: 'Database backed up successfully.',
+    detail:
+      'Important: this backup is encrypted with your device key, which lives ' +
+      'in the macOS Keychain. To restore it on a different Mac or after ' +
+      'reinstalling macOS, you will also need your encryption key.\n\n' +
+      'Would you like to export your key now?',
+    buttons: ['Export key…', 'Skip'],
+    defaultId: 0,
+    cancelId: 1,
+  });
+
+  if (response === 0) {
+    await exportKeyBackup();
+  }
+
   return { success: true, path: filePath };
+}
+
+// ── Encryption key export ─────────────────────────────────────────────────────
+
+/**
+ * Export the database encryption key to a text file chosen by the user.
+ *
+ * Security design: the raw key never touches the renderer. The main process
+ * retrieves it from the in-memory cache (populated at startup from the
+ * Keychain), then writes it directly to a file the user selects via a native
+ * dialog. The file is chmod 0600 (owner read/write only).
+ */
+export async function exportKeyBackup(): Promise<ExportResult> {
+  let key: string;
+  try {
+    key = getDbKey();
+  } catch {
+    return { success: false, reason: 'error', message: 'Encryption key not available.' };
+  }
+
+  const { filePath, canceled } = await dialog.showSaveDialog({
+    title: 'Export Encryption Key',
+    defaultPath: join(app.getPath('documents'), 'cinder-key.txt'),
+    filters: [{ name: 'Text File', extensions: ['txt'] }],
+    properties: ['createDirectory'],
+  });
+
+  if (canceled || !filePath) {
+    return { success: false, reason: 'cancelled' };
+  }
+
+  const content = [
+    'Cinder Database Encryption Key',
+    '================================',
+    '',
+    'Keep this file somewhere safe — separate from your database backup.',
+    'Anyone who has both this key and a database backup file can read',
+    'all of your notes and tasks.',
+    '',
+    'Good places to store it: a password manager, or an encrypted USB drive',
+    'kept in a different physical location from your Mac.',
+    '',
+    `Key: ${key}`,
+    '',
+    `Exported: ${new Date().toISOString()}`,
+    `App version: ${app.getVersion()}`,
+  ].join('\n');
+
+  writeFileSync(filePath, content, 'utf-8');
+  chmodSync(filePath, 0o600); // owner read/write only
+
+  await dialog.showMessageBox({
+    type: 'warning',
+    title: 'Store this key safely',
+    message: 'Encryption key exported.',
+    detail:
+      'Store this file somewhere safe and separate from your database backup ' +
+      '— a password manager is ideal. Delete it from Downloads or Desktop ' +
+      'once it is in a safe place.',
+    buttons: ['OK'],
+  });
+
+  return { success: true, path: filePath };
+}
+
+// ── Automatic backup on quit ──────────────────────────────────────────────────
+
+/**
+ * Silently back up the database to the auto-backup directory
+ * (`userData/backups/`) and rotate old files if the kept count exceeds
+ * `backup.keepCount`.
+ *
+ * Called from the `will-quit` handler in index.ts. Any errors are swallowed
+ * so a backup failure never prevents the app from quitting.
+ */
+export async function runAutoBackup(): Promise<void> {
+  const s = await getSettings();
+  if (!s['backup.autoOnQuit']) return;
+
+  const backupsDir = join(app.getPath('userData'), 'backups');
+  mkdirSync(backupsDir, { recursive: true });
+
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  const destPath = join(backupsDir, `auto-backup-${timestamp}.db`);
+
+  await vacuumInto(destPath);
+
+  // Rotate: keep only the most-recent `keepCount` auto-backups.
+  const keepCount = s['backup.keepCount'];
+  const existing = readdirSync(backupsDir)
+    .filter((f) => f.startsWith('auto-backup-') && f.endsWith('.db'))
+    .sort(); // lexicographic == chronological because of YYYY-MM-DD prefix
+
+  if (existing.length > keepCount) {
+    const toDelete = existing.slice(0, existing.length - keepCount);
+    for (const f of toDelete) {
+      try {
+        unlinkSync(join(backupsDir, f));
+      } catch {
+        // Ignore individual deletion failures; don't block the quit.
+      }
+    }
+  }
 }

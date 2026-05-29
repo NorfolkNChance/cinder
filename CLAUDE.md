@@ -31,6 +31,7 @@ Full architectural spec: [`../ARCHITECTURE.md`](../ARCHITECTURE.md) — read it 
 | + | Security hardening — assertMainFrame reference identity, SHA-pinned actions, Dependabot, SECURITY.md |
 | + | Daily Notes — fourth mode with calendar date tree, auto-create on first access, reuses NoteEditor |
 | + | Custom DatePicker — portal-based calendar popover replacing native date inputs on all task due-date fields |
+| + | Data protection hardening — VACUUM INTO backup, integrity check on startup, auto-backup on quit with rotation, encryption key export |
 
 ---
 
@@ -446,6 +447,15 @@ These have burned us before. Check here before debugging similar symptoms.
 
 **`notesService.list()` excludes daily notes by default**
 - Since migration 0009, `list()` always appends `AND daily_date IS NULL` unless `dailyOnly: true` is passed. This means any code that calls `list({})` and expects to see all notes (e.g. export, FTS index rebuild) will silently skip daily notes. If a future feature needs all notes regardless of type, pass `includeAllTypes: true` — but first add that flag to the schema. Do not remove the default filter; it keeps the main Notes list clean.
+
+**DB backup must use `VACUUM INTO`, not `copyFileSync`**
+- In WAL mode SQLite has three files (`cinder.db`, `cinder.db-wal`, `cinder.db-shm`). Copying only the main file produces a backup that is either incomplete or corrupt if the WAL hasn't been fully checkpointed. `VACUUM INTO '/path/to/backup.db'` creates a consistent, fully-checkpointed snapshot in a single atomic operation, regardless of WAL state. The output is encrypted with the same SQLCipher key. This is what `exportBackup()` and `runAutoBackup()` both use.
+
+**`will-quit` async pattern — use the `_quitting` guard**
+- To run async work (the auto-backup) before the app exits, call `event.preventDefault()` and then `app.quit()` after the work finishes. Use a boolean guard (`_quitting`) to distinguish the first (preventable) call from the second (let it proceed) call. Without the guard you get an infinite quit loop. See the `will-quit` handler in `src/main/index.ts`.
+
+**Auto-backup runs on every quit — keep it fast**
+- `runAutoBackup()` is awaited synchronously in the quit path. `VACUUM INTO` on a typical notes database takes well under a second, but if it ever becomes slow (e.g. very large attachments stored as blobs), consider adding a size check or a timeout. The `finally` block in the `will-quit` handler ensures `app.quit()` is always called even if the backup throws.
 
 **`new Date('YYYY-MM-DD')` is off-by-one in timezones west of UTC**
 - `new Date('2026-05-27')` is parsed as UTC midnight, which is the *previous* day in `America/New_York` (UTC−5) when `.toLocaleDateString()` is called. To get the correct local date, always parse as noon-local: `new Date('2026-05-27T12:00:00')`. This is what `formatDailyTitle()` and `DailySidebar`'s `buildTree()` do. Apply the same pattern anywhere a YYYY-MM-DD string must be turned into a JS `Date` for display or weekday calculation.

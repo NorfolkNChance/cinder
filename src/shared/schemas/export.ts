@@ -43,6 +43,14 @@ export type ExportTasksInput = z.infer<typeof ExportTasksInput>;
 export const ExportBackupInput = z.object({});
 export type ExportBackupInput = z.infer<typeof ExportBackupInput>;
 
+/**
+ * Export the database encryption key to a text file.
+ * No parameters — opens a Save dialog in the main process.
+ * The renderer never receives the raw key value.
+ */
+export const ExportKeyBackupInput = z.object({});
+export type ExportKeyBackupInput = z.infer<typeof ExportKeyBackupInput>;
+
 // ── Results ──────────────────────────────────────────────────────────────────
 
 /**

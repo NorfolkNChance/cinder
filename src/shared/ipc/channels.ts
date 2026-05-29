@@ -93,3 +93,5 @@ export const EXPORT_ALL_NOTES = 'export:allNotes' as const;
 export const EXPORT_TASKS = 'export:tasks' as const;
 /** Copy the encrypted DB file to a user-chosen location. */
 export const EXPORT_BACKUP = 'export:backup' as const;
+/** Export the database encryption key to a user-chosen text file. */
+export const EXPORT_KEY_BACKUP = 'export:keyBackup' as const;

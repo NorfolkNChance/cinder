@@ -6,13 +6,29 @@ import { join } from 'path';
 
 // ── Key management ───────────────────────────────────────────────────────────
 
+/** The decrypted DB key, cached once after `initDb()` resolves. */
+let _dbKey: string | null = null;
+
+/**
+ * Return the in-memory copy of the database encryption key.
+ * Throws if called before `initDb()` has resolved.
+ */
+export function getDbKey(): string {
+  if (_dbKey === null) {
+    throw new Error('Database key not available. Await initDb() first.');
+  }
+  return _dbKey;
+}
+
 function getOrCreateDbKey(): string {
   const keyFilePath = join(app.getPath('userData'), 'db.key');
 
   if (existsSync(keyFilePath)) {
     const encryptedBlob = readFileSync(keyFilePath);
     try {
-      return safeStorage.decryptString(encryptedBlob);
+      const decrypted = safeStorage.decryptString(encryptedBlob);
+      _dbKey = decrypted;
+      return decrypted;
     } catch (err) {
       // safeStorage.decryptString throws when the macOS Keychain is
       // inaccessible — e.g. after a password change, data migration, or
@@ -41,6 +57,7 @@ function getOrCreateDbKey(): string {
   const encryptedBlob = safeStorage.encryptString(rawKey);
   writeFileSync(keyFilePath, encryptedBlob);
   chmodSync(keyFilePath, 0o600); // owner read/write only
+  _dbKey = rawKey;
   return rawKey;
 }
 
@@ -105,4 +122,29 @@ export function getDb(): sqlite3.Database {
     throw new Error('Database has not been initialised. Await initDb() first.');
   }
   return _db;
+}
+
+/**
+ * Run SQLite's built-in integrity check on the open database.
+ * Returns `true` if the database is healthy, `false` if any problem is found.
+ * Should be called after `initDb()` has resolved.
+ *
+ * Runs `PRAGMA integrity_check` which scans b-tree pages, free-list pages,
+ * and index consistency. Returns 'ok' for a healthy database; otherwise
+ * returns a list of error strings (we treat any non-ok result as failure).
+ */
+export function runIntegrityCheck(): Promise<boolean> {
+  return new Promise((resolve) => {
+    getDb().get(
+      'PRAGMA integrity_check',
+      (err: Error | null, row: unknown) => {
+        if (err) {
+          resolve(false);
+          return;
+        }
+        const val = (row as Record<string, unknown> | undefined)?.['integrity_check'];
+        resolve(val === 'ok');
+      },
+    );
+  });
 }
