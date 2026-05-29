@@ -30,6 +30,7 @@ Full architectural spec: [`../ARCHITECTURE.md`](../ARCHITECTURE.md) — read it 
 | + | App icon — `build/icon.icns` wired into `electron-builder.yml` |
 | + | Security hardening — assertMainFrame reference identity, SHA-pinned actions, Dependabot, SECURITY.md |
 | + | Daily Notes — fourth mode with calendar date tree, auto-create on first access, reuses NoteEditor |
+| + | Custom DatePicker — portal-based calendar popover replacing native date inputs on all task due-date fields |
 
 ---
 
@@ -354,7 +355,7 @@ src/
       settings/   ← SettingsModal, useSettings, ThemeWatcher
       update/     ← UpdateBanner, useUpdateStatus
       help/       ← HelpModal, helpContent
-    components/   ← Toast (shared UI primitives)
+    components/   ← Toast, DatePicker (shared UI primitives)
     hooks/        ← useFocusTrap, useDebouncedCallback, useDebouncedValue
     lib/          ← query-client, dates
     state/        ← ui.ts (Zustand store)
