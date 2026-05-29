@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { TipTapEditor } from './TipTapEditor';
+import { HtmlBodyEditor } from './HtmlBodyEditor';
 import { useNote, useUpdateNote } from './queries';
 import { useDebouncedCallback } from '../../hooks/useDebouncedCallback';
 import { ExportMenu } from '../export/ExportMenu';
@@ -150,11 +151,21 @@ export function NoteEditor({ noteId }: NoteEditorProps): JSX.Element {
         </div>
       </div>
       <div className="flex min-h-0 flex-1 flex-col">
-        <TipTapEditor
-          markdown={note.body}
-          noteId={note.id}
-          onChange={onBodyChange}
-        />
+        {note.bodyType === 'html' ? (
+          // key={note.id} ensures the component remounts (and resets its mode
+          // to 'preview') when the user switches to a different HTML note.
+          <HtmlBodyEditor
+            key={note.id}
+            html={note.body}
+            onChange={onBodyChange}
+          />
+        ) : (
+          <TipTapEditor
+            markdown={note.body}
+            noteId={note.id}
+            onChange={onBodyChange}
+          />
+        )}
       </div>
     </div>
   );

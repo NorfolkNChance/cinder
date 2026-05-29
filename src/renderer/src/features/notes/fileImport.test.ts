@@ -128,54 +128,62 @@ describe('importFile — HTML', () => {
     expect(result.note.title).toBe('my-page');
   });
 
-  it('converts headings to markdown atx style', async () => {
+  it('stores raw HTML as-is (bodyType html)', async () => {
     const html = `<html><body><h2>Sub heading</h2><p>Text.</p></body></html>`;
     const file = makeFile('doc.html', html);
     const result = await importFile(file);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.note.body).toContain('## Sub heading');
+    // Raw HTML is preserved — no Markdown conversion.
+    expect(result.note.bodyType).toBe('html');
+    expect(result.note.body).toContain('<h2>Sub heading</h2>');
+    expect(result.note.body).toContain('<p>Text.</p>');
   });
 
-  it('converts bold to **markdown**', async () => {
+  it('preserves all HTML markup including inline styles', async () => {
     const html = `<html><body><p><strong>Important</strong> text.</p></body></html>`;
     const file = makeFile('doc.html', html);
     const result = await importFile(file);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.note.body).toContain('**Important**');
+    expect(result.note.bodyType).toBe('html');
+    expect(result.note.body).toContain('<strong>Important</strong>');
   });
 
-  it('converts unordered lists', async () => {
+  it('preserves list markup in raw HTML', async () => {
     const html = `<html><body><ul><li>Alpha</li><li>Beta</li></ul></body></html>`;
     const file = makeFile('list.html', html);
     const result = await importFile(file);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    // turndown renders list items as '-   item' (3 spaces after dash)
+    expect(result.note.bodyType).toBe('html');
     expect(result.note.body).toContain('Alpha');
     expect(result.note.body).toContain('Beta');
-    expect(result.note.body).toContain('-');
+    expect(result.note.body).toContain('<ul>');
   });
 
-  it('strips <script> tags', async () => {
+  it('preserves script tags in stored HTML (safe: iframe sandbox blocks execution)', async () => {
+    // Scripts are kept in the stored body because they cannot execute —
+    // HtmlBodyEditor renders HTML in an iframe with sandbox="allow-same-origin"
+    // which blocks all JavaScript. Stripping scripts would silently corrupt
+    // the user's original file.
     const html = `<html><body><script>alert('xss')</script><p>Safe text.</p></body></html>`;
     const file = makeFile('doc.html', html);
     const result = await importFile(file);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.note.body).not.toContain('alert');
-    expect(result.note.body).not.toContain('script');
+    expect(result.note.bodyType).toBe('html');
     expect(result.note.body).toContain('Safe text');
   });
 
-  it('strips <style> tags', async () => {
+  it('preserves style tags in stored HTML', async () => {
     const html = `<html><head><style>body{color:red}</style></head><body><p>Content.</p></body></html>`;
     const file = makeFile('doc.html', html);
     const result = await importFile(file);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.note.body).not.toContain('color:red');
+    expect(result.note.bodyType).toBe('html');
+    expect(result.note.body).toContain('Content.');
   });
 
   it('handles .htm extension', async () => {

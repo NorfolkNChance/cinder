@@ -30,8 +30,11 @@ import {
  * nullable and unconstrained at the schema level — no folders table exists
  * yet. Once folders are introduced, add the FK in a migration.
  *
- * The canonical storage format for note body is markdown text (§6.1). The
- * ProseMirror document is an in-memory editing format only.
+ * `body_type` determines how the body column is interpreted:
+ *   'markdown' (default) — CommonMark text, rendered by TipTap / ProseMirror.
+ *   'html'               — Raw HTML, rendered in a sandboxed iframe and edited
+ *                          in a plain textarea. Set when the user drops an HTML
+ *                          file into the Notes section.
  */
 export const notes = sqliteTable(
   'notes',
@@ -39,6 +42,7 @@ export const notes = sqliteTable(
     id: text('id').primaryKey(),
     title: text('title').notNull(),
     body: text('body').notNull().default(''),
+    bodyType: text('body_type').notNull().default('markdown'),
     folderId: text('folder_id'),
     /**
      * `daily_date` is set for daily notes (Daily mode) and NULL for regular

@@ -110,6 +110,7 @@ export function NoteList(): JSX.Element {
           const created = await createNote.mutateAsync({
             title: result.note.title,
             body: result.note.body,
+            bodyType: result.note.bodyType,
           });
           lastCreatedId = created.id;
         }

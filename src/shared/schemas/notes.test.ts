@@ -136,6 +136,7 @@ describe('Note (canonical shape)', () => {
       id: VALID_UUID,
       title: 'Hello',
       body: 'world',
+      bodyType: 'markdown' as const,
       folderId: null,
       dailyDate: null,
       createdAt: VALID_ISO,

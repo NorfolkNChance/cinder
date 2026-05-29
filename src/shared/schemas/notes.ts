@@ -16,12 +16,15 @@ const ISO_8601 = z.string().datetime({ offset: false });
 const NoteId = z.string().uuid();
 const FolderId = z.string().uuid().nullable();
 const DailyDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+const BodyType = z.enum(['markdown', 'html']);
 
 // ── Canonical note shape (returned by the service) ──────────────────────────
 export const Note = z.object({
   id: NoteId,
   title: z.string(),
   body: z.string(),
+  /** 'markdown' (default) or 'html'. Determines which editor is shown. */
+  bodyType: BodyType.default('markdown'),
   folderId: FolderId,
   /** NULL for regular notes; 'YYYY-MM-DD' for daily notes. */
   dailyDate: DailyDate.nullable(),
@@ -41,6 +44,8 @@ export const NoteCreateInput = z.object({
   // The body upper bound (1MB chars) matches §3.4 worked example. The default
   // empty string is applied by the service so an explicit "" is unambiguous.
   body: z.string().max(1_000_000).optional(),
+  /** 'markdown' (default) or 'html'. Set to 'html' when importing an HTML file. */
+  bodyType: BodyType.optional(),
   folderId: FolderId.optional(),
   /** Omit for regular notes; supply 'YYYY-MM-DD' to create a daily note. */
   dailyDate: DailyDate.nullable().optional(),

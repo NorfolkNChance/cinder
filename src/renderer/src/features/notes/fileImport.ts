@@ -2,47 +2,22 @@
  * File import utilities for the Notes section.
  *
  * Supported formats:
- *   .md / .markdown  → read as-is; title from first `# heading` or filename
- *   .html / .htm     → convert to Markdown via turndown; title from
- *                      <title>, first <h1>, or filename
+ *   .md / .markdown  → read as-is; title from first `# heading` or filename.
+ *                      bodyType: 'markdown'.
+ *   .html / .htm     → stored as raw HTML without conversion. bodyType: 'html'.
+ *                      Title extracted from <title> or first <h1>.
+ *                      Displayed in a sandboxed iframe; edited in a textarea.
  *
  * All file reading uses the standard browser File API (`file.text()`) —
  * safe inside a sandboxed Electron renderer with no Node access required.
- * HTML→Markdown conversion is done with the `turndown` library (pure JS,
- * no Node dependencies).
  */
-
-import TurndownService from 'turndown';
-
-// ── Turndown instance ────────────────────────────────────────────────────────
-
-/**
- * Shared TurndownService configured for clean Markdown output.
- *
- * Options:
- *   headingStyle: 'atx'   → # headings (not underline-style)
- *   hr: '---'             → consistent horizontal rules
- *   bulletListMarker: '-' → matches Cinder's quick-add preview style
- *   codeBlockStyle: 'fenced' → ``` fences instead of indentation
- */
-const turndown = new TurndownService({
-  headingStyle: 'atx',
-  hr: '---',
-  bulletListMarker: '-',
-  codeBlockStyle: 'fenced',
-});
-
-// Strip <script>, <style>, and <nav> entirely — they don't belong in notes.
-turndown.addRule('remove-noise', {
-  filter: ['script', 'style', 'nav', 'header', 'footer', 'aside'],
-  replacement: () => '',
-});
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
 export interface ImportedNote {
   title: string;
   body: string;
+  bodyType: 'markdown' | 'html';
 }
 
 export type ImportFileError =
@@ -145,30 +120,24 @@ function importMarkdown(filename: string, content: string): ImportedNote {
   }
 
   const body = lines.slice(bodyStart).join('\n').trimStart();
-  return { title, body };
+  return { title, body, bodyType: 'markdown' };
 }
 
-/** Import an HTML file: parse, extract title, convert body to Markdown. */
+/**
+ * Import an HTML file: store the raw HTML as-is. bodyType 'html' tells the
+ * editor to display it in a sandboxed iframe and let the user edit the source
+ * directly, rather than converting to Markdown.
+ */
 function importHtml(filename: string, rawHtml: string): ImportedNote {
   // DOMParser is available in sandboxed Electron renderers.
   const parser = new DOMParser();
   const doc = parser.parseFromString(rawHtml, 'text/html');
 
   // Title priority: <title>, first <h1>, filename stem.
-  const htmlTitle =
+  const title =
     doc.querySelector('title')?.textContent?.trim() ||
     doc.querySelector('h1')?.textContent?.trim() ||
     stemOf(filename);
 
-  // Convert the <body> (or whole doc if no body) to Markdown.
-  const bodyEl = doc.body ?? doc.documentElement;
-
-  // Remove elements that produce noise in a note context.
-  bodyEl
-    .querySelectorAll('script, style, nav, header, footer, aside')
-    .forEach((el) => el.remove());
-
-  const markdown = turndown.turndown(bodyEl.innerHTML).trim();
-
-  return { title: htmlTitle, body: markdown };
+  return { title, body: rawHtml, bodyType: 'html' };
 }
