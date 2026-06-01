@@ -63,12 +63,10 @@ Cross-reference the architecture in [`CLAUDE.md`](CLAUDE.md) before starting any
 
 ---
 
-### M2 — HTML note FTS5 search improvement
-**Why**: HTML notes store raw HTML in `body`, so searching returns snippets like `<p>meeting agenda</p>` instead of clean text. The FTS5 index should contain stripped text for HTML notes.
-
-**Scope**:
-- In `notes.ts` create/update: when `bodyType === 'html'`, strip HTML tags before writing to the FTS5 virtual table
-- This requires updating the FTS5 trigger (if triggers are used) or the explicit FTS upsert in the service layer
+### ~~M2 — HTML note FTS5 search improvement~~ ✅ shipped
+- `stripHtml()` helper strips HTML tags from body text
+- `updateFtsBody()` updates the FTS5 table directly (bypassing the trigger)
+- `notesService.create()` and `update()` now overwrite FTS with stripped text when `bodyType === 'html'`
 
 ---
 

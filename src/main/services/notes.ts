@@ -34,6 +34,30 @@ function nowIso(): string {
   return new Date().toISOString();
 }
 
+/** Strip HTML tags from a string, leaving only text content. */
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, '');
+}
+
+/**
+ * Update the FTS5 body for a note, bypassing the SQL trigger which always
+ * writes the raw body. For HTML notes the trigger writes raw HTML; this
+ * overwrites it with clean text so FTS5 searches and snippets are usable.
+ */
+function updateFtsBody(noteId: string, cleanBody: string): Promise<void> {
+  const db = getDb();
+  return new Promise<void>((resolve, reject) => {
+    db.run(
+      'UPDATE notes_fts SET body = ? WHERE note_id = ?',
+      [cleanBody, noteId],
+      (err: Error | null) => {
+        if (err) reject(err);
+        else resolve();
+      },
+    );
+  });
+}
+
 /**
  * Produce a human-readable title for a daily note from a YYYY-MM-DD string.
  * Examples: "Tuesday, 27 May 2026", "Monday, 1 January 2025".
@@ -74,6 +98,13 @@ export const notesService = {
       deletedAt: null,
     };
     await db.insert(notes).values(row);
+
+    // For HTML notes, overwrite the FTS body with stripped text — the
+    // SQL trigger writes raw HTML which pollutes search snippets.
+    if (row.bodyType === 'html' && row.body) {
+      void updateFtsBody(row.id, stripHtml(row.body));
+    }
+
     return row;
   },
 
@@ -122,6 +153,15 @@ export const notesService = {
     // diff is empty — important for the auto-save "touch" pattern.
     const patch = { ...input.patch, updatedAt: nowIso() };
     await db.update(notes).set(patch).where(eq(notes.id, input.id));
+
+    // For HTML notes, overwrite the FTS body with stripped text whenever
+    // body is part of the patch. The SQL trigger always writes raw HTML.
+    if ('body' in patch && patch.body !== undefined) {
+      const updated = await getById(input.id);
+      if (updated?.bodyType === 'html') {
+        void updateFtsBody(input.id, stripHtml(patch.body));
+      }
+    }
 
     return getById(input.id);
   },

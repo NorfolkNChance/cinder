@@ -39,6 +39,7 @@ Full architectural spec: [`../ARCHITECTURE.md`](../ARCHITECTURE.md) — read it 
 | + | Spellcheck — macOS `NSSpellChecker` via `webPreferences.spellcheck: true`; context-menu with suggestions + "Add to Dictionary"; `editor.spellcheck` toggle in Settings → Editor |
 | + | Vault import attachments — scanner counts `![[embeds]]`, importer copies matched files to `userData/attachments/<noteId>/` and converts to `attachment://` URLs; checkbox in preview modal |
 | + | Vault re-sync — `checkExisting` scan flag, "exists" badges in preview, create-only / overwrite strategy; import result includes `notesUpdated` counter |
+| + | HTML note FTS5 — raw HTML stripped from FTS index for HTML notes via `stripHtml()` called after create/update; clean search snippets |
 
 ---
 
