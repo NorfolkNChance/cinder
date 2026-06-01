@@ -178,7 +178,7 @@ export const HELP_SECTIONS: HelpSection[] = [
     id: 'notes',
     title: 'Notes',
     icon: '📝',
-    keywords: ['markdown', 'editor', 'tiptap', 'prosemirror', 'write', 'new note', 'search', 'attach', 'image', 'import'],
+    keywords: ['markdown', 'editor', 'tiptap', 'prosemirror', 'write', 'new note', 'search', 'attach', 'image', 'import', 'spellcheck', 'spell check', 'spelling'],
     render: () => (
       <div>
         <H2>Notes</H2>
@@ -244,6 +244,20 @@ export const HELP_SECTIONS: HelpSection[] = [
           editor toolbar creates a task linked to the current note and places
           it in the Triage queue — so it won't clutter Inbox until you decide
           what to do with it. See the <em>Triage &amp; Capture</em> section for details.
+        </P>
+
+        <H3>Spell checking</H3>
+        <P>
+          Cinder uses the macOS system spellchecker (<Code>NSSpellChecker</Code>
+          ) — the same engine used by TextEdit and Notes. Misspelled words are
+          underlined with a red dotted line. Right-click any underlined word to
+          see correction suggestions or to add the word to your personal
+          dictionary. The personal dictionary is shared with all macOS apps.
+        </P>
+        <P>
+          Spell checking respects your macOS language settings and works
+          offline. Toggle it on or off in{' '}
+          <strong className="text-gray-800 dark:text-gray-200">Settings → Editor</strong>.
         </P>
 
         <Callout type="tip">

@@ -7,6 +7,7 @@ import {
   editorExtensions,
 } from '../../../../shared/markdown';
 import { EditorToolbar } from './EditorToolbar';
+import { useSettings } from '../settings/useSettings';
 
 interface TipTapEditorProps {
   /** Markdown body to load. Editor is recreated when `noteId` changes. */
@@ -55,6 +56,12 @@ export function TipTapEditor({
   // we call setContent during a note switch.
   const isHydratingRef = useRef(false);
 
+  // Read the spellcheck preference. Default to true so the editor is usable
+  // before settings load. We update the DOM attribute in a separate effect
+  // rather than rebuilding the editor when the setting changes.
+  const { settings } = useSettings();
+  const spellcheck = settings?.['editor.spellcheck'] ?? true;
+
   // Keep noteId in a ref so the editor's pasteHandler (registered once on
   // construction) always sees the current id without rebuilding the editor.
   const noteIdRef = useRef(noteId);
@@ -77,6 +84,8 @@ export function TipTapEditor({
         // The .ProseMirror class (added by TipTap automatically) is styled
         // in index.css. Adding only layout-affecting utilities here.
         class: 'focus:outline-none min-h-[60vh] px-1',
+        // Initial value — kept in sync with the setting via the effect below.
+        spellcheck: 'true',
       },
       // Intercept a clipboard paste containing an image — bytes get
       // saved through the attachments IPC and the resulting URL is
@@ -157,6 +166,14 @@ export function TipTapEditor({
     editor.commands.setContent(deserialize(markdown).toJSON(), false);
     isHydratingRef.current = false;
   }, [editor, noteId, markdown]);
+
+  // Sync the spellcheck DOM attribute whenever the setting changes. We
+  // cannot pass this through editorProps after construction (TipTap doesn't
+  // re-apply attributes on re-render), so we mutate the DOM node directly.
+  useEffect(() => {
+    if (editor === null) return;
+    editor.view.dom.setAttribute('spellcheck', spellcheck ? 'true' : 'false');
+  }, [editor, spellcheck]);
 
   if (editor === null) {
     return <div className="px-1 text-gray-500">Loading editor…</div>;

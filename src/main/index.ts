@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog } from 'electron';
+import { app, BrowserWindow, dialog, Menu } from 'electron';
 import { join } from 'path';
 import { is } from '@electron-toolkit/utils';
 import { installCSP } from './security/csp';
@@ -131,8 +131,45 @@ function createWindow(): BrowserWindow {
       experimentalFeatures: false,
       enableBlinkFeatures: '',
       webviewTag: false,
+      spellcheck: true,
       preload: join(__dirname, '../preload/index.js'),
     },
+  });
+
+  // ── Spellcheck context menu ────────────────────────────────────────────────
+  // On macOS, Electron routes spellcheck through NSSpellChecker (the same
+  // engine used by TextEdit and Notes). When the user right-clicks a
+  // misspelled word, the `context-menu` event fires with correction
+  // suggestions in params.dictionarySuggestions. We build a native Menu from
+  // those suggestions and use webContents.replaceMisspelling() to apply the
+  // correction — no IPC round-trip required.
+  mainWindow.webContents.on('context-menu', (_event, params) => {
+    // Only show the spellcheck menu when a misspelled word was clicked.
+    if (!params.misspelledWord) return;
+
+    const items: Electron.MenuItemConstructorOptions[] = [];
+
+    if (params.dictionarySuggestions.length > 0) {
+      for (const suggestion of params.dictionarySuggestions) {
+        items.push({
+          label: suggestion,
+          click: () => mainWindow.webContents.replaceMisspelling(suggestion),
+        });
+      }
+    } else {
+      items.push({ label: 'No suggestions', enabled: false });
+    }
+
+    items.push({ type: 'separator' });
+    items.push({
+      label: 'Add to Dictionary',
+      click: () =>
+        mainWindow.webContents.session.addWordToSpellCheckerDictionary(
+          params.misspelledWord,
+        ),
+    });
+
+    Menu.buildFromTemplate(items).popup({ window: mainWindow });
   });
 
   mainWindow.on('ready-to-show', () => {

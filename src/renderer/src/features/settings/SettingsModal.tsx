@@ -70,6 +70,7 @@ export function SettingsModal(): JSX.Element | null {
           <p className="mb-3 px-4 text-[10px] font-semibold uppercase tracking-widest text-gray-500 dark:text-gray-600">
             Settings
           </p>
+          <SidebarItem label="Editor" icon="✏️" />
           <SidebarItem label="Appearance" icon="🎨" />
           <SidebarItem label="Notifications" icon="🔔" />
           <SidebarItem label="Backup" icon="💾" />
@@ -98,6 +99,8 @@ export function SettingsModal(): JSX.Element | null {
               <p className="text-sm text-gray-500">Loading…</p>
             ) : (
               <>
+                <EditorSection settings={settings} set={setWithSync} />
+                <div className="my-6 border-t border-gray-200 dark:border-gray-800" />
                 <AppearanceSection settings={settings} set={setWithSync} />
                 <div className="my-6 border-t border-gray-200 dark:border-gray-800" />
                 <NotificationsSection settings={settings} set={setWithSync} />
@@ -139,6 +142,42 @@ function SidebarItem({ label, icon }: { label: string; icon: string }): JSX.Elem
       <span>{icon}</span>
       <span>{label}</span>
     </div>
+  );
+}
+
+// ── Editor section ────────────────────────────────────────────────────────────
+
+function EditorSection({
+  settings,
+  set,
+}: {
+  settings: AppSettings;
+  set: SetFn;
+}): JSX.Element {
+  const spellcheck = settings['editor.spellcheck'];
+  return (
+    <section>
+      <SectionHeading icon="✏️" title="Editor" />
+      <Field
+        label="Spell checking"
+        description="Underline misspelled words using the macOS system spellchecker. Right-click a highlighted word for suggestions or to add it to your personal dictionary."
+      >
+        <button
+          role="switch"
+          aria-checked={spellcheck}
+          onClick={() => set('editor.spellcheck', !spellcheck)}
+          className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900 ${
+            spellcheck ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-700'
+          }`}
+        >
+          <span
+            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+              spellcheck ? 'translate-x-4' : 'translate-x-0'
+            }`}
+          />
+        </button>
+      </Field>
+    </section>
   );
 }
 
