@@ -6,6 +6,7 @@ import {
   useNotesList,
   useNotesSearch,
 } from './queries';
+import { FolderTree } from './FolderTree';
 import { useUI } from '../../state/ui';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { importDroppedFiles } from './fileImport';
@@ -36,15 +37,28 @@ export function NoteList(): JSX.Element {
   const deleteNote = useDeleteNote();
   const selectedNoteId = useUI((s) => s.selectedNoteId);
   const setSelectedNoteId = useUI((s) => s.setSelectedNoteId);
+  const notesFolderScope = useUI((s) => s.notesFolderScope);
 
   // Search
   const [searchInput, setSearchInput] = useState('');
   const debouncedQuery = useDebouncedValue(searchInput, SEARCH_DEBOUNCE_MS);
   const isSearching = debouncedQuery.trim().length > 0;
 
-  const listQuery = useNotesList();
+  const listQuery = useNotesList(notesFolderScope);
   const searchQuery = useNotesSearch(debouncedQuery);
-  const notes = isSearching ? searchQuery.data : listQuery.data;
+
+  // When searching, filter results by current folder scope client-side.
+  const rawSearchNotes = searchQuery.data;
+  const filteredSearchNotes =
+    rawSearchNotes === undefined
+      ? undefined
+      : notesFolderScope.kind === 'all'
+      ? rawSearchNotes
+      : notesFolderScope.kind === 'unfiled'
+      ? rawSearchNotes.filter((n) => n.folderId === null)
+      : rawSearchNotes.filter((n) => n.folderId === notesFolderScope.id);
+
+  const notes = isSearching ? filteredSearchNotes : listQuery.data;
   const isLoading = isSearching ? searchQuery.isLoading : listQuery.isLoading;
 
   // ── Drag-and-drop ─────────────────────────────────────────────────────────
@@ -233,6 +247,11 @@ export function NoteList(): JSX.Element {
           }}
           className="w-full rounded-md bg-gray-200 px-3 py-1.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-gray-900 dark:text-gray-200 dark:placeholder-gray-500"
         />
+      </div>
+
+      {/* Folder tree */}
+      <div className="border-b border-gray-200 dark:border-gray-800">
+        <FolderTree />
       </div>
 
       {/* Import errors */}

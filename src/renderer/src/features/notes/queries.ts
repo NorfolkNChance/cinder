@@ -17,10 +17,32 @@ const dailyNotesQueryKey = [...queryKeys.notes.all, 'daily'] as const;
  * components above stay declarative.
  */
 
-export function useNotesList(): ReturnType<typeof useQuery<readonly Note[]>> {
+/**
+ * Fetch the list of regular notes, optionally filtered by folder scope.
+ *
+ * - `{ kind: 'all' }`           → all notes regardless of folder
+ * - `{ kind: 'unfiled' }`       → only notes with no folder assigned
+ * - `{ kind: 'folder', id }` → only notes in the specified folder
+ */
+export type NotesFolderScope =
+  | { kind: 'all' }
+  | { kind: 'unfiled' }
+  | { kind: 'folder'; id: string };
+
+export function useNotesList(
+  scope: NotesFolderScope = { kind: 'all' },
+): ReturnType<typeof useQuery<readonly Note[]>> {
+  // Derive the folderId filter from the scope.
+  const input =
+    scope.kind === 'all'
+      ? {}
+      : scope.kind === 'unfiled'
+      ? { folderId: null as null }
+      : { folderId: scope.id };
+
   return useQuery({
-    queryKey: queryKeys.notes.list(),
-    queryFn: () => window.api.notes.list({}),
+    queryKey: [...queryKeys.notes.list(), scope] as const,
+    queryFn: () => window.api.notes.list(input),
   });
 }
 

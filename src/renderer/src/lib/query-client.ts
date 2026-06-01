@@ -55,4 +55,9 @@ export const queryKeys = {
     all: ['savedFilters'] as const,
     list: () => [...queryKeys.savedFilters.all, 'list'] as const,
   },
+  folders: {
+    all: ['folders'] as const,
+    list: () => [...queryKeys.folders.all, 'list'] as const,
+    detail: (id: string) => [...queryKeys.folders.all, 'detail', id] as const,
+  },
 } as const;

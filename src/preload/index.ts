@@ -2,6 +2,11 @@ import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron';
 import {
   APP_GET_VERSION,
   ATTACHMENTS_SAVE,
+  FOLDERS_CREATE,
+  FOLDERS_GET,
+  FOLDERS_LIST,
+  FOLDERS_UPDATE,
+  FOLDERS_DELETE,
   NOTES_CREATE,
   NOTES_DELETE,
   NOTES_GET,
@@ -123,6 +128,14 @@ import type {
   AppSettings,
   SettingsSetInput,
 } from '../shared/schemas/settings';
+import type {
+  Folder,
+  FolderCreateInput,
+  FolderGetInput,
+  FolderListInput,
+  FolderUpdateInput,
+  FolderDeleteInput,
+} from '../shared/schemas/folders';
 import type { UpdateStatus } from '../shared/schemas/update';
 import type {
   VaultScanInput,
@@ -265,6 +278,18 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.on(NOTIFY_TASK_DUE, handler);
       return () => ipcRenderer.off(NOTIFY_TASK_DUE, handler);
     },
+  },
+  folders: {
+    create: (input: FolderCreateInput): Promise<Folder> =>
+      ipcRenderer.invoke(FOLDERS_CREATE, input),
+    get: (input: FolderGetInput): Promise<Folder | null> =>
+      ipcRenderer.invoke(FOLDERS_GET, input),
+    list: (input: FolderListInput): Promise<readonly Folder[]> =>
+      ipcRenderer.invoke(FOLDERS_LIST, input),
+    update: (input: FolderUpdateInput): Promise<Folder | null> =>
+      ipcRenderer.invoke(FOLDERS_UPDATE, input),
+    delete: (input: FolderDeleteInput): Promise<{ ok: true } | { ok: false; reason: string }> =>
+      ipcRenderer.invoke(FOLDERS_DELETE, input),
   },
   vault: {
     pickFolder: (): Promise<string | null> =>

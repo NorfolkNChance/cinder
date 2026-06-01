@@ -17,16 +17,13 @@ Cross-reference the architecture in [`CLAUDE.md`](CLAUDE.md) before starting any
 
 ## 🔴 High priority
 
-### H1 — Real folder support
-**Why**: `folder_id` has been reserved in the notes table since the initial schema but the `folders` table was never built. The vault import had to work around this with ugly title prefixes (`Projects / Meeting notes`). Everything downstream — note organisation, vault import, sidebar navigation — improves once folders exist.
-
-**Scope**:
-- Migration: `folders` table (id, name, parent_id, order, created_at, updated_at)
-- Drizzle schema + Zod schemas + IPC channels (`folders:create/list/update/delete`)
-- NoteList sidebar: collapsible folder tree with drag-to-reorder
-- NoteEditor header: folder selector
-- Vault import: map Obsidian folder hierarchy → Cinder folders (replace title-prefix workaround)
-- Export: preserve folder structure as subdirectories
+### ~~H1 — Real folder support~~ ✅ shipped in v1.2.0
+- Migration 0011: `folders` table with parent_id self-reference and order column
+- Full CRUD service + IPC + preload surface (`window.api.folders.*`)
+- Notes sidebar: collapsible folder tree with "All Notes" / "Unfiled" scope selectors, inline create/rename/delete
+- NoteEditor header: folder assignment selector (hidden when no folders exist)
+- Notes list + search: both filtered by selected folder scope
+- Vault import folder→title prefix still in place; proper vault→folder mapping is a follow-on once vault re-sync (M1) lands
 
 ---
 

@@ -8,6 +8,13 @@
 
 export const APP_GET_VERSION = 'app:getVersion' as const;
 
+// ── Folders ──────────────────────────────────────────────────────────────────
+export const FOLDERS_CREATE = 'folders:create' as const;
+export const FOLDERS_GET    = 'folders:get'    as const;
+export const FOLDERS_LIST   = 'folders:list'   as const;
+export const FOLDERS_UPDATE = 'folders:update' as const;
+export const FOLDERS_DELETE = 'folders:delete' as const;
+
 // ── Notes ────────────────────────────────────────────────────────────────────
 export const NOTES_CREATE = 'notes:create' as const;
 export const NOTES_GET = 'notes:get' as const;

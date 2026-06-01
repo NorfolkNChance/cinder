@@ -67,6 +67,14 @@ import type {
   AppSettings,
   SettingsSetInput,
 } from '../shared/schemas/settings';
+import type {
+  Folder,
+  FolderCreateInput,
+  FolderGetInput,
+  FolderListInput,
+  FolderUpdateInput,
+  FolderDeleteInput,
+} from '../shared/schemas/folders';
 import type { UpdateStatus } from '../shared/schemas/update';
 import type {
   VaultScanInput,
@@ -158,6 +166,13 @@ declare global {
       };
       notify: {
         onTaskDue: (cb: () => void) => () => void;
+      };
+      folders: {
+        create: (input: FolderCreateInput) => Promise<Folder>;
+        get: (input: FolderGetInput) => Promise<Folder | null>;
+        list: (input: FolderListInput) => Promise<readonly Folder[]>;
+        update: (input: FolderUpdateInput) => Promise<Folder | null>;
+        delete: (input: FolderDeleteInput) => Promise<{ ok: true } | { ok: false; reason: string }>;
       };
       vault: {
         pickFolder: () => Promise<string | null>;

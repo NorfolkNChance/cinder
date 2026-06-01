@@ -10,6 +10,7 @@ import { runAutoBackup } from './services/export';
 import { registerAppHandlers } from './ipc/app';
 import { registerNotesHandlers } from './ipc/notes';
 import { registerAttachmentsHandlers } from './ipc/attachments';
+import { registerFoldersHandlers } from './ipc/folders';
 import { registerProjectsHandlers } from './ipc/projects';
 import { registerSectionsHandlers } from './ipc/sections';
 import { registerTasksHandlers } from './ipc/tasks';
@@ -196,6 +197,7 @@ app.whenReady().then(async () => {
   registerAppHandlers();
   registerNotesHandlers();
   registerAttachmentsHandlers();
+  registerFoldersHandlers();
   registerProjectsHandlers();
   registerSectionsHandlers();
   registerTasksHandlers();

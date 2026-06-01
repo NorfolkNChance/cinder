@@ -2,9 +2,64 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { TipTapEditor } from './TipTapEditor';
 import { HtmlBodyEditor } from './HtmlBodyEditor';
 import { useNote, useUpdateNote } from './queries';
+import { useFoldersList } from './folderQueries';
 import { useDebouncedCallback } from '../../hooks/useDebouncedCallback';
 import { ExportMenu } from '../export/ExportMenu';
 import { AddTriageTodo } from './AddTriageTodo';
+
+// ── Folder selector ───────────────────────────────────────────────────────────
+
+/**
+ * Small folder breadcrumb shown below the note title. Clicking it opens
+ * a native <select> to reassign the note to a different folder (or Unfiled).
+ */
+function FolderSelector({
+  noteId,
+  folderId,
+}: {
+  noteId: string;
+  folderId: string | null;
+}): JSX.Element | null {
+  const { data: folders } = useFoldersList();
+  const updateNote = useUpdateNote();
+
+  // Don't render if there are no folders yet — keeps the header clean.
+  if (!folders || folders.length === 0) return null;
+
+  const currentFolder = folders.find((f) => f.id === folderId);
+
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>): void => {
+    const val = e.target.value;
+    updateNote.mutate({
+      id: noteId,
+      patch: { folderId: val === '' ? null : val },
+    });
+  };
+
+  return (
+    <div className="mt-1 flex items-center gap-1">
+      <span className="text-[11px] text-gray-400 dark:text-gray-600" aria-hidden>📁</span>
+      <select
+        value={folderId ?? ''}
+        onChange={handleChange}
+        aria-label="Assign to folder"
+        className="bg-transparent text-[11px] text-gray-400 hover:text-gray-600 focus:outline-none dark:text-gray-600 dark:hover:text-gray-400"
+      >
+        <option value="">Unfiled</option>
+        {folders.map((f) => (
+          <option key={f.id} value={f.id}>
+            {f.name}
+          </option>
+        ))}
+      </select>
+      {currentFolder && (
+        <span className="sr-only">Current folder: {currentFolder.name}</span>
+      )}
+    </div>
+  );
+}
+
+// ── NoteEditor ────────────────────────────────────────────────────────────────
 
 interface NoteEditorProps {
   noteId: string;
@@ -129,26 +184,29 @@ export function NoteEditor({ noteId }: NoteEditorProps): JSX.Element {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-b border-gray-200 px-6 py-3 dark:border-gray-800">
-        <input
-          aria-label="Note title"
-          value={draft.title}
-          onChange={onTitleChange}
-          placeholder="Untitled"
-          className="flex-1 bg-transparent text-2xl font-semibold tracking-tight text-gray-900 placeholder-gray-500 focus:outline-none dark:text-white dark:placeholder-gray-600"
-        />
-        <div className="ml-4 flex items-center gap-3">
-          <span
-            className={`text-xs ${
-              draft.dirty ? 'text-amber-400' : 'text-gray-600'
-            }`}
-            aria-live="polite"
-          >
-            {draft.dirty ? 'Unsaved…' : 'Saved'}
-          </span>
-          <AddTriageTodo noteId={note.id} noteTitle={draft.title} />
-          <ExportMenu noteId={note.id} />
+      <div className="border-b border-gray-200 px-6 py-3 dark:border-gray-800">
+        <div className="flex items-center justify-between">
+          <input
+            aria-label="Note title"
+            value={draft.title}
+            onChange={onTitleChange}
+            placeholder="Untitled"
+            className="flex-1 bg-transparent text-2xl font-semibold tracking-tight text-gray-900 placeholder-gray-500 focus:outline-none dark:text-white dark:placeholder-gray-600"
+          />
+          <div className="ml-4 flex items-center gap-3">
+            <span
+              className={`text-xs ${
+                draft.dirty ? 'text-amber-400' : 'text-gray-600'
+              }`}
+              aria-live="polite"
+            >
+              {draft.dirty ? 'Unsaved…' : 'Saved'}
+            </span>
+            <AddTriageTodo noteId={note.id} noteTitle={draft.title} />
+            <ExportMenu noteId={note.id} />
+          </div>
         </div>
+        <FolderSelector noteId={note.id} folderId={note.folderId} />
       </div>
       <div className="flex min-h-0 flex-1 flex-col">
         {note.bodyType === 'html' ? (

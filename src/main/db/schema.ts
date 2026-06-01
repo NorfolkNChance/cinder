@@ -64,6 +64,43 @@ export const notes = sqliteTable(
 export type Note = typeof notes.$inferSelect;
 export type NewNote = typeof notes.$inferInsert;
 
+// ─── Folders ─────────────────────────────────────────────────────────────────
+
+/**
+ * Folders table — hierarchical organisation for notes.
+ *
+ * `parent_id` enables sub-folders. ON DELETE SET NULL means children
+ * become top-level if a parent is deleted.
+ *
+ * `order` is the manual sort position within the parent level (or top level
+ * if parent_id is null). Updated by the reorder service method.
+ *
+ * Note: the notes.folder_id column already exists from the initial migration
+ * but had no FK constraint (the folders table didn't exist yet). The FK is
+ * now enforced at the service layer via explicit validation.
+ */
+export const folders = sqliteTable(
+  'folders',
+  {
+    id: text('id').primaryKey(),
+    name: text('name').notNull(),
+    parentId: text('parent_id').references(
+      (): AnySQLiteColumn => folders.id,
+      { onDelete: 'set null' },
+    ),
+    order: integer('order').notNull().default(0),
+    createdAt: text('created_at').notNull(),
+    updatedAt: text('updated_at').notNull(),
+  },
+  (table) => ({
+    parentIdx: index('folders_parent_idx').on(table.parentId),
+    orderIdx: index('folders_order_idx').on(table.order),
+  }),
+);
+
+export type Folder = typeof folders.$inferSelect;
+export type NewFolder = typeof folders.$inferInsert;
+
 // ─── Projects ────────────────────────────────────────────────────────────────
 
 /**

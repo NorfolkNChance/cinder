@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { MatrixPrefs } from '../../../shared/matrix/classify';
 import { DEFAULT_MATRIX_PREFS } from '../../../shared/matrix/classify';
+import type { NotesFolderScope } from '../features/notes/queries';
 
 /**
  * Client-side UI state (Zustand).
@@ -40,6 +41,10 @@ export type TaskScope =
 interface UIState {
   mode: Mode;
   setMode: (m: Mode) => void;
+
+  /** Which folder scope the Notes sidebar is showing. */
+  notesFolderScope: NotesFolderScope;
+  setNotesFolderScope: (scope: NotesFolderScope) => void;
 
   /** The note open in Notes mode. Independent from Daily mode's selection. */
   selectedNoteId: string | null;
@@ -98,6 +103,9 @@ interface UIState {
 export const useUI = create<UIState>((set) => ({
   mode: 'notes',
   setMode: (m) => set({ mode: m }),
+
+  notesFolderScope: { kind: 'all' },
+  setNotesFolderScope: (scope) => set({ notesFolderScope: scope }),
 
   selectedNoteId: null,
   setSelectedNoteId: (id) => set({ selectedNoteId: id }),
