@@ -298,6 +298,17 @@ export const HELP_SECTIONS: HelpSection[] = [
           <li>The <strong className="text-gray-700 dark:text-gray-300">+ Todo</strong> button works inside daily notes — triage tasks link back to the daily note they came from.</li>
         </ul>
 
+        <H3>Daily note template</H3>
+        <P>
+          New daily notes can be pre-filled with a Markdown template. Go to{' '}
+          <strong className="text-gray-800 dark:text-gray-200">Settings → Daily Notes</strong>{' '}
+          (or click <strong className="text-gray-800 dark:text-gray-200">Edit template…</strong> at
+          the bottom of the Daily sidebar) and write your template in the textarea.
+          Common starting points: <Code>## Goals</Code>, <Code>## Journal</Code>,{' '}
+          <Code>## Gratitude</Code>. The template is only applied to{' '}
+          <em>new</em> notes — existing daily notes are never modified.
+        </P>
+
         <Callout type="tip">
           There is one note per calendar day — clicking <strong className="text-gray-800 dark:text-gray-200">Today →</strong> always
           opens the same note regardless of how many times you click it. You

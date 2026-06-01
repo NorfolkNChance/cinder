@@ -33,6 +33,7 @@ Most notes-and-todos products require you to send your content to someone else's
 - **Today → shortcut** in the sidebar always opens the current day's note
 - **Collapsible year → month → day tree** shows every day you've written; navigate with a single click
 - **Fully integrated** — daily notes support attachments, the triage "+ Todo" button, FTS5 search, and Markdown export; they're invisible in the main Notes list to keep both areas clean
+- **Markdown template** — configure a reusable template (e.g. `## Goals / ## Journal / ## Gratitude`) in Settings → Daily Notes; applied to every new daily note
 
 ### Tasks
 - **Full task CRUD** with title, description, priority (P1–P4), due date, and project assignment

@@ -51,6 +51,11 @@ const BackupAutoOnQuit = z.boolean();
 /** Number of auto-backup files to keep before rotating old ones out (1–30). */
 const BackupKeepCount = z.number().int().min(1).max(30);
 
+// ── Daily Notes ──────────────────────────────────────────────────────────────
+
+/** Markdown template applied to new daily notes. Empty string = blank note. */
+const DailyTemplate = z.string().max(50_000);
+
 // ── Appearance ───────────────────────────────────────────────────────────────
 
 /** UI colour scheme preference. */
@@ -63,6 +68,7 @@ export const AppSettingsSchema = z.object({
   'matrix.importanceCutoff': MatrixImportanceCutoff,
   'tasks.defaultScope': DefaultTaskScope,
   'tasks.showCompleted': ShowCompleted,
+  'daily.template': DailyTemplate,
   'appearance.theme': AppearanceTheme,
   'notifications.enabled': NotificationsEnabled,
   'backup.autoOnQuit': BackupAutoOnQuit,
@@ -77,6 +83,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   'matrix.importanceCutoff': 2,
   'tasks.defaultScope': 'inbox',
   'tasks.showCompleted': false,
+  'daily.template': '',
   'appearance.theme': 'auto',
   'notifications.enabled': true,
   'backup.autoOnQuit': true,

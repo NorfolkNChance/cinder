@@ -3,6 +3,7 @@ import { and, desc, eq, isNotNull, isNull, type SQL } from 'drizzle-orm';
 import { getDb } from '../db/index';
 import { getDrizzle } from '../db/drizzle';
 import { notes } from '../db/schema';
+import { settingsService } from './settings';
 import type {
   Note,
   NoteCreateInput,
@@ -148,12 +149,15 @@ export const notesService = {
 
     if (existing[0]) return existing[0] as Note;
 
-    // Create a blank daily note.
+    // Read template from settings — empty string means blank note.
+    const settings = await settingsService.getAll();
+    const body = settings['daily.template'];
+
     const now = nowIso();
     const row: Note = {
       id: uuidv7(),
       title: formatDailyTitle(input.date),
-      body: '',
+      body,
       bodyType: 'markdown',
       folderId: null,
       dailyDate: input.date,

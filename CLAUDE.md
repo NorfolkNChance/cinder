@@ -35,6 +35,7 @@ Full architectural spec: [`../ARCHITECTURE.md`](../ARCHITECTURE.md) — read it 
 | + | HTML notes — imported .html files stored raw (bodyType 'html'), rendered in sandboxed iframe, editable as source |
 | + | Obsidian vault import — scan-then-preview-then-import flow; detects daily notes by path, wiki-link/folder-prefix options |
 | + | Folders — `folders` table (migration 0011), nested tree in Notes sidebar, per-note folder assignment, scope filtering |
+| + | Daily note templates — `daily.template` setting; new daily notes pre-filled from Markdown template; "Edit template…" link in Daily sidebar |
 
 ---
 

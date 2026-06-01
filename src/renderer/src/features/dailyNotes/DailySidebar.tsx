@@ -117,6 +117,7 @@ export function DailySidebar(): JSX.Element {
   const setDailySelectedNoteId = useUI((s) => s.setDailySelectedNoteId);
   const setSelectedDailyDate = useUI((s) => s.setSelectedDailyDate);
   const selectedDailyDate = useUI((s) => s.selectedDailyDate);
+  const openSettings = useUI((s) => s.openSettings);
 
   const tree = useMemo(
     () => buildTree(dailyNotes ?? []),
@@ -257,6 +258,16 @@ export function DailySidebar(): JSX.Element {
           </div>
         ))}
       </nav>
+
+      {/* Footer */}
+      <div className="border-t border-gray-200 px-3 py-2 dark:border-gray-800">
+        <button
+          onClick={openSettings}
+          className="text-[11px] text-gray-500 underline hover:text-gray-700 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:text-gray-600 dark:hover:text-gray-400"
+        >
+          Edit template…
+        </button>
+      </div>
     </div>
   );
 }

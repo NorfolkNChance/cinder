@@ -27,13 +27,10 @@ Cross-reference the architecture in [`CLAUDE.md`](CLAUDE.md) before starting any
 
 ---
 
-### H2 — Daily note templates
-**Why**: Daily notes are currently created blank. Most Obsidian users have a structured template (e.g. `## Goals`, `## Journal`, `## Gratitude`). Without a template the feature is less compelling for new users.
-
-**Scope**:
-- Settings: a `daily.template` textarea where the user writes Markdown
-- `getOrCreateDaily()`: populate `body` from the template when creating a new note (leave blank when no template is set)
-- UI: small "Edit template…" link in the Daily sidebar footer
+### ~~H2 — Daily note templates~~ ✅ shipped in v1.2.1
+- Settings → Daily Notes: `daily.template` textarea (Markdown)
+- `getOrCreateDaily()` reads `daily.template` from settings and populates `body` on create; existing notes unaffected
+- "Edit template…" link in DailySidebar footer opens Settings modal
 
 ---
 

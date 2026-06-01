@@ -73,6 +73,7 @@ export function SettingsModal(): JSX.Element | null {
           <SidebarItem label="Appearance" icon="🎨" />
           <SidebarItem label="Notifications" icon="🔔" />
           <SidebarItem label="Backup" icon="💾" />
+          <SidebarItem label="Daily Notes" icon="📅" />
           <SidebarItem label="Matrix" icon="🔲" />
           <SidebarItem label="Tasks" icon="✅" />
         </nav>
@@ -102,6 +103,8 @@ export function SettingsModal(): JSX.Element | null {
                 <NotificationsSection settings={settings} set={setWithSync} />
                 <div className="my-6 border-t border-gray-200 dark:border-gray-800" />
                 <BackupSection settings={settings} set={setWithSync} />
+                <div className="my-6 border-t border-gray-200 dark:border-gray-800" />
+                <DailyNotesSection settings={settings} set={setWithSync} />
                 <div className="my-6 border-t border-gray-200 dark:border-gray-800" />
                 <MatrixSection settings={settings} set={setWithSync} />
                 <div className="my-6 border-t border-gray-200 dark:border-gray-800" />
@@ -301,6 +304,39 @@ function BackupSection({
           Export encryption key…
         </button>
       </div>
+    </section>
+  );
+}
+
+// ── Daily Notes section ───────────────────────────────────────────────────────
+
+function DailyNotesSection({
+  settings,
+  set,
+}: {
+  settings: AppSettings;
+  set: SetFn;
+}): JSX.Element {
+  const template = settings['daily.template'];
+
+  return (
+    <section>
+      <SectionHeading icon="📅" title="Daily Notes" />
+      <p className="mb-4 text-[12px] text-gray-500 dark:text-gray-500">
+        Markdown written here is inserted into every new daily note. Existing notes are not affected.
+      </p>
+      <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1.5">
+        Template
+      </label>
+      <textarea
+        value={template}
+        onChange={(e) => set('daily.template', e.target.value)}
+        placeholder={'## Goals\n\n## Journal\n\n## Gratitude'}
+        rows={8}
+        spellCheck={false}
+        className="w-full resize-y rounded border border-gray-300 bg-white px-3 py-2 font-mono text-xs text-gray-800 placeholder-gray-400 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:placeholder-gray-600"
+        aria-label="Daily note template"
+      />
     </section>
   );
 }
