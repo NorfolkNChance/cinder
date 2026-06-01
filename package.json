@@ -42,7 +42,10 @@
     "zustand": "^5.0.13"
   },
   "overrides": {
-    "tar": "^7.5.15"
+    "tar": "^7.5.15",
+    "@esbuild-kit/core-utils": {
+      "esbuild": "^0.25.0"
+    }
   },
   "devDependencies": {
     "@electron-toolkit/preload": "^3.0.1",

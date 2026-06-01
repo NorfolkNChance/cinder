@@ -45,17 +45,14 @@ Cross-reference the architecture in [`CLAUDE.md`](CLAUDE.md) before starting any
 
 ---
 
-### H4 — Fix Node.js 20 deprecation in CI workflows
-**Why**: Every push and release shows `Node.js 20 is deprecated — actions are being forced to Node 24`. The SHA-pinned actions still target Node 20 runtime internally. Dependabot will open a PR to bump the SHAs; it just needs reviewing and merging.
-
-**Scope**: Review and merge Dependabot's pending PR for `actions/checkout`, `actions/setup-node`, and `actions/setup-python`. Update the `# vX.Y.Z` comments to match.
+### ~~H4 — Fix Node.js 20 deprecation in CI workflows~~ ✅ shipped
+- Bumped `actions/checkout` → v6.0.2, `actions/setup-node` → v6.4.0, `actions/setup-python` → v6.2.0 (SHA-pinned)
 
 ---
 
-### H5 — Resolve the moderate npm vulnerability
-**Why**: A `1 moderate vulnerability` has been flagging on every push throughout the project's life. It should be understood and resolved.
-
-**Scope**: Run `npm audit` → identify the package and CVE → update the package or add an override in `package.json`. Update CLAUDE.md with the resolution.
+### ~~H5 — Resolve the moderate npm vulnerability~~ ✅ shipped
+- CVE GHSA-67mh-4wv8-2f99: esbuild <=0.24.2 dev-server CSRF, surfacing via `drizzle-kit → @esbuild-kit/core-utils → esbuild@0.18.20`
+- Fixed via `overrides["@esbuild-kit/core-utils"]["esbuild"] = "^0.25.0"` in package.json; no attack surface (drizzle-kit never runs an esbuild dev server); documented in CLAUDE.md gotchas
 
 ---
 
