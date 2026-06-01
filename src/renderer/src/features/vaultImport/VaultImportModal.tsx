@@ -33,6 +33,7 @@ const DEFAULT_OPTIONS: VaultImportOptions = {
   folderPrefix: 'top-level',
   dailyNotesFolder: 'Daily Notes',
   importAttachments: true,
+  resyncStrategy: 'create-only',
 };
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -84,6 +85,7 @@ export function VaultImportModal(): JSX.Element | null {
       const result = await window.api.vault.scan({
         vaultPath,
         dailyNotesFolder: options.dailyNotesFolder,
+        checkExisting: true,
       });
       setScanResult(result);
       setPhase('preview');
@@ -102,6 +104,7 @@ export function VaultImportModal(): JSX.Element | null {
       const result = await window.api.vault.scan({
         vaultPath: scanResult.vaultPath,
         dailyNotesFolder: newDailyFolder,
+        checkExisting: true,
       });
       setScanResult(result);
       setPhase('preview');
@@ -114,9 +117,20 @@ export function VaultImportModal(): JSX.Element | null {
   const handleImport = useCallback(async () => {
     if (!scanResult) return;
 
+    // Filter paths based on resync strategy.
+    const notePaths =
+      options.resyncStrategy === 'create-only'
+        ? scanResult.notes.filter((n) => n.status === 'new').map((n) => n.relativePath)
+        : scanResult.notes.map((n) => n.relativePath);
+
+    const dailyPaths =
+      options.resyncStrategy === 'create-only'
+        ? scanResult.dailyNotes.filter((n) => n.status === 'new').map((n) => n.relativePath)
+        : scanResult.dailyNotes.map((n) => n.relativePath);
+
     setPhase('importing');
-    setNoteProgress({ current: 0, total: scanResult.notes.length });
-    setDailyProgress({ current: 0, total: scanResult.dailyNotes.length });
+    setNoteProgress({ current: 0, total: notePaths.length });
+    setDailyProgress({ current: 0, total: dailyPaths.length });
 
     // Subscribe to progress events.
     progressUnsubRef.current = window.api.vault.onProgress(
@@ -132,8 +146,8 @@ export function VaultImportModal(): JSX.Element | null {
     try {
       const result = await window.api.vault.import({
         vaultPath: scanResult.vaultPath,
-        noteRelativePaths: scanResult.notes.map((n) => n.relativePath),
-        dailyNoteRelativePaths: scanResult.dailyNotes.map((n) => n.relativePath),
+        noteRelativePaths: notePaths,
+        dailyNoteRelativePaths: dailyPaths,
         attachmentRelativePaths: scanResult.attachments,
         options,
       });
@@ -233,15 +247,22 @@ export function VaultImportModal(): JSX.Element | null {
             {phase === 'done' ? 'Close' : 'Cancel'}
           </button>
 
-          {phase === 'preview' && scanResult && (
-            <button
-              onClick={() => void handleImport()}
-              disabled={scanResult.notes.length === 0 && scanResult.dailyNotes.length === 0}
-              className="rounded-md bg-emerald-600 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50"
-            >
-              Import {scanResult.notes.length + scanResult.dailyNotes.length} items →
-            </button>
-          )}
+          {phase === 'preview' && scanResult && (() => {
+            const importCount =
+              options.resyncStrategy === 'create-only'
+                ? scanResult.notes.filter((n) => n.status === 'new').length +
+                  scanResult.dailyNotes.filter((n) => n.status === 'new').length
+                : scanResult.notes.length + scanResult.dailyNotes.length;
+            return (
+              <button
+                onClick={() => void handleImport()}
+                disabled={importCount === 0}
+                className="rounded-md bg-emerald-600 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50"
+              >
+                Import {importCount} item{importCount !== 1 ? 's' : ''} →
+              </button>
+            );
+          })()}
 
           {phase === 'idle' && (
             <button
@@ -353,6 +374,30 @@ function PreviewPhase({
           </p>
         </Section>
 
+        {(scanResult.notes.some((n) => n.status === 'exists') ||
+          scanResult.dailyNotes.some((n) => n.status === 'exists')) && (
+          <Section title="Re-sync mode">
+            <RadioGroup
+              value={options.resyncStrategy}
+              onChange={(v) => onOptionsChange({ resyncStrategy: v as VaultImportOptions['resyncStrategy'] })}
+              options={[
+                { value: 'create-only', label: 'New items only', hint: 'skips existing' },
+                { value: 'overwrite', label: 'Overwrite existing', hint: 'replaces body' },
+              ]}
+            />
+            {options.resyncStrategy === 'create-only' && (
+              <p className="mt-1 text-[10px] text-amber-500">
+                Existing notes and daily notes will be skipped.
+              </p>
+            )}
+            {options.resyncStrategy === 'overwrite' && (
+              <p className="mt-1 text-[10px] text-amber-500">
+                Existing note bodies will be replaced with vault content.
+              </p>
+            )}
+          </Section>
+        )}
+
         <Section title="Wiki links [[…]]">
           <RadioGroup
             value={options.wikiLinks}
@@ -409,6 +454,12 @@ function PreviewPhase({
           <StatChip icon="📅" label="Daily notes" value={scanResult.dailyNotes.length} color="emerald" />
           <StatChip icon="📎" label="Attachments" value={scanResult.attachments.length} color="gray" />
           <StatChip icon="⏭" label="Skipped" value={scanResult.skipped.length} color="gray" />
+          {(() => {
+            const existingCount = scanResult.notes.filter((n) => n.status === 'exists').length +
+              scanResult.dailyNotes.filter((n) => n.status === 'exists').length;
+            if (existingCount === 0) return null;
+            return <StatChip icon="🔁" label="Already exist" value={existingCount} color="gray" />;
+          })()}
         </div>
 
         {/* Notes tree */}
@@ -439,6 +490,11 @@ function PreviewPhase({
                   <span className="font-mono">{n.date}</span>
                   <span className="text-gray-400">·</span>
                   <span className="truncate">{n.title}</span>
+                  {n.status === 'exists' && (
+                    <span className="shrink-0 rounded bg-gray-200 px-1.5 py-0.5 text-[10px] text-gray-500 dark:bg-gray-700 dark:text-gray-400">
+                      exists
+                    </span>
+                  )}
                 </div>
               ))}
               {scanResult.dailyNotes.length > 5 && (
@@ -537,6 +593,9 @@ function DonePhase({ result }: { result: VaultImportResult }): JSX.Element {
           {result.notesCreated} note{result.notesCreated !== 1 ? 's' : ''} and{' '}
           {result.dailyNotesCreated} daily note{result.dailyNotesCreated !== 1 ? 's' : ''} imported
           ({total} total).
+          {result.notesUpdated > 0 && (
+            <> {result.notesUpdated} item{result.notesUpdated !== 1 ? 's were' : ' was'} updated.</>
+          )}
         </p>
       </div>
       {result.errors.length > 0 && (
@@ -674,7 +733,7 @@ function ProgressRow({
 
 interface FolderNode {
   name: string;
-  notes: Array<{ title: string; wikiLinkCount: number; folderPath: string }>;
+  notes: Array<{ title: string; wikiLinkCount: number; embedCount: number; folderPath: string; status: 'new' | 'exists' }>;
   children: Map<string, FolderNode>;
 }
 
@@ -708,7 +767,7 @@ function buildFolderTree(
       }
       node = node.children.get(part)!;
     }
-    node.notes.push({ title: displayTitle, wikiLinkCount: note.wikiLinkCount, folderPath: dir });
+    node.notes.push({ title: displayTitle, wikiLinkCount: note.wikiLinkCount, embedCount: note.embedCount, folderPath: dir, status: note.status });
   }
 
   return root;
@@ -771,9 +830,19 @@ function FolderNodeView({
             >
               <span className="text-gray-400">·</span>
               <span className="truncate">{note.title}</span>
+              {note.status === 'exists' && (
+                <span className="shrink-0 rounded bg-gray-200 px-1.5 py-0.5 text-[10px] text-gray-500 dark:bg-gray-700 dark:text-gray-400">
+                  exists
+                </span>
+              )}
               {note.wikiLinkCount > 0 && (
                 <span className="ml-auto shrink-0 text-[10px] text-amber-500">
                   {note.wikiLinkCount} links
+                </span>
+              )}
+              {note.embedCount > 0 && (
+                <span className="shrink-0 text-[10px] text-blue-500">
+                  {note.embedCount} embed{note.embedCount !== 1 ? 's' : ''}
                 </span>
               )}
             </div>

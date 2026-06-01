@@ -55,13 +55,11 @@ Cross-reference the architecture in [`CLAUDE.md`](CLAUDE.md) before starting any
 
 ## 🟠 Medium priority
 
-### M1 — Incremental vault re-sync
-**Why**: Running the vault import twice duplicates every note. A re-sync mode that matches existing notes by title + daily_date (skip if exists, optionally update body if changed) lets users keep Cinder and their vault in sync as they add notes.
-
-**Scope**:
-- Scanner: add a `checkExisting` flag; service checks for title/date matches against the DB
-- Preview modal: show "new / already exists / updated" status per item
-- Import: skip or overwrite based on user choice
+### ~~M1 — Incremental vault re-sync~~ ✅ shipped
+- Scanner: `checkExisting` flag queries DB; items tagged `status: 'new' | 'exists'`
+- Preview modal: "exists" badges on notes/daily-notes, resync strategy radio (create-only / overwrite)
+- Import: filters path lists by strategy; overwrite mode updates existing note bodies
+- Counters: import result includes `notesUpdated` for skips/updates
 
 ---
 

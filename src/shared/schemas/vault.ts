@@ -12,6 +12,9 @@ import { z } from 'zod';
 
 const RelativePath = z.string().min(1);
 
+export const ImportItemStatus = z.enum(['new', 'exists']);
+export type ImportItemStatus = z.infer<typeof ImportItemStatus>;
+
 // ── Scan input ────────────────────────────────────────────────────────────────
 
 /** Input for vault:scan. The vaultPath is returned by vault:pickFolder. */
@@ -24,6 +27,12 @@ export const VaultScanInput = z.object({
    * The scanner uses this to classify files as daily notes vs regular notes.
    */
   dailyNotesFolder: z.string(),
+  /**
+   * When true, the scanner queries the database to determine whether each
+   * scanned note already exists (matched by title for regular notes, by
+   * date for daily notes). Set this on re-scan after the initial import.
+   */
+  checkExisting: z.boolean().optional().default(false),
 });
 export type VaultScanInput = z.infer<typeof VaultScanInput>;
 
@@ -41,6 +50,8 @@ export const ScannedNote = z.object({
   embedCount: z.number().int().min(0),
   /** File size in bytes. */
   sizeBytes: z.number().int().min(0),
+  /** Whether this note already exists in the database (matched by title). */
+  status: ImportItemStatus,
 });
 export type ScannedNote = z.infer<typeof ScannedNote>;
 
@@ -54,6 +65,8 @@ export const ScannedDailyNote = z.object({
   wikiLinkCount: z.number().int().min(0),
   embedCount: z.number().int().min(0),
   sizeBytes: z.number().int().min(0),
+  /** Whether this daily note already exists in the database (matched by date). */
+  status: ImportItemStatus,
 });
 export type ScannedDailyNote = z.infer<typeof ScannedDailyNote>;
 
@@ -100,6 +113,13 @@ export const VaultImportOptions = z.object({
    * converted to attachment:// URLs in the note body.
    */
   importAttachments: z.boolean(),
+  /**
+   * Strategy for handling notes that already exist in the database.
+   * Only meaningful when the scanner was run with checkExisting: true.
+   *   'create-only' — only import items with status 'new' (default).
+   *   'overwrite'    — re-import all items; existing notes get their body replaced.
+   */
+  resyncStrategy: z.enum(['create-only', 'overwrite']).optional().default('create-only'),
 });
 export type VaultImportOptions = z.infer<typeof VaultImportOptions>;
 
@@ -134,6 +154,7 @@ export type VaultProgress = z.infer<typeof VaultProgress>;
 export const VaultImportResult = z.object({
   notesCreated: z.number().int().min(0),
   dailyNotesCreated: z.number().int().min(0),
+  notesUpdated: z.number().int().min(0),
   /** Paths that failed to import. */
   errors: z.array(z.string()),
 });

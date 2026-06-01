@@ -19,12 +19,16 @@
 import { readdir, readFile, stat as statFile } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
+import { and, isNull, isNotNull } from 'drizzle-orm';
+import { getDrizzle } from '../db/drizzle';
+import { notes } from '../db/schema';
 import type {
   VaultScanInput,
   VaultScanResult,
   ScannedNote,
   ScannedDailyNote,
   SkippedFile,
+  ImportItemStatus,
 } from '../../shared/schemas/vault';
 
 // ── Directory walker ──────────────────────────────────────────────────────────
@@ -186,7 +190,7 @@ void stripFrontmatter;
 // ── Public API ────────────────────────────────────────────────────────────────
 
 export async function scanVault(input: VaultScanInput): Promise<VaultScanResult> {
-  const { vaultPath, dailyNotesFolder } = input;
+  const { vaultPath, dailyNotesFolder, checkExisting } = input;
 
   if (!existsSync(vaultPath)) {
     return {
@@ -198,10 +202,28 @@ export async function scanVault(input: VaultScanInput): Promise<VaultScanResult>
     };
   }
 
+  // If checkExisting, preload existing note titles and daily dates from the DB.
+  let existingTitles: Set<string> | undefined;
+  let existingDailyDates: Set<string> | undefined;
+  if (checkExisting) {
+    const db = getDrizzle();
+    const rows = await db
+      .select({ title: notes.title, dailyDate: notes.dailyDate })
+      .from(notes)
+      .where(and(isNull(notes.deletedAt), isNull(notes.dailyDate)));
+    existingTitles = new Set(rows.map((r) => r.title));
+
+    const dailyRows = await db
+      .select({ dailyDate: notes.dailyDate })
+      .from(notes)
+      .where(and(isNull(notes.deletedAt), isNotNull(notes.dailyDate)));
+    existingDailyDates = new Set(dailyRows.map((r) => r.dailyDate).filter((d): d is string => d !== null));
+  }
+
   const allFiles = await walkDirectory(vaultPath, vaultPath);
 
-  const notes: ScannedNote[] = [];
-  const dailyNotes: ScannedDailyNote[] = [];
+  const scannedNotes: ScannedNote[] = [];
+  const scannedDailyNotes: ScannedDailyNote[] = [];
   const attachments: string[] = [];
   const skipped: SkippedFile[] = [];
 
@@ -251,20 +273,25 @@ export async function scanVault(input: VaultScanInput): Promise<VaultScanResult>
       const date = tryParseDailyDate(relativeToDaily);
 
       if (date !== null) {
-        dailyNotes.push({ relativePath, date, title, wikiLinkCount, embedCount, sizeBytes });
+        const status: ImportItemStatus = existingDailyDates?.has(date) ? 'exists' : 'new';
+        scannedDailyNotes.push({ relativePath, date, title, wikiLinkCount, embedCount, sizeBytes, status });
         continue;
       }
       // Date couldn't be parsed — treat as regular note (unusual naming).
     }
 
-    notes.push({ relativePath, title, wikiLinkCount, embedCount, sizeBytes });
+    const status: ImportItemStatus = existingTitles?.has(title) ? 'exists' : 'new';
+    scannedNotes.push({ relativePath, title, wikiLinkCount, embedCount, sizeBytes, status });
   }
 
-  // Sort: notes by path, daily notes by date (chronological).
-  notes.sort((a, b) => a.relativePath.localeCompare(b.relativePath));
-  dailyNotes.sort((a, b) => a.date.localeCompare(b.date));
+  // Sort: notes by path (new first, then existing), daily notes by date.
+  scannedNotes.sort((a, b) => {
+    if (a.status !== b.status) return a.status === 'new' ? -1 : 1;
+    return a.relativePath.localeCompare(b.relativePath);
+  });
+  scannedDailyNotes.sort((a, b) => a.date.localeCompare(b.date));
 
-  return { vaultPath, notes, dailyNotes, attachments, skipped };
+  return { vaultPath, notes: scannedNotes, dailyNotes: scannedDailyNotes, attachments, skipped };
 }
 
 // Re-export helpers needed by the importer.

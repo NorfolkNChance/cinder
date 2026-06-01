@@ -38,6 +38,7 @@ Full architectural spec: [`../ARCHITECTURE.md`](../ARCHITECTURE.md) — read it 
 | + | Daily note templates — `daily.template` setting; new daily notes pre-filled from Markdown template; "Edit template…" link in Daily sidebar |
 | + | Spellcheck — macOS `NSSpellChecker` via `webPreferences.spellcheck: true`; context-menu with suggestions + "Add to Dictionary"; `editor.spellcheck` toggle in Settings → Editor |
 | + | Vault import attachments — scanner counts `![[embeds]]`, importer copies matched files to `userData/attachments/<noteId>/` and converts to `attachment://` URLs; checkbox in preview modal |
+| + | Vault re-sync — `checkExisting` scan flag, "exists" badges in preview, create-only / overwrite strategy; import result includes `notesUpdated` counter |
 
 ---
 

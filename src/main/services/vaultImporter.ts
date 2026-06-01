@@ -137,6 +137,7 @@ export async function importVault(
   const errors: string[] = [];
   let notesCreated = 0;
   let dailyNotesCreated = 0;
+  let notesUpdated = 0;
 
   // ── Import regular notes ─────────────────────────────────────────────────
 
@@ -160,16 +161,40 @@ export async function importVault(
       let title = buildTitle(rawTitle, relativePath, options.folderPrefix);
       let body = applyWikiLinks(rawBody, options.wikiLinks);
 
-      const note = await notesService.create({ title, body, bodyType: 'markdown' });
+      // Check whether this note already exists (by title).
+      const existingNotes = await notesService.list({ includeDeleted: false });
+      const match = (existingNotes as readonly { id: string; title: string }[]).find(
+        (n) => n.title === title,
+      );
 
-      if (options.importAttachments) {
-        const processedBody = processEmbeds(body, note.id, vaultPath, attachmentRelativePaths);
-        if (processedBody !== body) {
-          await notesService.update({ id: note.id, patch: { body: processedBody } });
-        }
+      if (match && options.resyncStrategy === 'create-only') {
+        notesUpdated++;
+        push(sender, {
+          phase: 'notes',
+          current: i + 1,
+          total: noteRelativePaths.length,
+        });
+        continue;
       }
 
-      notesCreated++;
+      if (match && options.resyncStrategy === 'overwrite') {
+        if (options.importAttachments) {
+          body = processEmbeds(body, match.id, vaultPath, attachmentRelativePaths);
+        }
+        await notesService.update({ id: match.id, patch: { body } });
+        notesUpdated++;
+      } else {
+        const note = await notesService.create({ title, body, bodyType: 'markdown' });
+
+        if (options.importAttachments) {
+          const processedBody = processEmbeds(body, note.id, vaultPath, attachmentRelativePaths);
+          if (processedBody !== body) {
+            await notesService.update({ id: note.id, patch: { body: processedBody } });
+          }
+        }
+
+        notesCreated++;
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       errors.push(`${relativePath}: ${msg}`);
@@ -249,12 +274,16 @@ export async function importVault(
         body = processEmbeds(body, existing.id, vaultPath, attachmentRelativePaths);
       }
 
-      // If the existing note has no body yet, fill it in with the vault content.
-      if (existing.body.trim() === '' && body.trim() !== '') {
+      if (body.trim() === '') {
+        // Skip — nothing to write.
+      } else if (existing.body.trim() === '' || options.resyncStrategy === 'overwrite') {
+        // Fill empty body or overwrite existing content in re-sync mode.
         await notesService.update({ id: existing.id, patch: { body } });
+        dailyNotesCreated++;
+      } else {
+        // Exists with content and we're not overwriting — count as "already present".
+        notesUpdated++;
       }
-
-      dailyNotesCreated++;
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       errors.push(`${relativePath}: ${msg}`);
@@ -275,5 +304,5 @@ export async function importVault(
     total: noteRelativePaths.length + dailyNoteRelativePaths.length,
   });
 
-  return { notesCreated, dailyNotesCreated, errors };
+  return { notesCreated, dailyNotesCreated, notesUpdated, errors };
 }
