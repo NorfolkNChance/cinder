@@ -144,6 +144,11 @@ function countWikiLinks(body: string): number {
   return (body.match(/\[\[[^\]]+\]\]/g) ?? []).length;
 }
 
+/** Count ![[embed]] occurrences (images, PDFs, etc.). */
+function countEmbeds(body: string): number {
+  return (body.match(/!\[\[[^\]]+\]\]/g) ?? []).length;
+}
+
 /**
  * Extract the title from markdown content.
  * Priority: YAML frontmatter `title:`, first `# heading`, filename stem.
@@ -238,6 +243,7 @@ export async function scanVault(input: VaultScanInput): Promise<VaultScanResult>
     const filenameStem = path.basename(relativePath, '.md');
     const title = extractTitle(content, filenameStem);
     const wikiLinkCount = countWikiLinks(content);
+    const embedCount = countEmbeds(content);
 
     // Classify as daily note if it lives under the daily notes folder.
     if (dailyRoot && (relativePath.startsWith(`${dailyRoot}/`) || relativePath === dailyRoot)) {
@@ -245,13 +251,13 @@ export async function scanVault(input: VaultScanInput): Promise<VaultScanResult>
       const date = tryParseDailyDate(relativeToDaily);
 
       if (date !== null) {
-        dailyNotes.push({ relativePath, date, title, wikiLinkCount, sizeBytes });
+        dailyNotes.push({ relativePath, date, title, wikiLinkCount, embedCount, sizeBytes });
         continue;
       }
       // Date couldn't be parsed — treat as regular note (unusual naming).
     }
 
-    notes.push({ relativePath, title, wikiLinkCount, sizeBytes });
+    notes.push({ relativePath, title, wikiLinkCount, embedCount, sizeBytes });
   }
 
   // Sort: notes by path, daily notes by date (chronological).

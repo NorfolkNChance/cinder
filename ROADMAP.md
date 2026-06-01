@@ -34,14 +34,11 @@ Cross-reference the architecture in [`CLAUDE.md`](CLAUDE.md) before starting any
 
 ---
 
-### H3 — Vault import: attachment support
-**Why**: Obsidian vaults embed images and files via `![[image.png]]`. Without importing attachments, notes with images have broken references after import.
-
-**Scope**:
-- Scanner: include image/PDF files in `VaultScanResult.attachments` (already collected, just not imported)
-- Importer: for each note being imported, find `![[filename]]` references, resolve them against the vault's attachment folder, copy to Cinder's `userData/attachments/<noteId>/` using `resolveAttachmentPath`
-- Convert Obsidian embed syntax to `attachment://` URLs in the body
-- Preview modal: enable the "Import attachments" checkbox (currently placeholder)
+### ~~H3 — Vault import: attachment support~~ ✅ shipped
+- Scanner: collects image/PDF files into `VaultScanResult.attachments` (was already in place)
+- Importer: `processEmbeds()` builds a filename→vault-path map, copies matched files to Cinder's attachment storage via `saveAttachment()`, and converts `![[filename]]` to `![alt](attachment://noteId/uuid.ext)`
+- Preview modal: "Import attachments" checkbox (default on) with embed count warnings
+- Unrecognised filenames and read failures leave the embed syntax unchanged
 
 ---
 

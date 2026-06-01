@@ -53,6 +53,11 @@ Most notes-and-todos products require you to send your content to someone else's
 - **Task detail panel** — click any card to open an inline editor for all fields
 - **Project and label filters** — scope the matrix to a specific project or label
 
+### Vault Import
+- **Obsidian vault import** — scan-then-preview-then-import flow; supports regular notes, daily notes (date detection by path), wiki-link conversion, and folder-prefix title strategies
+- **Attachment import** — `![[embeds]]` are resolved against vault files, copied to Cinder's attachment storage, and converted to `attachment://` URLs; toggleable checkbox in the preview modal
+- **Unrecognised or missing attachments** are left as `![[…]]` in the body for manual follow-up
+
 ### ⌘K Command Palette
 - Fuzzy-match search across all navigation targets, task scopes, projects, labels, saved filters, and actions
 - Navigate to Notes, Tasks, Matrix, or Daily; jump to any project or label; create notes; open Help, Settings, or trigger exports — all from the keyboard

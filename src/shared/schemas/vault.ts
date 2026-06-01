@@ -37,6 +37,8 @@ export const ScannedNote = z.object({
   title: z.string(),
   /** Number of [[wiki link]] occurrences. Used to show warnings in the preview. */
   wikiLinkCount: z.number().int().min(0),
+  /** Number of ![[embed]] occurrences (images, PDFs, etc.). */
+  embedCount: z.number().int().min(0),
   /** File size in bytes. */
   sizeBytes: z.number().int().min(0),
 });
@@ -50,6 +52,7 @@ export const ScannedDailyNote = z.object({
   /** Title extracted from the note content, or the date string. */
   title: z.string(),
   wikiLinkCount: z.number().int().min(0),
+  embedCount: z.number().int().min(0),
   sizeBytes: z.number().int().min(0),
 });
 export type ScannedDailyNote = z.infer<typeof ScannedDailyNote>;
@@ -91,6 +94,12 @@ export const VaultImportOptions = z.object({
   folderPrefix: z.enum(['top-level', 'full-path', 'none']),
   /** Name of the vault folder that holds daily notes. */
   dailyNotesFolder: z.string(),
+  /**
+   * Whether to import ![[embedded files]] (images, PDFs) from the vault.
+   * Files are copied to Cinder's attachment storage and embed syntax is
+   * converted to attachment:// URLs in the note body.
+   */
+  importAttachments: z.boolean(),
 });
 export type VaultImportOptions = z.infer<typeof VaultImportOptions>;
 
@@ -103,6 +112,8 @@ export const VaultImportPlan = z.object({
   vaultPath: z.string().min(1),
   noteRelativePaths: z.array(RelativePath),
   dailyNoteRelativePaths: z.array(RelativePath),
+  /** Relative paths of attachment files to make available during import. */
+  attachmentRelativePaths: z.array(RelativePath),
   options: VaultImportOptions,
 });
 export type VaultImportPlan = z.infer<typeof VaultImportPlan>;

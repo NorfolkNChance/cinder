@@ -975,6 +975,63 @@ Take vitamins every day`}</CodeBlock>
     ),
   },
 
+  // ── Vault Import ─────────────────────────────────────────────────────────
+  {
+    id: 'vault-import',
+    title: 'Vault Import',
+    icon: '🗂️',
+    keywords: ['vault', 'import', 'obsidian', 'attach', 'attachment', 'embed', 'backup'],
+    render: function VaultImportSection() {
+      return (
+        <div>
+          <H2>Import an Obsidian Vault</H2>
+          <P>
+            Cinder can import notes from an Obsidian vault. The import is a two-step
+            process: first it scans the vault to show a full preview, then it
+            writes the imported notes to the database. Nothing is written until
+            you confirm in the preview.
+          </P>
+
+          <H3>How it works</H3>
+          <ol className="mb-3 list-inside list-decimal space-y-1 text-sm text-gray-600 dark:text-gray-400">
+            <li>Click <strong>File → Import Obsidian Vault…</strong>.</li>
+            <li>Choose the vault folder (the root that contains <Code>.obsidian/</Code>).</li>
+            <li>Review the preview: the scanner detects regular notes, daily notes, and attachments.</li>
+            <li>Adjust options and click <strong>Import</strong>.</li>
+          </ol>
+
+          <H3>Import options</H3>
+          <ul className="mb-3 list-inside list-disc space-y-1 text-sm text-gray-600 dark:text-gray-400">
+            <li>
+              <strong>Wiki links</strong> — convert <Code>[[Note Name]]</Code> to
+              plain text, or leave them as-is.
+            </li>
+            <li>
+              <strong>Folder prefix</strong> — prepend the Obsidian folder path to
+              note titles (top-level folder only, full path, or none).
+            </li>
+            <li>
+              <strong>Daily notes folder</strong> — the name of the folder where
+              your daily notes live (default: <Code>Daily Notes</Code>).
+            </li>
+            <li>
+              <strong>Import attachments</strong> — copy embedded images and PDFs
+              (<Code>![[file.png]]</Code>) to Cinder&apos;s attachment storage and
+              convert them to <Code>attachment://</Code> URLs. Turn this off if
+              you only want the text content.
+            </li>
+          </ul>
+
+          <Callout type="info">
+            Attachments that can&apos;t be found (no matching file in the vault)
+            or fail to copy are left as <Code>![[…]]</Code> in the note body so
+            you can investigate after import.
+          </Callout>
+        </div>
+      );
+    },
+  },
+
   // ── About ────────────────────────────────────────────────────────────────
   {
     id: 'about',

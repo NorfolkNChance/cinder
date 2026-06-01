@@ -10,10 +10,12 @@
  */
 
 import { readFile } from 'fs/promises';
+import { readFileSync } from 'fs';
 import path from 'path';
 import type { WebContents } from 'electron';
 import { notesService } from './notes';
 import { extractTitle, stripFrontmatter } from './vaultScanner';
+import { saveAttachment } from './attachments';
 import type { VaultImportPlan, VaultImportResult, VaultProgress } from '../../shared/schemas/vault';
 import { VAULT_PROGRESS } from '../../shared/ipc/channels';
 
@@ -62,6 +64,53 @@ function buildTitle(
   return prefix ? `${prefix} / ${rawTitle}` : rawTitle;
 }
 
+/**
+ * Convert Obsidian ![[embed]] syntax to Markdown image links using
+ * attachment:// URLs. For each embed reference found in the body, the
+ * matching vault file is copied to Cinder's attachment storage.
+ *
+ * Unrecognised filenames (no matching attachment) are left as-is so the
+ * user can investigate after import.
+ */
+function processEmbeds(
+  body: string,
+  noteId: string,
+  vaultPath: string,
+  attachmentRelativePaths: string[],
+): string {
+  if (attachmentRelativePaths.length === 0) return body;
+
+  // Build a case-insensitive map: lowercase filename → absolute vault path.
+  const filenameMap = new Map<string, string>();
+  for (const relPath of attachmentRelativePaths) {
+    const filename = path.basename(relPath);
+    filenameMap.set(filename.toLowerCase(), path.join(vaultPath, relPath));
+  }
+
+  // Match ![[filename]] and ![[filename|alt text]] syntax.
+  return body.replace(
+    /!\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g,
+    (_match: string, target: string, alt?: string) => {
+      const normalized = target.trim().toLowerCase();
+      const vaultAbsolute = filenameMap.get(normalized);
+      if (!vaultAbsolute) return _match;
+
+      try {
+        const data = readFileSync(vaultAbsolute);
+        const result = saveAttachment({
+          noteId,
+          data,
+          originalFilename: target.trim(),
+        });
+        const altText = alt?.trim() ?? target.trim();
+        return `![${altText}](${result.url})`;
+      } catch {
+        return _match;
+      }
+    },
+  );
+}
+
 // ── Progress helper ───────────────────────────────────────────────────────────
 
 function push(sender: WebContents, progress: VaultProgress): void {
@@ -84,7 +133,7 @@ export async function importVault(
   plan: VaultImportPlan,
   sender: WebContents,
 ): Promise<VaultImportResult> {
-  const { vaultPath, noteRelativePaths, dailyNoteRelativePaths, options } = plan;
+  const { vaultPath, noteRelativePaths, dailyNoteRelativePaths, attachmentRelativePaths, options } = plan;
   const errors: string[] = [];
   let notesCreated = 0;
   let dailyNotesCreated = 0;
@@ -108,10 +157,18 @@ export async function importVault(
       const rawTitle = extractTitle(raw, path.basename(relativePath, '.md'));
       const rawBody = stripFrontmatter(raw);
 
-      const title = buildTitle(rawTitle, relativePath, options.folderPrefix);
-      const body = applyWikiLinks(rawBody, options.wikiLinks);
+      let title = buildTitle(rawTitle, relativePath, options.folderPrefix);
+      let body = applyWikiLinks(rawBody, options.wikiLinks);
 
-      await notesService.create({ title, body, bodyType: 'markdown' });
+      const note = await notesService.create({ title, body, bodyType: 'markdown' });
+
+      if (options.importAttachments) {
+        const processedBody = processEmbeds(body, note.id, vaultPath, attachmentRelativePaths);
+        if (processedBody !== body) {
+          await notesService.update({ id: note.id, patch: { body: processedBody } });
+        }
+      }
+
       notesCreated++;
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -182,11 +239,15 @@ export async function importVault(
       const absolutePath = path.join(vaultPath, relativePath);
       const raw = await readFile(absolutePath, 'utf-8');
       const rawBody = stripFrontmatter(raw);
-      const body = applyWikiLinks(rawBody, options.wikiLinks);
+      let body = applyWikiLinks(rawBody, options.wikiLinks);
 
       // getOrCreateDaily is idempotent — if a note for this date already
       // exists, it returns it instead of creating a duplicate.
       const existing = await notesService.getOrCreateDaily({ date });
+
+      if (options.importAttachments) {
+        body = processEmbeds(body, existing.id, vaultPath, attachmentRelativePaths);
+      }
 
       // If the existing note has no body yet, fill it in with the vault content.
       if (existing.body.trim() === '' && body.trim() !== '') {

@@ -32,6 +32,7 @@ const DEFAULT_OPTIONS: VaultImportOptions = {
   wikiLinks: 'plain-text',
   folderPrefix: 'top-level',
   dailyNotesFolder: 'Daily Notes',
+  importAttachments: true,
 };
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -133,6 +134,7 @@ export function VaultImportModal(): JSX.Element | null {
         vaultPath: scanResult.vaultPath,
         noteRelativePaths: scanResult.notes.map((n) => n.relativePath),
         dailyNoteRelativePaths: scanResult.dailyNotes.map((n) => n.relativePath),
+        attachmentRelativePaths: scanResult.attachments,
         options,
       });
       setImportResult(result);
@@ -311,10 +313,9 @@ function PreviewPhase({
   onOptionsChange: (patch: Partial<VaultImportOptions>) => void;
   onChangePath: () => void;
 }): JSX.Element {
-  const totalWikiLinks = [...scanResult.notes, ...scanResult.dailyNotes].reduce(
-    (sum, n) => sum + n.wikiLinkCount,
-    0,
-  );
+  const allItems = [...scanResult.notes, ...scanResult.dailyNotes];
+  const totalWikiLinks = allItems.reduce((sum, n) => sum + n.wikiLinkCount, 0);
+  const totalEmbeds = allItems.reduce((sum, n) => sum + n.embedCount, 0);
 
   const dateRange =
     scanResult.dailyNotes.length > 0
@@ -373,6 +374,30 @@ function PreviewPhase({
               { value: 'none', label: 'None', hint: 'Note' },
             ]}
           />
+        </Section>
+
+        <Section title="Attachments">
+          <label className="flex cursor-pointer items-start gap-2">
+            <input
+              type="checkbox"
+              checked={options.importAttachments}
+              onChange={(e) => onOptionsChange({ importAttachments: e.target.checked })}
+              className="mt-0.5 accent-emerald-500"
+            />
+            <span>
+              <span className="text-xs text-gray-700 dark:text-gray-300">
+                Import attachments
+              </span>
+              <span className="block text-[10px] text-gray-400 dark:text-gray-600">
+                Copy images, PDFs and convert ![[…]] embeds
+              </span>
+            </span>
+          </label>
+          {scanResult.attachments.length > 0 && (
+            <p className="mt-1 text-[10px] text-gray-400">
+              {scanResult.attachments.length} file{scanResult.attachments.length !== 1 ? 's' : ''} available
+            </p>
+          )}
         </Section>
       </div>
 
@@ -438,6 +463,18 @@ function PreviewPhase({
                   {options.wikiLinks === 'plain-text'
                     ? ' — will be converted to plain text'
                     : ' — will be left as [[…]]'}
+                </Warning>
+              )}
+              {totalEmbeds > 0 && options.importAttachments && (
+                <Warning>
+                  {totalEmbeds} embed{totalEmbeds !== 1 ? 's' : ''} found
+                  — will be converted to attachment:// URLs
+                </Warning>
+              )}
+              {totalEmbeds > 0 && !options.importAttachments && (
+                <Warning>
+                  {totalEmbeds} embed{totalEmbeds !== 1 ? 's' : ''} found
+                  — will be left as ![[…]] (import attachments is off)
                 </Warning>
               )}
               {scanResult.skipped.map((s) => (
