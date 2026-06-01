@@ -32,6 +32,9 @@ Full architectural spec: [`../ARCHITECTURE.md`](../ARCHITECTURE.md) — read it 
 | + | Daily Notes — fourth mode with calendar date tree, auto-create on first access, reuses NoteEditor |
 | + | Custom DatePicker — portal-based calendar popover replacing native date inputs on all task due-date fields |
 | + | Data protection hardening — VACUUM INTO backup, integrity check on startup, auto-backup on quit with rotation, encryption key export |
+| + | HTML notes — imported .html files stored raw (bodyType 'html'), rendered in sandboxed iframe, editable as source |
+| + | Obsidian vault import — scan-then-preview-then-import flow; detects daily notes by path, wiki-link/folder-prefix options |
+| + | Folders — `folders` table (migration 0011), nested tree in Notes sidebar, per-note folder assignment, scope filtering |
 
 ---
 
@@ -447,6 +450,12 @@ These have burned us before. Check here before debugging similar symptoms.
 
 **`notesService.list()` excludes daily notes by default**
 - Since migration 0009, `list()` always appends `AND daily_date IS NULL` unless `dailyOnly: true` is passed. This means any code that calls `list({})` and expects to see all notes (e.g. export, FTS index rebuild) will silently skip daily notes. If a future feature needs all notes regardless of type, pass `includeAllTypes: true` — but first add that flag to the schema. Do not remove the default filter; it keeps the main Notes list clean.
+
+**`folders` FK is enforced in the service layer, not the schema**
+- The `notes.folder_id` column predates the `folders` table (added in 0000, table added in 0011). SQLite cannot add a FK constraint to an existing column, so referential integrity for `notes.folder_id → folders.id` lives in `foldersService`. Deleting a folder moves its notes to Unfiled (`folder_id = null`) and is blocked if sub-folders exist. Don't assume the DB enforces the FK.
+
+**HTML notes store raw HTML in `body` with `bodyType = 'html'`**
+- Imported `.html` files are NOT converted to Markdown (that changed in v1.1.8). `body` holds raw HTML, rendered via a sandboxed `<iframe srcDoc>` (sandbox `allow-same-origin` only — JS blocked) and edited as source. `NoteEditor` branches on `note.bodyType`. The FTS index still contains the raw HTML, so search snippets for HTML notes include tags (roadmap item M2).
 
 **DB backup must use `VACUUM INTO`, not `copyFileSync`**
 - In WAL mode SQLite has three files (`cinder.db`, `cinder.db-wal`, `cinder.db-shm`). Copying only the main file produces a backup that is either incomplete or corrupt if the WAL hasn't been fully checkpointed. `VACUUM INTO '/path/to/backup.db'` creates a consistent, fully-checkpointed snapshot in a single atomic operation, regardless of WAL state. The output is encrypted with the same SQLCipher key. This is what `exportBackup()` and `runAutoBackup()` both use.
