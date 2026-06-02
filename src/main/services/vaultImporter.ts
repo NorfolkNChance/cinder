@@ -168,7 +168,6 @@ export async function importVault(
       );
 
       if (match && options.resyncStrategy === 'create-only') {
-        notesUpdated++;
         push(sender, {
           phase: 'notes',
           current: i + 1,

@@ -102,7 +102,7 @@ export const notesService = {
     // For HTML notes, overwrite the FTS body with stripped text — the
     // SQL trigger writes raw HTML which pollutes search snippets.
     if (row.bodyType === 'html' && row.body) {
-      void updateFtsBody(row.id, stripHtml(row.body));
+      await updateFtsBody(row.id, stripHtml(row.body));
     }
 
     return row;
@@ -156,14 +156,12 @@ export const notesService = {
 
     // For HTML notes, overwrite the FTS body with stripped text whenever
     // body is part of the patch. The SQL trigger always writes raw HTML.
-    if ('body' in patch && patch.body !== undefined) {
-      const updated = await getById(input.id);
-      if (updated?.bodyType === 'html') {
-        void updateFtsBody(input.id, stripHtml(patch.body));
-      }
+    const updated = await getById(input.id);
+    if ('body' in patch && patch.body !== undefined && updated?.bodyType === 'html') {
+      await updateFtsBody(input.id, stripHtml(patch.body));
     }
 
-    return getById(input.id);
+    return updated;
   },
 
   async delete(id: string): Promise<void> {
