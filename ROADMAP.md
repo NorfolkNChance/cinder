@@ -70,14 +70,12 @@ Cross-reference the architecture in [`CLAUDE.md`](CLAUDE.md) before starting any
 
 ---
 
-### M3 — Inter-note links
-**Why**: Obsidian's `[[wiki links]]` are currently stripped or left as literals. A proper internal link system would let users navigate between related notes and give imported vaults real structure.
-
-**Scope**:
-- Custom TipTap extension that recognises `[[Note Title]]` syntax and renders as a clickable link
-- On click: look up the note by title, select it in the sidebar
-- On create: if the target note doesn't exist, offer to create it
-- Export: serialise back to `[[...]]` or standard Markdown links
+### ~~M3 — Inter-note wiki links~~ ✅ shipped
+- Custom `WikiLink` TipTap mark (`src/shared/markdown/extensions/WikiLink.ts`): recognises `[[Note Title]]` syntax, renders as a styled, clickable span with `data-wikilink` attribute
+- Serde: `serialize.ts` emits `[[Title]]` for wikiLink marks; `deserialize.ts` pre-processes `[[Title]]` → markdown-it link syntax then applies wikiLink mark via `link_open`/`link_close` inline handling
+- IPC: `notes:findByTitle` channel, `NoteFindByTitleInput` schema, `notesService.findByTitle()` query
+- Click handler in `TipTapEditor`: looks up note by title, navigates via `setSelectedNoteId`; if not found, creates the note and navigates
+- Styled as blue dotted-underline in light/dark modes
 
 ---
 

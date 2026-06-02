@@ -16,6 +16,8 @@ interface TipTapEditorProps {
   noteId: string;
   /** Fired on every editor update with the current markdown serialisation. */
   onChange: (markdown: string) => void;
+  /** Fired when the user clicks a [[wiki link]] in the editor. */
+  onWikiLinkClick?: (title: string) => void;
 }
 
 /**
@@ -50,6 +52,7 @@ export function TipTapEditor({
   markdown,
   noteId,
   onChange,
+  onWikiLinkClick,
 }: TipTapEditorProps): JSX.Element {
   // Reference to whether the editor is currently being programmatically
   // hydrated. Used to filter out the synthetic onUpdate that fires when
@@ -142,6 +145,18 @@ export function TipTapEditor({
             view.dispatch(view.state.tr.insert(coords.pos, imageNode));
           }
         })();
+        return true;
+      },
+      // Intercept a click on a [[wiki link]] span inside the editor.
+      handleClick: (_view, _pos, event) => {
+        if (!onWikiLinkClick) return false;
+        const target = event.target as HTMLElement | null;
+        if (!target) return false;
+        const el = target.closest('[data-wikilink]');
+        if (!el) return false;
+        const title = (el as HTMLElement).getAttribute('data-title');
+        if (!title) return false;
+        onWikiLinkClick(title);
         return true;
       },
     },

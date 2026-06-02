@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { TipTapEditor } from './TipTapEditor';
 import { HtmlBodyEditor } from './HtmlBodyEditor';
-import { useNote, useUpdateNote } from './queries';
+import { useNote, useUpdateNote, useCreateNote } from './queries';
 import { useFoldersList } from './folderQueries';
 import { useDebouncedCallback } from '../../hooks/useDebouncedCallback';
+import { useUI } from '../../state/ui';
 import { ExportMenu } from '../export/ExportMenu';
 import { AddTriageTodo } from './AddTriageTodo';
 
@@ -169,6 +170,40 @@ export function NoteEditor({ noteId }: NoteEditorProps): JSX.Element {
     [debouncedSave, draft.title],
   );
 
+  // ── Wiki-link navigation ─────────────────────────────────────────────────
+
+  const showToast = useUI((s) => s.showToast);
+  const setMode = useUI((s) => s.setMode);
+  const setSelectedNoteId = useUI((s) => s.setSelectedNoteId);
+  const createNote = useCreateNote();
+
+  const onWikiLinkClick = useCallback(
+    (title: string) => {
+      void (async () => {
+        const existing = await window.api.notes.findByTitle({ title });
+        if (existing !== null) {
+          setMode('notes');
+          setSelectedNoteId(existing.id);
+          return;
+        }
+        createNote.mutate(
+          { title },
+          {
+            onSuccess: (note) => {
+              setMode('notes');
+              setSelectedNoteId(note.id);
+              showToast(`Created linked note: ${title}`, 'success');
+            },
+            onError: () => {
+              showToast('Failed to create linked note', 'error');
+            },
+          },
+        );
+      })();
+    },
+    [createNote, setMode, setSelectedNoteId, showToast],
+  );
+
   // ── Render ───────────────────────────────────────────────────────────────
 
   if (isLoading || note === undefined) {
@@ -222,6 +257,7 @@ export function NoteEditor({ noteId }: NoteEditorProps): JSX.Element {
             markdown={note.body}
             noteId={note.id}
             onChange={onBodyChange}
+            onWikiLinkClick={onWikiLinkClick}
           />
         )}
       </div>

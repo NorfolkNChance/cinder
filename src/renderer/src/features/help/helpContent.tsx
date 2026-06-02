@@ -178,7 +178,7 @@ export const HELP_SECTIONS: HelpSection[] = [
     id: 'notes',
     title: 'Notes',
     icon: '📝',
-    keywords: ['markdown', 'editor', 'tiptap', 'prosemirror', 'write', 'new note', 'search', 'attach', 'image', 'import', 'spellcheck', 'spell check', 'spelling'],
+    keywords: ['markdown', 'editor', 'tiptap', 'prosemirror', 'write', 'new note', 'search', 'attach', 'image', 'import', 'spellcheck', 'spell check', 'spelling', 'wiki link', 'wiki links', 'internal link', 'wikilink', '\[\[', 'inter-note'],
     render: () => (
       <div>
         <H2>Notes</H2>
@@ -244,6 +244,26 @@ export const HELP_SECTIONS: HelpSection[] = [
           editor toolbar creates a task linked to the current note and places
           it in the Triage queue — so it won't clutter Inbox until you decide
           what to do with it. See the <em>Triage &amp; Capture</em> section for details.
+        </P>
+
+        <H3>Wiki links (inter-note links)</H3>
+        <P>
+          Link notes together using Obsidian-style wiki link syntax. Type{' '}
+          <Code>[[Note Title]]</Code> anywhere in the editor — the title is
+          highlighted as a clickable link (blue, dotted underline).
+        </P>
+        <P>
+          <strong className="text-gray-800 dark:text-gray-200">Clicking</strong> a wiki link
+          will navigate to the linked note if it exists, or create it and navigate
+          there if it doesn't. You can also use the pipe syntax{' '}
+          <Code>[[Actual Title|Display Text]]</Code> to show different text than
+          the target note's title.
+        </P>
+        <P>
+          Wiki links round-trip through markdown correctly — they are stored as{' '}
+          <Code>[[Title]]</Code> in the markdown body and rendered as styled
+          spans in the editor. This means they work in exported <Code>.md</Code>{' '}
+          files and survive import/export cycles.
         </P>
 
         <H3>Spell checking</H3>

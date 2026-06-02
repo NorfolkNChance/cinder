@@ -2,6 +2,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import { getSchema } from '@tiptap/core';
 import type { Schema } from '@tiptap/pm/model';
+import { WikiLink } from './extensions/WikiLink';
 
 /**
  * The ProseMirror schema used by both the serialiser/deserialiser and the
@@ -40,6 +41,6 @@ const ConfiguredImage = Image.configure({
   allowBase64: true,
 });
 
-export const editorExtensions = [StarterKit, ConfiguredImage] as const;
+export const editorExtensions = [StarterKit, ConfiguredImage, WikiLink] as const;
 
 export const markdownSchema: Schema = getSchema([...editorExtensions]);

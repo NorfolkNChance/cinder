@@ -40,6 +40,7 @@ Full architectural spec: [`../ARCHITECTURE.md`](../ARCHITECTURE.md) — read it 
 | + | Vault import attachments — scanner counts `![[embeds]]`, importer copies matched files to `userData/attachments/<noteId>/` and converts to `attachment://` URLs; checkbox in preview modal |
 | + | Vault re-sync — `checkExisting` scan flag, "exists" badges in preview, create-only / overwrite strategy; import result includes `notesUpdated` counter |
 | + | HTML note FTS5 — raw HTML stripped from FTS index for HTML notes via `stripHtml()` called after create/update; clean search snippets |
+| + | Inter-note wiki links — TipTap `WikiLink` mark, `[[Note Title]]` syntax, click-to-navigate/create via `notes:findByTitle` IPC |
 
 ---
 
@@ -456,6 +457,10 @@ These have burned us before. Check here before debugging similar symptoms.
 
 **`vite` is pinned to v7 — do not upgrade to v8 without migrating plugin-react**
 - `@vitejs/plugin-react@4` declares peer support for vite `^4–7` only. Upgrading vite to v8 breaks `npm ci` with an `ERESOLVE` peer conflict. The migration path to vite 8 requires `@vitejs/plugin-react@6`, which in turn requires `babel-plugin-react-compiler` as a peer dep — a deliberate migration, not a routine bump. Do not run `npm update` blindly.
+
+**`src/shared/` is compiled under both Node and web tsconfigs — avoid DOM types in shared code**
+- `tsconfig.node.json` has `"lib": ["ES2022"]` (no DOM), `tsconfig.web.json` has `"lib": ["ES2022", "DOM", "DOM.Iterable"]`. Since shared code is included in both, any DOM-specific type references cause `tsc -p tsconfig.node.json` compile errors.
+- If you need to call `getAttribute` or other DOM methods in a shared TipTap extension, use a structural type alias like `type DomElement = { getAttribute?: (name: string) => string | null }` instead of `HTMLElement`. See `src/shared/markdown/extensions/WikiLink.ts` for the pattern.
 
 **`notesService.list()` excludes daily notes by default**
 - Since migration 0009, `list()` always appends `AND daily_date IS NULL` unless `dailyOnly: true` is passed. This means any code that calls `list({})` and expects to see all notes (e.g. export, FTS index rebuild) will silently skip daily notes. If a future feature needs all notes regardless of type, pass `includeAllTypes: true` — but first add that flag to the schema. Do not remove the default filter; it keeps the main Notes list clean.

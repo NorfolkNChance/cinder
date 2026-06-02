@@ -24,6 +24,8 @@ export const NOTES_DELETE = 'notes:delete' as const;
 export const NOTES_SEARCH = 'notes:search' as const;
 /** Get or create the daily note for a YYYY-MM-DD date string. */
 export const NOTES_GET_OR_CREATE_DAILY = 'notes:getOrCreateDaily' as const;
+/** Find a regular (non-daily, non-deleted) note by exact title match. */
+export const NOTES_FIND_BY_TITLE = 'notes:findByTitle' as const;
 
 // ── Attachments ──────────────────────────────────────────────────────────────
 export const ATTACHMENTS_SAVE = 'attachments:save' as const;

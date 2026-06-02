@@ -27,6 +27,7 @@ interface MarkType {
   bold?: Mark;
   italic?: Mark;
   code?: Mark;
+  wikiLink?: Mark;
 }
 
 function activeMarks(active: MarkType): readonly Mark[] {
@@ -34,6 +35,7 @@ function activeMarks(active: MarkType): readonly Mark[] {
   if (active.bold) marks.push(active.bold);
   if (active.italic) marks.push(active.italic);
   if (active.code) marks.push(active.code);
+  if (active.wikiLink) marks.push(active.wikiLink);
   return marks;
 }
 
@@ -109,6 +111,23 @@ function renderInline(tokens: readonly Token[], schema: Schema): InlineNode[] {
       case 'hardbreak':
         out.push({ type: 'hardBreak' });
         break;
+
+      case 'link_open': {
+        const attrPairs = (tok.attrs ?? []) as Array<[string, string]>;
+        const attrs: Record<string, string> = {};
+        for (const [k, v] of attrPairs) attrs[k] = v;
+        const href = attrs['href'] ?? '';
+        if (href.startsWith('wikilink:')) {
+          const title = href.slice(9);
+          active.wikiLink = schema.marks['wikiLink']!.create({ title });
+        }
+        break;
+      }
+
+      case 'link_close': {
+        delete active.wikiLink;
+        break;
+      }
 
       case 'image': {
         // markdown-it stores attrs as [[name, value], ...].
@@ -325,6 +344,21 @@ function renderListItems(
 }
 
 /**
+ * Pre-process markdown to convert Obsidian-style wiki links `[[Title]]`
+ * to standard markdown link syntax `[Title](wikilink:Title)` so
+ * markdown-it can tokenise them for the wikiLink mark handler.
+ */
+function preprocessWikiLinks(text: string): string {
+  return text.replace(
+    /\[\[([^\[\]]+?)(?:\|([^\[\]]+?))?\]\]/g,
+    (_match, title: string, display?: string) => {
+      const label = display?.trim() ?? title.trim();
+      return `[${label}](wikilink:${title.trim()})`;
+    },
+  );
+}
+
+/**
  * Parse a markdown string into a ProseMirror Node.
  *
  * Returns a `doc` node validated against the markdownSchema. Throws if
@@ -332,7 +366,8 @@ function renderListItems(
  * markdown contains unsupported constructs that produce invalid trees.
  */
 export function deserialize(markdown: string, schema: Schema = markdownSchema): Node {
-  const tokens = md.parse(markdown, {});
+  const preprocessed = preprocessWikiLinks(markdown);
+  const tokens = md.parse(preprocessed, {});
   const blocks = renderBlocks(tokens, schema);
   // An empty document needs at least one block per ProseMirror's doc content
   // expression (`block+` in StarterKit). Default to an empty paragraph.

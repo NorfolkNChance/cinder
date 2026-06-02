@@ -3,6 +3,7 @@ import { assertMainFrame } from '../security/ipc-guard';
 import {
   NoteCreateInput,
   NoteDeleteInput,
+  NoteFindByTitleInput,
   NoteGetInput,
   NoteGetOrCreateDailyInput,
   NoteListInput,
@@ -12,6 +13,7 @@ import {
 import {
   NOTES_CREATE,
   NOTES_DELETE,
+  NOTES_FIND_BY_TITLE,
   NOTES_GET,
   NOTES_GET_OR_CREATE_DAILY,
   NOTES_LIST,
@@ -73,5 +75,11 @@ export function registerNotesHandlers(): void {
     assertMainFrame(event);
     const input = NoteGetOrCreateDailyInput.parse(raw);
     return notesService.getOrCreateDaily(input);
+  });
+
+  ipcMain.handle(NOTES_FIND_BY_TITLE, async (event, raw) => {
+    assertMainFrame(event);
+    const input = NoteFindByTitleInput.parse(raw);
+    return notesService.findByTitle(input.title);
   });
 }

@@ -53,6 +53,10 @@ function applyMark(text: string, mark: Mark): string {
       return `**${text}**`;
     case 'italic':
       return `_${text}_`;
+    case 'wikiLink':
+      // Emit [[Title]] syntax. The text at this point is already
+      // escaped, but inside [[...]] only `]` and `\` are meaningful.
+      return `[[${text}]]`;
     case 'code': {
       // Choose a backtick run not present in the text (CommonMark §6.1).
       const runs = text.match(/`+/g) ?? [];
@@ -78,20 +82,20 @@ function applyMark(text: string, mark: Mark): string {
  * Apply all marks to a text fragment in a deterministic order so the same
  * marks always produce the same output. Code is innermost (per CommonMark
  * parsing rules — code spans don't contain other inline formatting).
+ * WikiLink is also innermost — its [[...]] wrapping must use unescaped text.
  */
-function applyMarks(text: string, marks: readonly Mark[]): string {
-  // Order: code (innermost) → italic → bold (outermost).
-  // We sort by an explicit priority rather than relying on doc order
-  // so adjacent text nodes with the same marks in different orders
-  // produce identical markdown.
+function applyMarks(text: string, marks: readonly Mark[], rawText?: string): string {
+  // Order: code (innermost) → wikiLink → italic → bold (outermost).
   const priority = (m: Mark): number => {
     switch (m.type.name) {
       case 'code':
         return 0;
-      case 'italic':
+      case 'wikiLink':
         return 1;
-      case 'bold':
+      case 'italic':
         return 2;
+      case 'bold':
+        return 3;
       default:
         return 99;
     }
@@ -100,13 +104,13 @@ function applyMarks(text: string, marks: readonly Mark[]): string {
 
   let result = text;
   for (const mark of sorted) {
-    // Code is special: its content is verbatim, not escaped, and no other
-    // marks are applied inside. Once we hit code, stop wrapping.
-    if (mark.type.name === 'code') {
-      result = applyMark(text, mark);
-      // Apply remaining (outer) marks around the code span without
-      // re-escaping the inner text.
-      const remaining = sorted.filter((m) => m.type.name !== 'code');
+    // Code and wikiLink use raw (unescaped) text internally; other marks
+    // wrap the already-escaped result.
+    if (mark.type.name === 'code' || mark.type.name === 'wikiLink') {
+      result = applyMark(rawText ?? text, mark);
+      const remaining = sorted.filter(
+        (m) => m.type.name !== 'code' && m.type.name !== 'wikiLink',
+      );
       for (const outer of remaining) result = applyMark(result, outer);
       return result;
     }
@@ -136,8 +140,9 @@ function renderInline(node: Node): string {
   let out = '';
   node.forEach((child) => {
     if (child.isText) {
-      const escaped = escapeText(child.text ?? '');
-      out += applyMarks(escaped, child.marks);
+      const raw = child.text ?? '';
+      const escaped = escapeText(raw);
+      out += applyMarks(escaped, child.marks, raw);
     } else if (child.type.name === 'hardBreak') {
       // CommonMark: two trailing spaces before a newline is a hard break.
       out += '  \n';

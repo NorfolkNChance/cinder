@@ -25,6 +25,7 @@ Most notes-and-todos products require you to send your content to someone else's
 - **Autosave** with a 500 ms debounce and explicit ⌘S flush
 - **Full-text search** across titles and bodies (SQLite FTS5)
 - **Local attachments** served via a custom `attachment://` protocol, pasted or dragged in
+- **Wiki links** — type `[[Note Title]]` to create clickable inter-note links; clicking navigates to the target note or creates it on the fly
 - **Drag-and-drop import** — drop `.md`, `.markdown`, `.html`, or `.htm` files directly into the sidebar or the empty state; HTML is converted to Markdown automatically via Turndown
 - **Export** — export any note as a `.md` file, or all notes to a folder of `.md` files, via a native Save dialog
 

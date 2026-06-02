@@ -209,6 +209,22 @@ export const notesService = {
     return row;
   },
 
+  async findByTitle(title: string): Promise<Note | null> {
+    const db = getDrizzle();
+    const rows = await db
+      .select()
+      .from(notes)
+      .where(
+        and(
+          eq(notes.title, title),
+          isNull(notes.deletedAt),
+          isNull(notes.dailyDate),
+        ),
+      )
+      .limit(1);
+    return (rows[0] as Note | undefined) ?? null;
+  },
+
   search(input: NoteSearchInput): Promise<readonly Note[]> {
     const ftsQuery = buildFtsQuery(input.query);
     if (ftsQuery === null) return Promise.resolve([]);

@@ -9,6 +9,7 @@ import {
   FOLDERS_DELETE,
   NOTES_CREATE,
   NOTES_DELETE,
+  NOTES_FIND_BY_TITLE,
   NOTES_GET,
   NOTES_GET_OR_CREATE_DAILY,
   NOTES_LIST,
@@ -63,6 +64,7 @@ import type {
   Note,
   NoteCreateInput,
   NoteDeleteInput,
+  NoteFindByTitleInput,
   NoteGetInput,
   NoteGetOrCreateDailyInput,
   NoteListInput,
@@ -170,6 +172,8 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke(NOTES_SEARCH, input),
     getOrCreateDaily: (input: NoteGetOrCreateDailyInput): Promise<Note> =>
       ipcRenderer.invoke(NOTES_GET_OR_CREATE_DAILY, input),
+    findByTitle: (input: NoteFindByTitleInput): Promise<Note | null> =>
+      ipcRenderer.invoke(NOTES_FIND_BY_TITLE, input),
   },
   attachments: {
     save: (input: AttachmentSaveInput): Promise<AttachmentSaveResult> =>

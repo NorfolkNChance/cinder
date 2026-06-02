@@ -100,6 +100,11 @@ export const NoteDeleteInput = z.object({
 });
 export type NoteDeleteInput = z.infer<typeof NoteDeleteInput>;
 
+export const NoteFindByTitleInput = z.object({
+  title: z.string().max(500),
+});
+export type NoteFindByTitleInput = z.infer<typeof NoteFindByTitleInput>;
+
 export const NoteSearchInput = z.object({
   // Free-text query. The service sanitises this into a safe FTS5 MATCH
   // expression (prefix-match for clean tokens, phrase-match for tokens
