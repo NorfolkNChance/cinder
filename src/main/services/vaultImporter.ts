@@ -19,6 +19,27 @@ import { saveAttachment } from './attachments';
 import type { VaultImportPlan, VaultImportResult, VaultProgress } from '../../shared/schemas/vault';
 import { VAULT_PROGRESS } from '../../shared/ipc/channels';
 
+// ── Path containment ─────────────────────────────────────────────────────────
+
+/**
+ * Resolve `relativePath` against `vaultRoot` and assert the result stays
+ * inside the vault. Throws if a `../` traversal would escape the root.
+ *
+ * `relativePath` values come from the renderer via VaultImportPlan and must
+ * be validated before being used to read files — the same defence-in-depth
+ * pattern applied in `security/attachment-path.ts`.
+ */
+function safeVaultPath(vaultRoot: string, relativePath: string): string {
+  const resolvedRoot = path.resolve(vaultRoot);
+  const resolved = path.resolve(vaultRoot, relativePath);
+  if (!resolved.startsWith(resolvedRoot + path.sep)) {
+    throw new Error(
+      `Path traversal detected: "${relativePath}" escapes vault root`,
+    );
+  }
+  return resolved;
+}
+
 // ── Content transformations ───────────────────────────────────────────────────
 
 /**
@@ -152,7 +173,7 @@ export async function importVault(
     if (!relativePath) continue;
 
     try {
-      const absolutePath = path.join(vaultPath, relativePath);
+      const absolutePath = safeVaultPath(vaultPath, relativePath);
       const raw = await readFile(absolutePath, 'utf-8');
 
       const rawTitle = extractTitle(raw, path.basename(relativePath, '.md'));
@@ -260,7 +281,7 @@ export async function importVault(
     }
 
     try {
-      const absolutePath = path.join(vaultPath, relativePath);
+      const absolutePath = safeVaultPath(vaultPath, relativePath);
       const raw = await readFile(absolutePath, 'utf-8');
       const rawBody = stripFrontmatter(raw);
       let body = applyWikiLinks(rawBody, options.wikiLinks);

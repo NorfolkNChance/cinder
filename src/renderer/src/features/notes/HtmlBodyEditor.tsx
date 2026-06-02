@@ -55,10 +55,21 @@ export function HtmlBodyEditor({ html, onChange }: HtmlBodyEditorProps): JSX.Ele
       {mode === 'preview' ? (
         <iframe
           // srcdoc renders the HTML inline — no external URL, no navigation.
-          // sandbox="allow-same-origin" permits CSS and attachment:// images
-          // while blocking all JavaScript execution.
+          //
+          // Sandbox is intentionally empty (fully restrictive):
+          //   - No allow-scripts → JS and event handlers are blocked.
+          //   - No allow-same-origin → the frame gets a null origin, which
+          //     also prevents <meta http-equiv="refresh"> navigation (that
+          //     tag fires without scripts but requires same-origin to reach
+          //     the parent's browsing context).
+          //   - attachment:// images continue to load because the Electron
+          //     protocol handler is registered in the main process and does
+          //     not check the requesting frame's origin.
+          //   - Inline <style> blocks and style= attributes work normally;
+          //     only external <link rel=stylesheet> requests are blocked
+          //     (which is desirable — imported HTML should be self-contained).
           srcDoc={html}
-          sandbox="allow-same-origin"
+          sandbox=""
           className="min-h-0 flex-1 border-none bg-white"
           title="HTML preview"
           aria-label="Rendered HTML preview"
