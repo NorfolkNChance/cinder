@@ -5,7 +5,11 @@ directories:
 
 files:
   - out/**/*
+  - node_modules/**/*
   - package.json
+
+asarUnpack:
+  - node_modules/@journeyapps/sqlcipher/**
 
 mac:
   icon: build/icon.icns
