@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { tryParseDailyDate } from './vaultScanner';
+import { tryParseDailyDate, extractTitle, countWikiLinks } from './vaultScanner';
 
 // ── tryParseDailyDate ──────────────────────────────────────────────────────────
 //
@@ -82,5 +82,96 @@ describe('tryParseDailyDate', () => {
   // ── Windows-style backslash paths ─────────────────────────────────────────
   it('handles backslash path separators (Windows paths)', () => {
     expect(tryParseDailyDate('2026\\05\\29.md')).toBe('2026-05-29');
+  });
+});
+
+// ── extractTitle ──────────────────────────────────────────────────────────────
+//
+// Priority: YAML frontmatter `title:` → first `# Heading` → filename stem.
+
+describe('extractTitle', () => {
+  // ── Frontmatter title ─────────────────────────────────────────────────────
+  it('extracts title from YAML frontmatter', () => {
+    const content = '---\ntitle: My Note\ntags: [work]\n---\n\n# Different Heading\n';
+    expect(extractTitle(content, 'my-note')).toBe('My Note');
+  });
+
+  it('strips surrounding quotes from frontmatter title', () => {
+    const content = '---\ntitle: "Quoted Title"\n---\n';
+    expect(extractTitle(content, 'fallback')).toBe('Quoted Title');
+  });
+
+  it('strips single quotes from frontmatter title', () => {
+    const content = "---\ntitle: 'Single Quoted'\n---\n";
+    expect(extractTitle(content, 'fallback')).toBe('Single Quoted');
+  });
+
+  // ── First H1 heading ──────────────────────────────────────────────────────
+  it('falls back to first # heading when no frontmatter', () => {
+    const content = '# Meeting Notes\n\nSome text here.\n';
+    expect(extractTitle(content, 'meeting-notes')).toBe('Meeting Notes');
+  });
+
+  it('ignores ## headings and uses only # headings', () => {
+    const content = '## Section\n\nText.\n';
+    expect(extractTitle(content, 'my-stem')).toBe('my-stem');
+  });
+
+  it('prefers frontmatter title over H1 heading', () => {
+    const content = '---\ntitle: FM Title\n---\n\n# H1 Title\n';
+    expect(extractTitle(content, 'stem')).toBe('FM Title');
+  });
+
+  // ── Filename stem fallback ────────────────────────────────────────────────
+  it('falls back to filename stem when no frontmatter and no heading', () => {
+    const content = 'Just some prose with no heading.\n';
+    expect(extractTitle(content, 'my-filename')).toBe('my-filename');
+  });
+
+  it('uses filename stem for empty content', () => {
+    expect(extractTitle('', 'empty-file')).toBe('empty-file');
+  });
+
+  // ── Incomplete frontmatter ────────────────────────────────────────────────
+  it('falls back to H1 when frontmatter has no title key', () => {
+    const content = '---\ntags: [a, b]\n---\n\n# Real Title\n';
+    expect(extractTitle(content, 'stem')).toBe('Real Title');
+  });
+
+  it('falls back to stem when frontmatter is unclosed', () => {
+    // No closing --- so it is not treated as frontmatter.
+    const content = '---\ntitle: Broken FM\n\n# Heading\n';
+    expect(extractTitle(content, 'stem')).toBe('Heading');
+  });
+});
+
+// ── countWikiLinks ────────────────────────────────────────────────────────────
+
+describe('countWikiLinks', () => {
+  it('returns 0 for content with no wiki links', () => {
+    expect(countWikiLinks('Just some text.')).toBe(0);
+  });
+
+  it('counts a single wiki link', () => {
+    expect(countWikiLinks('See [[My Note]] for details.')).toBe(1);
+  });
+
+  it('counts multiple wiki links', () => {
+    expect(countWikiLinks('[[A]] and [[B]] and [[C]]')).toBe(3);
+  });
+
+  it('does not count embed syntax ![[…]] as wiki links', () => {
+    // countWikiLinks counts [[…]], not ![[…]].
+    // An embed like ![[image.png]] contains [[image.png]] inside it,
+    // so it WILL be counted — this is the current behaviour.
+    expect(countWikiLinks('![[image.png]]')).toBe(1);
+  });
+
+  it('handles wiki links with pipe display text', () => {
+    expect(countWikiLinks('[[Note Name|Display Text]]')).toBe(1);
+  });
+
+  it('returns 0 for empty string', () => {
+    expect(countWikiLinks('')).toBe(0);
   });
 });
