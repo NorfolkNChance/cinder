@@ -79,7 +79,7 @@ Cross-reference the architecture in [`CLAUDE.md`](CLAUDE.md) before starting any
 
 ---
 
-### M4 — Tests for vault services
+### ~~M4 — Tests for vault services~~ ✅ shipped
 **Why**: `vaultScanner.ts` and `vaultImporter.ts` have zero unit tests. The date parsing logic (`tryParseDailyDate`) handles multiple format patterns and is exactly the code that benefits most from test coverage.
 
 **Scope**:
