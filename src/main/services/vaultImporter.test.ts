@@ -1,5 +1,8 @@
-import { describe, expect, it } from 'vitest';
-import { applyWikiLinks, buildTitle } from './vaultImporter';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { mkdtempSync, rmSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
+import { applyWikiLinks, buildTitle, safeVaultPath } from './vaultImporter';
 
 // ── applyWikiLinks ────────────────────────────────────────────────────────────
 //
@@ -107,6 +110,54 @@ describe('buildTitle', () => {
   it('returns rawTitle unchanged when note is at vault root (full-path)', () => {
     expect(buildTitle('Root Note', 'Root Note.md', 'full-path')).toBe(
       'Root Note',
+    );
+  });
+});
+
+// ── safeVaultPath ─────────────────────────────────────────────────────────────
+//
+// Resolves relativePath against vaultRoot and throws if the result
+// escapes the vault. Uses real temp directories so path.resolve()
+// behaves as it does in production.
+
+describe('safeVaultPath', () => {
+  let vaultRoot: string;
+
+  beforeEach(() => {
+    vaultRoot = mkdtempSync(join(tmpdir(), 'cinder-vault-test-'));
+  });
+
+  afterEach(() => {
+    if (vaultRoot) rmSync(vaultRoot, { recursive: true, force: true });
+  });
+
+  it('returns the resolved absolute path for a simple relative path', () => {
+    const result = safeVaultPath(vaultRoot, 'notes/my-note.md');
+    expect(result).toBe(join(vaultRoot, 'notes', 'my-note.md'));
+  });
+
+  it('accepts a filename at the vault root level', () => {
+    const result = safeVaultPath(vaultRoot, 'note.md');
+    expect(result).toBe(join(vaultRoot, 'note.md'));
+  });
+
+  it('throws on a literal path-traversal attempt (../)', () => {
+    expect(() => safeVaultPath(vaultRoot, '../etc/passwd')).toThrow(
+      'Path traversal detected',
+    );
+  });
+
+  it('throws on a nested path-traversal attempt', () => {
+    expect(() =>
+      safeVaultPath(vaultRoot, 'notes/../../etc/passwd'),
+    ).toThrow('Path traversal detected');
+  });
+
+  it('throws on an absolute path supplied as relativePath', () => {
+    // An absolute path like /etc/passwd resolves to itself, which is
+    // outside the vault root.
+    expect(() => safeVaultPath(vaultRoot, '/etc/passwd')).toThrow(
+      'Path traversal detected',
     );
   });
 });
