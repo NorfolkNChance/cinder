@@ -91,7 +91,7 @@ async function walkDirectory(dir: string, vaultRoot: string): Promise<FileEntry[
  *   3. YYYY/MM/YYYY-MM-DD.md                      → year+month folder, date filename
  *   4. YYYY/YYYY-MM-DD.md                         → year folder, date filename
  */
-function tryParseDailyDate(relativeToRoot: string): string | null {
+export function tryParseDailyDate(relativeToRoot: string): string | null {
   const normalised = relativeToRoot.replace(/\\/g, '/');
   // Strip .md extension.
   const withoutExt = normalised.endsWith('.md')
@@ -157,7 +157,7 @@ function countEmbeds(body: string): number {
  * Extract the title from markdown content.
  * Priority: YAML frontmatter `title:`, first `# heading`, filename stem.
  */
-function extractTitle(content: string, filenameStem: string): string {
+export function extractTitle(content: string, filenameStem: string): string {
   // 1. YAML frontmatter title.
   if (content.startsWith('---')) {
     const fmEnd = content.indexOf('\n---', 3);
@@ -295,4 +295,4 @@ export async function scanVault(input: VaultScanInput): Promise<VaultScanResult>
 }
 
 // Re-export helpers needed by the importer.
-export { extractTitle, stripFrontmatter, countWikiLinks };
+export { stripFrontmatter, countWikiLinks };
