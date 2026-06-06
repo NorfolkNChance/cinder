@@ -29,7 +29,7 @@ import { VAULT_PROGRESS } from '../../shared/ipc/channels';
  * be validated before being used to read files — the same defence-in-depth
  * pattern applied in `security/attachment-path.ts`.
  */
-function safeVaultPath(vaultRoot: string, relativePath: string): string {
+export function safeVaultPath(vaultRoot: string, relativePath: string): string {
   const resolvedRoot = path.resolve(vaultRoot);
   const resolved = path.resolve(vaultRoot, relativePath);
   if (!resolved.startsWith(resolvedRoot + path.sep)) {
@@ -47,7 +47,7 @@ function safeVaultPath(vaultRoot: string, relativePath: string): string {
  *   [[Note Name]]              → "Note Name"
  *   [[Note Name|Display Text]] → "Display Text"
  */
-function applyWikiLinks(
+export function applyWikiLinks(
   body: string,
   strategy: 'plain-text' | 'leave-as-is',
 ): string {
@@ -65,7 +65,7 @@ function applyWikiLinks(
  *   'top-level' → "Projects / Meeting notes"
  *   'full-path' → "Projects/Work / Meeting notes"
  */
-function buildTitle(
+export function buildTitle(
   rawTitle: string,
   relativePath: string,
   strategy: 'top-level' | 'full-path' | 'none',
