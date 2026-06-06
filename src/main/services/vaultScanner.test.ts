@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { tryParseDailyDate, extractTitle, countWikiLinks } from './vaultScanner';
+import { tryParseDailyDate } from './vaultScanner';
 
 // ── tryParseDailyDate ──────────────────────────────────────────────────────────
 //
