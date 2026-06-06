@@ -49,7 +49,7 @@ describe('applyWikiLinks', () => {
     expect(applyWikiLinks('', 'plain-text')).toBe('');
   });
 
-  it('does not affect embed syntax ![[…]]', () => {
+  it('converts [[…]] inside embed syntax, leaving the ! prefix intact', () => {
     // ![[…]] is handled separately by processEmbeds.
     // applyWikiLinks should still convert the [[…]] part inside the embed.
     // Current behaviour: the regex matches [[…]] anywhere including inside ![[…]].

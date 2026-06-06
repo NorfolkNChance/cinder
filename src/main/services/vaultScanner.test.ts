@@ -138,7 +138,7 @@ describe('extractTitle', () => {
     expect(extractTitle(content, 'stem')).toBe('Real Title');
   });
 
-  it('falls back to stem when frontmatter is unclosed', () => {
+  it('falls back to H1 when frontmatter is unclosed (no closing ---)', () => {
     // No closing --- so it is not treated as frontmatter.
     const content = '---\ntitle: Broken FM\n\n# Heading\n';
     expect(extractTitle(content, 'stem')).toBe('Heading');
