@@ -450,10 +450,9 @@ These have burned us before. Check here before debugging similar symptoms.
 - `npx electron-builder` only packages already-compiled output. It does not invoke electron-vite. If `out/main/index.js` does not exist when electron-builder runs, it fails with `Application entry file was not found in this archive`. The release workflow runs `npm run build` (electron-vite compile) as a separate step before `npx electron-builder`.
 
 **Auto-update "Code signature did not pass" — ShipIt identity mismatch**
-- ShipIt (the macOS ZIP update installer used by electron-updater) verifies that the update's signing identity matches the currently installed app. If the installed build was compiled locally (unsigned) or signed with a different certificate than the update, ShipIt rejects it with "Code signature at URL ... did not pass."
-- The fix in `electron-builder.yml` is `publisherName: "James Burns (2R8J6YQMGN)"` — this tells electron-updater exactly which Developer ID to expect, so it can validate before handing off to ShipIt. Without it, ShipIt does a bare identity comparison that fails on any mismatch.
-- **If a user hits this error**: they must manually install from the latest `.dmg` (one-time migration onto the signed-update path). Subsequent updater-delivered updates will work correctly.
-- The `publisherName` value is the CN of the Developer ID certificate minus the "Developer ID Application: " prefix. Update it if the signing cert is ever rotated.
+- ShipIt (the macOS ZIP update installer used by electron-updater) verifies that the update's signing identity matches the currently installed app. If the installed build was compiled locally (unsigned) or signed with a different Developer ID certificate than the update, ShipIt rejects it with "Code signature at URL ... did not pass."
+- `publisherName` is Windows-only — there is no equivalent electron-builder config to override this for macOS. ShipIt reads the signing identity directly from the installed binary.
+- **If a user hits this error**: they must manually download and install from the latest `.dmg` (one-time migration onto the signed-update path). Subsequent updater-delivered updates will work correctly once the installed app and the update share the same Developer ID.
 
 **electron-updater requires a `.zip` target — DMG alone is not enough**
 - The DMG is for first-time installation only. electron-updater downloads and applies a `.zip` for subsequent background updates. If `electron-builder.yml` only lists `dmg` as a target, the updater errors with `ZIP file not provided`. Both `dmg` and `zip` targets must be listed under `mac.target` for the full install + update flow to work.

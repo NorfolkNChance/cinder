@@ -14,13 +14,6 @@ mac:
   gatekeeperAssess: false
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
-  # The CN of the Developer ID Application certificate (without the
-  # "Developer ID Application: " prefix). electron-updater passes this to
-  # ShipIt so it can verify the downloaded update's signing identity before
-  # installation. Without it, ShipIt falls back to a bare identity comparison
-  # that fails whenever the installed app and the update were signed in
-  # different contexts (e.g. locally-built install → CI-signed update).
-  publisherName: "James Burns (2R8J6YQMGN)"
   target:
     - target: dmg
       arch:
