@@ -10,7 +10,7 @@
  */
 
 import { readFile } from 'fs/promises';
-import { readFileSync } from 'fs';
+import { readFileSync, realpathSync } from 'fs';
 import path from 'path';
 import type { WebContents } from 'electron';
 import { notesService } from './notes';
@@ -30,13 +30,41 @@ import { VAULT_PROGRESS } from '../../shared/ipc/channels';
  * pattern applied in `security/attachment-path.ts`.
  */
 export function safeVaultPath(vaultRoot: string, relativePath: string): string {
-  const resolvedRoot = path.resolve(vaultRoot);
+  // Canonicalise the root itself — on macOS userData and tmp dirs are often
+  // reached via /private/... symlinks, so we must compare like with like.
+  let canonicalRoot: string;
+  try {
+    canonicalRoot = realpathSync(path.resolve(vaultRoot));
+  } catch {
+    canonicalRoot = path.resolve(vaultRoot);
+  }
+  const prefix = canonicalRoot + path.sep;
+
+  // Syntactic traversal check (fast path — catches ../.. without touching disk).
   const resolved = path.resolve(vaultRoot, relativePath);
-  if (!resolved.startsWith(resolvedRoot + path.sep)) {
+  if (!resolved.startsWith(prefix)) {
     throw new Error(
       `Path traversal detected: "${relativePath}" escapes vault root`,
     );
   }
+
+  // Symlink check: if the resolved path already exists, follow all symlinks
+  // and re-validate. A symlink inside the vault (e.g. link → /etc) would
+  // pass the syntactic check above but fail here.
+  try {
+    const real = realpathSync(resolved);
+    if (!real.startsWith(prefix)) {
+      throw new Error(
+        `Path traversal detected: "${relativePath}" escapes vault root via symlink`,
+      );
+    }
+  } catch (err) {
+    if (err instanceof Error && err.message.includes('escapes vault root')) {
+      throw err;
+    }
+    // ENOENT — file doesn't exist yet; syntactic check is the only guarantee.
+  }
+
   return resolved;
 }
 
@@ -102,10 +130,17 @@ function processEmbeds(
   if (attachmentRelativePaths.length === 0) return body;
 
   // Build a case-insensitive map: lowercase filename → absolute vault path.
+  // Use safeVaultPath so that a malicious VaultImportPlan cannot escape the
+  // vault root via traversal sequences or symlinks in attachmentRelativePaths.
   const filenameMap = new Map<string, string>();
   for (const relPath of attachmentRelativePaths) {
-    const filename = path.basename(relPath);
-    filenameMap.set(filename.toLowerCase(), path.join(vaultPath, relPath));
+    try {
+      const filename = path.basename(relPath);
+      filenameMap.set(filename.toLowerCase(), safeVaultPath(vaultPath, relPath));
+    } catch {
+      // Skip paths that escape the vault root — they should never appear in a
+      // legitimate scan result but could be injected via a crafted IPC call.
+    }
   }
 
   // Match ![[filename]] and ![[filename|alt text]] syntax.

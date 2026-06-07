@@ -13,19 +13,20 @@ interface HtmlBodyEditorProps {
  *
  * Two modes toggled by a tab bar:
  *
- *   Preview  — renders the HTML in a sandboxed iframe (no JavaScript,
- *               same-origin so attachment:// images work). The user sees
- *               the page exactly as a browser would display it.
+ *   Preview  — renders the HTML in a fully sandboxed iframe (sandbox="",
+ *               no scripts, null origin). attachment:// images load via the
+ *               main-process protocol handler which does not enforce origin.
+ *               The user sees the page as a browser would display it.
  *
  *   Source   — a plain textarea showing the raw HTML. Changes are fed to
  *               NoteEditor's debounced autosave via onChange, so ⌘S and
  *               the "Saved / Unsaved…" indicator all work normally.
  *
  * Security:
- *   The iframe uses sandbox="allow-same-origin" which permits CSS and
- *   same-origin resources (attachment:// images) but blocks all JavaScript
- *   execution. The app's own CSP further restricts any external resource
- *   loading. dangerouslySetInnerHTML is intentionally NOT used.
+ *   sandbox="" gives the frame a null opaque origin — no JavaScript, no
+ *   storage access (localStorage/cookies/IndexedDB), no same-origin
+ *   postMessage forgery. The app's CSP blocks external resource loads.
+ *   dangerouslySetInnerHTML is intentionally NOT used.
  */
 export function HtmlBodyEditor({ html, onChange }: HtmlBodyEditorProps): JSX.Element {
   const [mode, setMode] = useState<'preview' | 'source'>('preview');
@@ -56,18 +57,16 @@ export function HtmlBodyEditor({ html, onChange }: HtmlBodyEditorProps): JSX.Ele
         <iframe
           // srcdoc renders the HTML inline — no external URL, no navigation.
           //
-          // Sandbox is intentionally empty (fully restrictive):
+          // sandbox="" is fully restrictive:
           //   - No allow-scripts → JS and event handlers are blocked.
-          //   - No allow-same-origin → the frame gets a null origin, which
-          //     also prevents <meta http-equiv="refresh"> navigation (that
-          //     tag fires without scripts but requires same-origin to reach
-          //     the parent's browsing context).
-          //   - attachment:// images continue to load because the Electron
-          //     protocol handler is registered in the main process and does
-          //     not check the requesting frame's origin.
-          //   - Inline <style> blocks and style= attributes work normally;
-          //     only external <link rel=stylesheet> requests are blocked
-          //     (which is desirable — imported HTML should be self-contained).
+          //   - No allow-same-origin → null opaque origin; the frame cannot
+          //     access localStorage, cookies, or IndexedDB, and cannot
+          //     postMessage to same-origin windows.
+          //   - attachment:// images load because the Electron protocol
+          //     handler runs in the main process and does not enforce origin.
+          //   - Inline <style> and style= attributes work; external
+          //     <link rel=stylesheet> requests are blocked (desirable —
+          //     imported HTML should be self-contained).
           srcDoc={html}
           sandbox=""
           className="min-h-0 flex-1 border-none bg-white"
