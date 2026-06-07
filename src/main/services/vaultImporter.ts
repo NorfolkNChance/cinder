@@ -40,19 +40,22 @@ export function safeVaultPath(vaultRoot: string, relativePath: string): string {
   }
   const prefix = canonicalRoot + path.sep;
 
-  // Syntactic traversal check (fast path — catches ../.. without touching disk).
-  const resolved = path.resolve(vaultRoot, relativePath);
-  if (!resolved.startsWith(prefix)) {
+  // Syntactic traversal check. Resolve against both the original vaultRoot (to
+  // produce the return value callers expect) and canonicalRoot (for the prefix
+  // comparison — apples-to-apples on macOS where /tmp → /private/tmp).
+  const candidate = path.resolve(vaultRoot, relativePath);
+  const candidateCanonical = path.resolve(canonicalRoot, relativePath);
+  if (!candidateCanonical.startsWith(prefix)) {
     throw new Error(
       `Path traversal detected: "${relativePath}" escapes vault root`,
     );
   }
 
-  // Symlink check: if the resolved path already exists, follow all symlinks
-  // and re-validate. A symlink inside the vault (e.g. link → /etc) would
-  // pass the syntactic check above but fail here.
+  // Symlink check: if the file already exists, follow all symlinks and
+  // re-validate. A symlink inside the vault (e.g. link → /etc) passes the
+  // syntactic check above but the realpath escapes the vault root.
   try {
-    const real = realpathSync(resolved);
+    const real = realpathSync(candidate);
     if (!real.startsWith(prefix)) {
       throw new Error(
         `Path traversal detected: "${relativePath}" escapes vault root via symlink`,
@@ -65,7 +68,7 @@ export function safeVaultPath(vaultRoot: string, relativePath: string): string {
     // ENOENT — file doesn't exist yet; syntactic check is the only guarantee.
   }
 
-  return resolved;
+  return candidate;
 }
 
 // ── Content transformations ───────────────────────────────────────────────────
