@@ -449,6 +449,12 @@ These have burned us before. Check here before debugging similar symptoms.
 **electron-builder does not compile — run `npm run build` first**
 - `npx electron-builder` only packages already-compiled output. It does not invoke electron-vite. If `out/main/index.js` does not exist when electron-builder runs, it fails with `Application entry file was not found in this archive`. The release workflow runs `npm run build` (electron-vite compile) as a separate step before `npx electron-builder`.
 
+**Auto-update "Code signature did not pass" — ShipIt identity mismatch**
+- ShipIt (the macOS ZIP update installer used by electron-updater) verifies that the update's signing identity matches the currently installed app. If the installed build was compiled locally (unsigned) or signed with a different certificate than the update, ShipIt rejects it with "Code signature at URL ... did not pass."
+- The fix in `electron-builder.yml` is `publisherName: "James Burns (2R8J6YQMGN)"` — this tells electron-updater exactly which Developer ID to expect, so it can validate before handing off to ShipIt. Without it, ShipIt does a bare identity comparison that fails on any mismatch.
+- **If a user hits this error**: they must manually install from the latest `.dmg` (one-time migration onto the signed-update path). Subsequent updater-delivered updates will work correctly.
+- The `publisherName` value is the CN of the Developer ID certificate minus the "Developer ID Application: " prefix. Update it if the signing cert is ever rotated.
+
 **electron-updater requires a `.zip` target — DMG alone is not enough**
 - The DMG is for first-time installation only. electron-updater downloads and applies a `.zip` for subsequent background updates. If `electron-builder.yml` only lists `dmg` as a target, the updater errors with `ZIP file not provided`. Both `dmg` and `zip` targets must be listed under `mac.target` for the full install + update flow to work.
 
@@ -470,7 +476,7 @@ These have burned us before. Check here before debugging similar symptoms.
 - The `notes.folder_id` column predates the `folders` table (added in 0000, table added in 0011). SQLite cannot add a FK constraint to an existing column, so referential integrity for `notes.folder_id → folders.id` lives in `foldersService`. Deleting a folder moves its notes to Unfiled (`folder_id = null`) and is blocked if sub-folders exist. Don't assume the DB enforces the FK.
 
 **HTML notes store raw HTML in `body` with `bodyType = 'html'`**
-- Imported `.html` files are NOT converted to Markdown (that changed in v1.1.8). `body` holds raw HTML, rendered via a sandboxed `<iframe srcDoc>` (sandbox `allow-same-origin` only — JS blocked) and edited as source. `NoteEditor` branches on `note.bodyType`. The FTS index still contains the raw HTML, so search snippets for HTML notes include tags (roadmap item M2).
+- Imported `.html` files are NOT converted to Markdown (that changed in v1.1.8). `body` holds raw HTML, rendered via a fully sandboxed `<iframe srcDoc>` (`sandbox=""` — null origin, no scripts, no storage access) and edited as source. `NoteEditor` branches on `note.bodyType`. `attachment://` images still load because the Electron protocol handler runs in the main process and does not enforce frame origin.
 
 **DB backup must use `VACUUM INTO`, not `copyFileSync`**
 - In WAL mode SQLite has three files (`cinder.db`, `cinder.db-wal`, `cinder.db-shm`). Copying only the main file produces a backup that is either incomplete or corrupt if the WAL hasn't been fully checkpointed. `VACUUM INTO '/path/to/backup.db'` creates a consistent, fully-checkpointed snapshot in a single atomic operation, regardless of WAL state. The output is encrypted with the same SQLCipher key. This is what `exportBackup()` and `runAutoBackup()` both use.
