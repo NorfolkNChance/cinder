@@ -1,4 +1,5 @@
 import type { Editor } from '@tiptap/core';
+import { useEditorState } from '@tiptap/react';
 import clsx from 'clsx';
 
 interface EditorToolbarProps {
@@ -99,6 +100,23 @@ function HeadingLabel({ level }: { level: 1 | 2 | 3 }): JSX.Element {
 export function EditorToolbar({ editor }: EditorToolbarProps): JSX.Element {
   const disabled = editor === null;
 
+  const state = useEditorState({
+    editor,
+    selector: (ctx) => ({
+      h1: ctx.editor?.isActive('heading', { level: 1 }) ?? false,
+      h2: ctx.editor?.isActive('heading', { level: 2 }) ?? false,
+      h3: ctx.editor?.isActive('heading', { level: 3 }) ?? false,
+      bold: ctx.editor?.isActive('bold') ?? false,
+      italic: ctx.editor?.isActive('italic') ?? false,
+      strike: ctx.editor?.isActive('strike') ?? false,
+      code: ctx.editor?.isActive('code') ?? false,
+      bulletList: ctx.editor?.isActive('bulletList') ?? false,
+      orderedList: ctx.editor?.isActive('orderedList') ?? false,
+      blockquote: ctx.editor?.isActive('blockquote') ?? false,
+      codeBlock: ctx.editor?.isActive('codeBlock') ?? false,
+    }),
+  });
+
   return (
     <div
       role="toolbar"
@@ -109,7 +127,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps): JSX.Element {
       {/* Headings */}
       <ToolbarButton
         label="Heading 1"
-        active={editor?.isActive('heading', { level: 1 }) ?? false}
+        active={state?.h1 ?? false}
         disabled={disabled}
         onClick={() =>
           editor?.chain().focus().toggleHeading({ level: 1 }).run()
@@ -119,7 +137,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps): JSX.Element {
       </ToolbarButton>
       <ToolbarButton
         label="Heading 2"
-        active={editor?.isActive('heading', { level: 2 }) ?? false}
+        active={state?.h2 ?? false}
         disabled={disabled}
         onClick={() =>
           editor?.chain().focus().toggleHeading({ level: 2 }).run()
@@ -129,7 +147,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps): JSX.Element {
       </ToolbarButton>
       <ToolbarButton
         label="Heading 3"
-        active={editor?.isActive('heading', { level: 3 }) ?? false}
+        active={state?.h3 ?? false}
         disabled={disabled}
         onClick={() =>
           editor?.chain().focus().toggleHeading({ level: 3 }).run()
@@ -143,7 +161,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps): JSX.Element {
       {/* Inline marks */}
       <ToolbarButton
         label="Bold (⌘B)"
-        active={editor?.isActive('bold') ?? false}
+        active={state?.bold ?? false}
         disabled={disabled}
         onClick={() => editor?.chain().focus().toggleBold().run()}
       >
@@ -151,7 +169,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps): JSX.Element {
       </ToolbarButton>
       <ToolbarButton
         label="Italic (⌘I)"
-        active={editor?.isActive('italic') ?? false}
+        active={state?.italic ?? false}
         disabled={disabled}
         onClick={() => editor?.chain().focus().toggleItalic().run()}
       >
@@ -159,7 +177,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps): JSX.Element {
       </ToolbarButton>
       <ToolbarButton
         label="Strikethrough"
-        active={editor?.isActive('strike') ?? false}
+        active={state?.strike ?? false}
         disabled={disabled}
         onClick={() => editor?.chain().focus().toggleStrike().run()}
       >
@@ -168,7 +186,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps): JSX.Element {
       </ToolbarButton>
       <ToolbarButton
         label="Inline code"
-        active={editor?.isActive('code') ?? false}
+        active={state?.code ?? false}
         disabled={disabled}
         onClick={() => editor?.chain().focus().toggleCode().run()}
       >
@@ -180,7 +198,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps): JSX.Element {
       {/* Block structure */}
       <ToolbarButton
         label="Bullet list"
-        active={editor?.isActive('bulletList') ?? false}
+        active={state?.bulletList ?? false}
         disabled={disabled}
         onClick={() => editor?.chain().focus().toggleBulletList().run()}
       >
@@ -202,7 +220,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps): JSX.Element {
       </ToolbarButton>
       <ToolbarButton
         label="Ordered list"
-        active={editor?.isActive('orderedList') ?? false}
+        active={state?.orderedList ?? false}
         disabled={disabled}
         onClick={() => editor?.chain().focus().toggleOrderedList().run()}
       >
@@ -223,7 +241,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps): JSX.Element {
       </ToolbarButton>
       <ToolbarButton
         label="Blockquote"
-        active={editor?.isActive('blockquote') ?? false}
+        active={state?.blockquote ?? false}
         disabled={disabled}
         onClick={() => editor?.chain().focus().toggleBlockquote().run()}
       >
@@ -246,7 +264,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps): JSX.Element {
       {/* Code block */}
       <ToolbarButton
         label="Code block"
-        active={editor?.isActive('codeBlock') ?? false}
+        active={state?.codeBlock ?? false}
         disabled={disabled}
         onClick={() => editor?.chain().focus().toggleCodeBlock().run()}
       >
