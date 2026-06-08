@@ -43,6 +43,9 @@ Full architectural spec: [`../ARCHITECTURE.md`](../ARCHITECTURE.md) — read it 
 | + | HTML note FTS5 — raw HTML stripped from FTS index for HTML notes via `stripHtml()` called after create/update; clean search snippets |
 | + | Inter-note wiki links — TipTap `WikiLink` mark, `[[Note Title]]` syntax, click-to-navigate/create via `notes:findByTitle` IPC |
 | + | Vault service tests — `tryParseDailyDate`, `extractTitle`, `countWikiLinks`, `applyWikiLinks`, `buildTitle`, `safeVaultPath` |
+| + | Editor toolbar active-state — `useEditorState` replaces inline `editor.isActive()` calls, eliminating unnecessary re-renders |
+| + | Release workflow fix — sequential `--x64` then `--arm64` steps prevent parallel-publish 422 race on GitHub Releases |
+| + | Preflight script — `scripts/preflight.sh` validates env, signing identity, and tests before tagging a release |
 
 ---
 
@@ -435,6 +438,9 @@ These have burned us before. Check here before debugging similar symptoms.
 
 **`assertMainFrame` uses reference identity, not URL equality**
 - The guard in `src/main/security/ipc-guard.ts` checks `!event.senderFrame || event.senderFrame !== event.senderFrame.top`. Do not revert this to URL comparison — URL equality has two bypasses: a destroyed frame makes both sides `undefined` (which passes the `!==` check), and a subframe loaded from the same URL as the top frame also passes. Reference identity is unforgeable.
+
+**electron-builder parallel arch publish race — 422 `already_exists`**
+- Passing `--arm64 --x64` together causes electron-builder to publish both arches in parallel. Both find "release doesn't exist" at the same instant, both POST to create it, and the second gets `422 Unprocessable Entity: already_exists`. The workflow uses two sequential steps — `--x64` first (creates the draft release), then `--arm64` (uploads into the existing release) — to avoid this. Do not collapse them back into a single `--arm64 --x64` invocation.
 
 **GitHub Actions: pin to commit SHAs, not mutable tags**
 - Both workflow files pin `actions/checkout`, `setup-node`, and `setup-python` to immutable commit SHAs with a `# vX.Y.Z` comment. The release workflow has access to signing certs and a `contents: write` token — mutable tags are the exact threat model where SHA pinning matters. Dependabot will keep the SHAs current via weekly PRs. Do not revert to `@v4`-style tags.
