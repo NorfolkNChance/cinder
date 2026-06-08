@@ -1056,6 +1056,93 @@ Take vitamins every day`}</CodeBlock>
     },
   },
 
+  // ── Feedback ─────────────────────────────────────────────────────────────
+  {
+    id: 'feedback',
+    title: 'Feedback & Support',
+    icon: '💬',
+    keywords: ['bug', 'report', 'issue', 'feedback', 'feature', 'request', 'support', 'help', 'github'],
+    render: function FeedbackSection() {
+      const open = (url: string): void => {
+        void window.api.app.openExternal(url);
+      };
+
+      return (
+        <div>
+          <H2>Feedback &amp; Support</H2>
+          <P>
+            Cinder is open-source and tracked on GitHub. If something isn&apos;t
+            working right, or you have an idea for a feature, opening an issue
+            is the best way to get it seen.
+          </P>
+
+          <div className="mb-6 flex flex-col gap-3">
+            <button
+              onClick={() =>
+                open(
+                  'https://github.com/NorfolkNChance/cinder/issues/new?template=bug_report.yml'
+                )
+              }
+              className="flex items-start gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 text-left transition-colors hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-950 dark:hover:bg-gray-900"
+            >
+              <span className="mt-0.5 text-lg">🐛</span>
+              <span>
+                <span className="block text-sm font-semibold text-gray-900 dark:text-white">
+                  Report a bug
+                </span>
+                <span className="block text-xs text-gray-500 dark:text-gray-400">
+                  Opens a pre-filled issue template on GitHub
+                </span>
+              </span>
+            </button>
+
+            <button
+              onClick={() =>
+                open(
+                  'https://github.com/NorfolkNChance/cinder/issues/new?template=feature_request.yml'
+                )
+              }
+              className="flex items-start gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 text-left transition-colors hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-950 dark:hover:bg-gray-900"
+            >
+              <span className="mt-0.5 text-lg">✨</span>
+              <span>
+                <span className="block text-sm font-semibold text-gray-900 dark:text-white">
+                  Request a feature
+                </span>
+                <span className="block text-xs text-gray-500 dark:text-gray-400">
+                  Describe what you&apos;d like Cinder to do
+                </span>
+              </span>
+            </button>
+
+            <button
+              onClick={() =>
+                open('https://github.com/NorfolkNChance/cinder/issues')
+              }
+              className="flex items-start gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 text-left transition-colors hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-950 dark:hover:bg-gray-900"
+            >
+              <span className="mt-0.5 text-lg">📋</span>
+              <span>
+                <span className="block text-sm font-semibold text-gray-900 dark:text-white">
+                  Browse open issues
+                </span>
+                <span className="block text-xs text-gray-500 dark:text-gray-400">
+                  See what&apos;s already reported or in progress
+                </span>
+              </span>
+            </button>
+          </div>
+
+          <Callout type="tip">
+            When reporting a bug, include your Cinder version (visible in the
+            About section) and steps to reproduce — it makes it much faster to
+            diagnose.
+          </Callout>
+        </div>
+      );
+    },
+  },
+
   // ── About ────────────────────────────────────────────────────────────────
   {
     id: 'about',

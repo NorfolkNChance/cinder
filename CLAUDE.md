@@ -46,6 +46,7 @@ Full architectural spec: [`../ARCHITECTURE.md`](../ARCHITECTURE.md) — read it 
 | + | Editor toolbar active-state — `useEditorState` replaces inline `editor.isActive()` calls, eliminating unnecessary re-renders |
 | + | Release workflow fix — sequential `--x64` then `--arm64` steps prevent parallel-publish 422 race on GitHub Releases |
 | + | Preflight script — `scripts/preflight.sh` validates env, signing identity, and tests before tagging a release |
+| + | Feedback & GitHub Issues — `app:openExternal` IPC channel, in-app "Feedback & Support" help section, GitHub issue templates (bug + feature request) |
 
 ---
 

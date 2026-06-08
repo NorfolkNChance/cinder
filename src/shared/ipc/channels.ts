@@ -6,7 +6,8 @@
  * dedicated handler with its own Zod schema.
  */
 
-export const APP_GET_VERSION = 'app:getVersion' as const;
+export const APP_GET_VERSION    = 'app:getVersion'    as const;
+export const APP_OPEN_EXTERNAL  = 'app:openExternal'  as const;
 
 // ── Folders ──────────────────────────────────────────────────────────────────
 export const FOLDERS_CREATE = 'folders:create' as const;

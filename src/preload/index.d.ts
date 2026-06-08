@@ -96,6 +96,7 @@ declare global {
     api: {
       app: {
         getVersion: () => Promise<string>;
+        openExternal: (url: string) => Promise<void>;
       };
       notes: {
         create: (input: NoteCreateInput) => Promise<Note>;

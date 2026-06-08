@@ -97,9 +97,10 @@ Most notes-and-todos products require you to send your content to someone else's
 - Slim banner appears when a download is in progress or an update is ready to install
 - "Restart to apply" one-click install; "Check for updates" also available in Settings and the command palette
 
-### Help
+### Help & Feedback
 - Full in-app documentation covering every feature, searchable by keyword
 - Open with ⌘/ or the `?` button; navigate sections with the keyboard
+- **Feedback & Support** section links directly to GitHub Issues — report a bug or request a feature without leaving the app
 
 ### Accessibility
 - Focus is trapped inside all modals and returned to the opener on close

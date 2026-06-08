@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron';
 import {
   APP_GET_VERSION,
+  APP_OPEN_EXTERNAL,
   ATTACHMENTS_SAVE,
   FOLDERS_CREATE,
   FOLDERS_GET,
@@ -156,6 +157,7 @@ import type {
 contextBridge.exposeInMainWorld('api', {
   app: {
     getVersion: (): Promise<string> => ipcRenderer.invoke(APP_GET_VERSION),
+    openExternal: (url: string): Promise<void> => ipcRenderer.invoke(APP_OPEN_EXTERNAL, { url }),
   },
   notes: {
     create: (input: NoteCreateInput): Promise<Note> =>
