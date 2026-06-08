@@ -455,15 +455,19 @@ Weekly review every monday p2
           project) without interrupting what you were doing.
         </P>
 
-        <H3>Two ways to capture a task</H3>
+        <H3>Three ways to capture a task</H3>
         <div className="mb-4 overflow-hidden rounded-lg border border-gray-200 text-sm dark:border-gray-800">
           <div className="flex items-start gap-3 border-b border-gray-200/50 px-3 py-2.5 dark:border-gray-800/50">
             <span className="w-36 shrink-0 font-medium text-gray-700 dark:text-gray-300">+ Todo button</span>
-            <span className="text-gray-500">Appears in the editor toolbar while writing a note. Creates a task linked to that note — the triage card shows a backlink so you can jump back.</span>
+            <span className="text-gray-500">Appears in Notes and Daily editor toolbars, and in the Tasks and Matrix view headers. Click to open a small popover, type a title, press Enter — the task lands in Triage. In Notes/Daily, the triage card shows a backlink so you can jump back to the source note.</span>
           </div>
-          <div className="flex items-start gap-3 px-3 py-2.5">
+          <div className="flex items-start gap-3 border-b border-gray-200/50 px-3 py-2.5 dark:border-gray-800/50">
             <span className="w-36 shrink-0 font-medium text-gray-700 dark:text-gray-300"><Kbd>⌘⇧Space</Kbd></span>
             <span className="text-gray-500">Global shortcut — works even when Cinder is in the background. Opens a lightweight popup from the macOS menu-bar tray icon. The same natural-language parser as quick-add is available here.</span>
+          </div>
+          <div className="flex items-start gap-3 px-3 py-2.5">
+            <span className="w-36 shrink-0 font-medium text-gray-700 dark:text-gray-300">Quick-add bar</span>
+            <span className="text-gray-500">The text input at the top of the Tasks main pane. Supports natural-language parsing (dates, priority, project, labels). Press <Kbd>q</Kbd> to focus it from anywhere in Tasks view.</span>
           </div>
         </div>
 

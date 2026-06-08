@@ -80,7 +80,7 @@ Most notes-and-todos products require you to send your content to someone else's
 - All operations use native macOS Save/Open dialogs — the app never touches arbitrary file paths
 
 ### Triage queue
-- **"+ Todo"** button in the note editor captures a task without breaking your writing flow — the task is held in a Triage queue rather than going straight to Inbox
+- **"+ Todo"** button in Notes, Daily, Tasks, and Matrix headers captures a task without breaking your flow — the task is held in a Triage queue rather than going straight to Inbox
 - **⌘⇧Space** global shortcut opens a lightweight capture popup from the macOS menu-bar tray icon, even when Cinder is in the background
 - Each triage task is shown as a card with inline editing for title, description, priority, due date, and project; captured-from-note tasks show a clickable backlink to the source note
 - **Acknowledge** promotes the task into normal flow (Inbox or its assigned project) in one click; **Discard** hard-deletes noise captures

@@ -1,5 +1,6 @@
 import { useMemo, useState, useCallback } from 'react';
 import { useUI } from '../../state/ui';
+import { AddTriageTodo } from '../notes/AddTriageTodo';
 import { useAllTasksList, useUpdateTask } from '../tasks/queries';
 import {
   classifyAll,
@@ -268,8 +269,9 @@ export function MatrixView(): JSX.Element {
             Not Urgent
           </div>
         </div>
-        {/* Snapshot toggle */}
-        <div className="flex items-center border-l border-gray-200 px-3 dark:border-gray-800">
+        {/* + Todo + Snapshot toggle */}
+        <div className="flex items-center gap-2 border-l border-gray-200 px-3 dark:border-gray-800">
+          <AddTriageTodo />
           {snapshot === null ? (
             <button
               onClick={takeSnapshot}

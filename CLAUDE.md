@@ -25,6 +25,7 @@ Full architectural spec: [`../ARCHITECTURE.md`](../ARCHITECTURE.md) — read it 
 | + | Menu-bar quick-capture — tray icon + ⌘⇧Space global shortcut, frameless popup |
 | + | Due-task notifications — macOS alerts for tasks due today/overdue, 15-min checks |
 | + | Note → Task source link — triage tasks link back to the note they came from |
+| + | Consistent + Todo button — Tasks and Matrix headers now have the same triage capture button as Notes/Daily |
 | + | ADR process — `docs/adr/` with template, index, and ADR-0001–0003 |
 | + | CI/CD pipelines — GitHub Actions CI (PR/push) and Release (signed + notarised DMG on version tag) |
 | + | App icon — `build/icon.icns` wired into `electron-builder.yml` |
@@ -491,6 +492,13 @@ These have burned us before. Check here before debugging similar symptoms.
 
 **Capture window and `window-all-closed`**
 - The capture popup is an always-hidden utility window. When the user closes the main window on macOS, `window-all-closed` fires but the app should keep running (tray icon stays). This works because macOS already skips `app.quit()` in the `window-all-closed` handler. The capture window is destroyed in `cleanupTray()` during `will-quit`. Do not add `captureWin` to any "visible windows" count that could trigger `app.quit()`.
+
+---
+
+## Security Review
+
+- After applying security fixes, run the affected tests to confirm nothing breaks (especially path/symlink logic on macOS)
+- Produce a SECURITY_FIXES.md documenting each issue and its concrete fix
 
 ---
 

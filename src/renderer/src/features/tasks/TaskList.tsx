@@ -13,6 +13,7 @@ import { formatDueDate, localDateString } from '../../lib/dates';
 import { parseQuickAdd, type ParsedQuickAdd } from './quickAdd';
 import { describeRecurrence } from '../../../../shared/recurrence';
 import { useTaskShortcuts } from './useTaskShortcuts';
+import { AddTriageTodo } from '../notes/AddTriageTodo';
 import type { TaskCreateInput } from '../../../../shared/schemas/tasks';
 
 /**
@@ -139,15 +140,20 @@ export function TaskList(): JSX.Element {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="border-b border-gray-200 px-6 py-4 dark:border-gray-800">
-        <h2 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">
-          {header.title}
-        </h2>
-        {header.subtitle !== undefined && (
-          <p className={`mt-0.5 text-xs text-gray-500 ${isTriage ? '' : 'font-mono'}`}>
-            {header.subtitle}
-          </p>
-        )}
+      <header className="flex items-start justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-800">
+        <div>
+          <h2 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">
+            {header.title}
+          </h2>
+          {header.subtitle !== undefined && (
+            <p className={`mt-0.5 text-xs text-gray-500 ${isTriage ? '' : 'font-mono'}`}>
+              {header.subtitle}
+            </p>
+          )}
+        </div>
+        <div className="ml-4 flex-shrink-0 pt-1">
+          <AddTriageTodo />
+        </div>
       </header>
 
       {/* Quick-add is hidden in Triage — tasks arrive from notes, not typed here */}
