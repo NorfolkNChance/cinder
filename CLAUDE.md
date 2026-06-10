@@ -59,6 +59,7 @@ npm run build        # production build
 npm run typecheck    # tsc strict check (main + renderer)
 npm run lint         # eslint flat config
 npm run test         # vitest unit tests
+npm run smoke        # build + launch the real app (Playwright/_electron) and assert it boots, DB inits, IPC round-trips
 npm run release      # production build + publish to GitHub Releases (needs GH_TOKEN)
 ```
 
@@ -66,7 +67,7 @@ npm run release      # production build + publish to GitHub Releases (needs GH_T
 
 After every feature session:
 
-1. **Verify** — `npm run typecheck && npm run lint` must both pass clean before committing.
+1. **Verify** — `npm run typecheck && npm run lint` must both pass clean before committing. For changes that touch the runtime (Electron/native-module bumps, main-process boot, DB init, the preload bridge), also run `npm run smoke` — it builds and launches the real app on the pinned Electron with an isolated `userData`, then asserts it boots, `initDb()` succeeds (the SQLCipher binding loads), the renderer mounts, and a notes IPC round-trip hits the DB. Unit tests (vitest) can't catch a runtime/packaging regression like the v1.2.4 startup crash; the smoke test can. Strongly recommended before any release that bumps Electron.
 2. **Write an ADR** — if the session involved a significant architectural decision (new pattern, non-obvious trade-off, or a choice between competing approaches that was discussed and resolved through prompting), capture it as an ADR **before** committing:
    - Copy `docs/adr/template.md` to `docs/adr/NNNN-short-title.md` (next sequential number).
    - Fill in Context, Decision, Alternatives considered, and Consequences.

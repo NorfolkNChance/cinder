@@ -16,6 +16,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.node.json --noEmit",
     "test": "vitest run",
+    "smoke": "electron-vite build && playwright test",
     "release": "electron-vite build && electron-builder --publish always"
   },
   "dependencies": {
@@ -52,6 +53,7 @@
     "@electron-toolkit/utils": "^3.0.0",
     "@electron/notarize": "^3.1.1",
     "@electron/rebuild": "^4.0.4",
+    "@playwright/test": "^1.60.0",
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^20.17.10",
     "@types/react": "^18.3.12",
