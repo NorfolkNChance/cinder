@@ -467,6 +467,9 @@ These have burned us before. Check here before debugging similar symptoms.
 **electron-builder does not compile — run `npm run build` first**
 - `npx electron-builder` only packages already-compiled output. It does not invoke electron-vite. If `out/main/index.js` does not exist when electron-builder runs, it fails with `Application entry file was not found in this archive`. The release workflow runs `npm run build` (electron-vite compile) as a separate step before `npx electron-builder`.
 
+**`electron-builder` is pinned (exact) in `devDependencies` — keep it that way**
+- It is pinned to an exact version (no `^`) so `npx electron-builder` resolves the installed local copy instead of silently downloading whatever npm currently calls "latest". An unpinned release tool means the build process can change with zero diff in the repo — a real risk for a project this release-sensitive. Bump it only via a reviewed Dependabot PR, and re-run a full dual-arch release verification (see ADR-0005) after any bump. Do not remove the pin or loosen it to a range.
+
 **Auto-update "Code signature did not pass" — ShipIt identity mismatch**
 - ShipIt (the macOS ZIP update installer used by electron-updater) verifies that the update's signing identity matches the currently installed app. If the installed build was compiled locally (unsigned) or signed with a different Developer ID certificate than the update, ShipIt rejects it with "Code signature at URL ... did not pass."
 - `publisherName` is Windows-only — there is no equivalent electron-builder config to override this for macOS. ShipIt reads the signing identity directly from the installed binary.
