@@ -1,6 +1,7 @@
-# Phase 1 Security Review: Nexus (Cinder)
+# Security Review: Cinder
 
 **Date:** May 18, 2026
+**Status:** Historical record — all findings resolved (see CLAUDE.md "Known gotchas").
 
 ## 🛡️ Core Strengths
 

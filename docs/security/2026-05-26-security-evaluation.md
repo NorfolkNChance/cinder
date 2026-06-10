@@ -1,14 +1,14 @@
-# Security Evaluation Report: Nexus (Cinder)
+# Security Evaluation Report: Cinder
 
 **Date:** May 26, 2026
-**Status:** Completed
+**Status:** Historical record — all findings resolved (see CLAUDE.md "Known gotchas").
 **Evaluator:** Gemini CLI
 
 ---
 
 ## 1. Executive Summary
 
-This security evaluation provides a comprehensive review of the Nexus (Cinder) codebase, an Electron-based application designed with security as a foundational principle. The application demonstrates an exceptionally high standard of security engineering, particularly in its implementation of defense-in-depth strategies tailored for the Electron platform.
+This security evaluation provides a comprehensive review of the Cinder codebase, an Electron-based application designed with security as a foundational principle. The application demonstrates an exceptionally high standard of security engineering, particularly in its implementation of defense-in-depth strategies tailored for the Electron platform.
 
 While the core architecture is robust, several specific vulnerabilities and inconsistencies were identified. The most significant concern is a potential bypass in navigation guards, which could allow a compromised renderer to navigate to unauthorized origins.
 
@@ -16,7 +16,7 @@ While the core architecture is robust, several specific vulnerabilities and inco
 
 ## 2. Architecture Overview
 
-Nexus follows a strict process isolation model to minimize the impact of a potential compromise in the renderer process.
+Cinder follows a strict process isolation model to minimize the impact of a potential compromise in the renderer process.
 
 | Process  | Trust Level | Responsibilities | Security Constraints |
 |----------|-------------|------------------|----------------------|
@@ -108,6 +108,6 @@ The CSP includes the `attachment:` scheme in `img-src`.
 
 ## 5. Conclusion
 
-Nexus (Cinder) exhibits a strong security posture. The vulnerabilities identified are "last-mile" refinements to an otherwise excellent security architecture. Addressing the navigation guard bypass and improving error handling for database decryption will ensure the application meets the highest standards for production readiness.
+Cinder exhibits a strong security posture. The vulnerabilities identified are "last-mile" refinements to an otherwise excellent security architecture. Addressing the navigation guard bypass and improving error handling for database decryption will ensure the application meets the highest standards for production readiness.
 
 Regular dependency audits and continued adherence to the established IPC and process isolation patterns are recommended as the project moves into feature development.
