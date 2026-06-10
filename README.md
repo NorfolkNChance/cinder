@@ -114,7 +114,7 @@ Most notes-and-todos products require you to send your content to someone else's
 
 | Concern | Choice |
 |---------|--------|
-| Shell | Electron 41 (hardened runtime, sandboxed renderer) |
+| Shell | Electron 42 (hardened runtime, sandboxed renderer) |
 | UI | React 18, Tailwind CSS |
 | State | Zustand (UI state), TanStack Query (server/IPC state) |
 | Build | electron-vite + Vite + TypeScript (strict + `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`) |
@@ -135,7 +135,7 @@ Most notes-and-todos products require you to send your content to someone else's
 ### Prerequisites
 
 - macOS (arm64 or x64)
-- Node 24 (`nvm use 24`) — Electron 41 requires Node ≥ 22.12 at build time
+- Node 24 (`nvm use 24`) — Electron 42 requires Node ≥ 22.12 at build time
 - Python 3 (for occasional native-module rebuilds)
 
 ### Setup
