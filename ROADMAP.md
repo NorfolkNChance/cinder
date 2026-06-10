@@ -12,6 +12,7 @@ Cross-reference the architecture in [`CLAUDE.md`](CLAUDE.md) before starting any
 | 1.0 | Hardened shell, Notes (WYSIWYG, FTS5, attachments, export), Tasks (CRUD, projects, recurrence, labels, filter DSL, command palette) |
 | 1.1 | Eisenhower Matrix, triage workflow, menu-bar quick-capture, due-task notifications, Daily Notes, CI/CD, auto-update |
 | 1.1.x | Calendar DatePicker, data protection hardening (VACUUM INTO backup, integrity check, auto-backup on quit, key export), CI gate on release, HTML note import/display, Obsidian vault import with preview |
+| 1.2.x | Real folders, daily-note templates, spellcheck, vault attachment import + re-sync, inter-note wiki links, feedback/GitHub-issues flow; security hardening (vault-root authorization, ADR-0004); reliable multi-arch releases (per-arch x64+arm64 with correct SQLCipher bindings, ADR-0005), pinned build tooling, Electron 42; unattended Electron smoke test |
 
 ---
 

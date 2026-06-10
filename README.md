@@ -156,7 +156,8 @@ npm ci
 | `npm run build` | Production build (main, preload, renderer) — does not sign |
 | `npm run typecheck` | `tsc --noEmit` against both the main and renderer tsconfigs |
 | `npm run lint` | ESLint flat config (security rules + TypeScript rules) |
-| `npm test` | Vitest unit tests (279 tests across 15 suites) |
+| `npm test` | Vitest unit tests (335 tests across 18 suites) |
+| `npm run smoke` | Build + launch the real app (Playwright/`_electron`) and assert it boots, the DB initialises, and a notes IPC round-trip works — catches runtime/packaging regressions unit tests can't |
 | `npm run release` | Production build + electron-builder publish to GitHub Releases (requires `GH_TOKEN`) |
 
 For the signed and notarised release build pipeline, see the workflow files in [`.github/workflows/`](./.github/workflows/).

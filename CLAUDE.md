@@ -48,6 +48,8 @@ Full architectural spec: [`../ARCHITECTURE.md`](../ARCHITECTURE.md) — read it 
 | + | Preflight script — `scripts/preflight.sh` validates env, signing identity, and tests before tagging a release |
 | + | Feedback & GitHub Issues — `app:openExternal` IPC channel, in-app "Feedback & Support" help section, GitHub issue templates (bug + feature request) |
 | + | Vault root authorization — `vault:scan`/`vault:import` roots must be confirmed against a session allowlist (`security/vault-access.ts`); closes a renderer arbitrary-fs-read (ADR-0004) |
+| + | Unattended smoke test — `npm run smoke` builds + launches the real app via Playwright `_electron`, asserts boot, DB init, renderer mount, and a notes IPC round-trip (catches runtime/packaging regressions like the v1.2.4 crash) |
+| + | Reproducible release tooling — `electron-builder` pinned exact in devDependencies; Electron bumped to 42 (with both-arch SQLCipher prebuilt fetch in CI) |
 
 ---
 

@@ -3,9 +3,11 @@
 This document describes how to set up the Phase 0 CI/CD pipeline on GitHub for Cinder. Goals, in order:
 
 1. **PR checks** — every pull request runs typecheck, lint, build, and tests.
-2. **Release pipeline** — pushing a `v*` tag builds a universal macOS DMG, signs it with the Developer ID Application certificate, notarises it through Apple's `notarytool`, and uploads the artefact (DMG + `latest-mac.yml` for `electron-updater`) to a GitHub Release.
+2. **Release pipeline** — pushing a `v*` tag builds signed per-arch (x64 + arm64) macOS DMGs + zips, notarises them through Apple's `notarytool`, and uploads the artefacts (per-arch DMG/zip + a single combined `latest-mac.yml` for `electron-updater`) to a GitHub Release.
 
 This closes the "Code signing and notarization green end-to-end in CI" Phase 0 deliverable (see [ARCHITECTURE.md §8](../ARCHITECTURE.md) and §3.7).
+
+> **The canonical release workflow is [`.github/workflows/release.yml`](../.github/workflows/release.yml)** — it has evolved well past the Phase-0 sketch below (CI gate, explicit SQLCipher prebuilt fetch, single dual-arch build, decoupled `gh` publish). Read it and [ADR-0005](adr/0005-multi-arch-release-build.md) before changing the release pipeline; the snippet in §3.2 is illustrative, not current.
 
 ---
 
@@ -168,14 +170,17 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          # GH_TOKEN is what electron-builder uses to create the Release
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx electron-builder --mac --arm64 --x64 --publish always
 ```
 
+> ⚠️ **The snippet above is the original Phase-0 sketch and is NOT how releases run today.** The live workflow differs in three load-bearing ways (see `release.yml` + ADR-0005):
+> 1. **Fetch both SQLCipher prebuilts after `npm ci`** — `macos-latest` is arm64, so without an explicit `node-pre-gyp install --target_arch=x64` the x64 build ships the wrong-arch native binding and crashes on launch (this was the v1.2.4 outage).
+> 2. **One dual-arch build, decoupled publish** — `electron-builder --mac --x64 --arm64 --publish never` (single invocation → one combined `latest-mac.yml`, arch-suffixed artifacts), then a single `gh release` upload. `--publish always` with both arches races to create the Release and 422s.
+> 3. **CI gate** — the release waits for the `validate` CI job to pass on the tagged commit before building.
+
 Notes:
 
-- The `--publish always` flag is what tells `electron-builder` to create the GitHub Release and upload the DMG and the `latest-mac.yml` manifest used by `electron-updater`.
 - `secrets.GITHUB_TOKEN` is automatically provisioned by GitHub Actions for the workflow run; it has just enough scope to create releases in the same repo.
 - The `environment: release` line is optional. If set, configure a protected environment in **Settings → Environments → New environment → release** with required reviewers — this gives you a manual approval step before secrets are released to the run. Recommended for the first few releases until you trust the pipeline.
 
