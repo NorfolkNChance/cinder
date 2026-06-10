@@ -39,11 +39,26 @@ interface FileEntry {
 }
 
 /**
+ * Defensive bounds on the recursive walk. A vault is a user-chosen folder, so
+ * these are far above any realistic note collection — they exist only to stop a
+ * pathological or hostile tree (deeply nested or enormous) from turning a scan
+ * into an unbounded local DoS. See Finding 3 in the 2026-06 security review.
+ */
+const MAX_WALK_DEPTH = 32;
+const MAX_WALK_FILES = 100_000;
+
+/**
  * Recursively collect all files under `dir`.
  * Skips `.obsidian`, `.DS_Store`, hidden directories, and `node_modules`.
+ * Bounded by MAX_WALK_DEPTH and MAX_WALK_FILES (defense-in-depth).
  */
-async function walkDirectory(dir: string, vaultRoot: string): Promise<FileEntry[]> {
-  const results: FileEntry[] = [];
+async function walkDirectory(
+  dir: string,
+  vaultRoot: string,
+  results: FileEntry[] = [],
+  depth = 0,
+): Promise<FileEntry[]> {
+  if (depth > MAX_WALK_DEPTH || results.length >= MAX_WALK_FILES) return results;
 
   let names: string[];
   try {
@@ -53,6 +68,8 @@ async function walkDirectory(dir: string, vaultRoot: string): Promise<FileEntry[
   }
 
   for (const name of names) {
+    if (results.length >= MAX_WALK_FILES) break;
+
     // Skip hidden entries and noise directories.
     if (name.startsWith('.') || name === 'node_modules') continue;
 
@@ -69,8 +86,7 @@ async function walkDirectory(dir: string, vaultRoot: string): Promise<FileEntry[
     }
 
     if (entryStat.isDirectory()) {
-      const sub = await walkDirectory(absolutePath, vaultRoot);
-      results.push(...sub);
+      await walkDirectory(absolutePath, vaultRoot, results, depth + 1);
     } else if (entryStat.isFile()) {
       results.push({ absolutePath, relativePath });
     }

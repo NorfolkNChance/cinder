@@ -47,6 +47,7 @@ Full architectural spec: [`../ARCHITECTURE.md`](../ARCHITECTURE.md) — read it 
 | + | Release workflow fix — sequential `--x64` then `--arm64` steps prevent parallel-publish 422 race on GitHub Releases |
 | + | Preflight script — `scripts/preflight.sh` validates env, signing identity, and tests before tagging a release |
 | + | Feedback & GitHub Issues — `app:openExternal` IPC channel, in-app "Feedback & Support" help section, GitHub issue templates (bug + feature request) |
+| + | Vault root authorization — `vault:scan`/`vault:import` roots must be confirmed against a session allowlist (`security/vault-access.ts`); closes a renderer arbitrary-fs-read (ADR-0004) |
 
 ---
 
@@ -486,6 +487,9 @@ These have burned us before. Check here before debugging similar symptoms.
 
 **HTML notes store raw HTML in `body` with `bodyType = 'html'`**
 - Imported `.html` files are NOT converted to Markdown (that changed in v1.1.8). `body` holds raw HTML, rendered via a fully sandboxed `<iframe srcDoc>` (`sandbox=""` — null origin, no scripts, no storage access) and edited as source. `NoteEditor` branches on `note.bodyType`. `attachment://` images still load because the Electron protocol handler runs in the main process and does not enforce frame origin.
+
+**A renderer-supplied filesystem *root* must be authorized — `safeVaultPath()` alone is not enough**
+- `safeVaultPath()` only stops a `relativePath` from escaping a root; it does NOT validate the root itself. `vault:scan` / `vault:import` take a `vaultPath` from the renderer, so that root must be confirmed against the session allowlist in `src/main/security/vault-access.ts` (`assertAuthorizedVault()`) before any disk read. The only thing that adds a path to the allowlist is `vault:pickFolder` calling `rememberAuthorizedVault()` with the native dialog's return value — a renderer-invented path like `/Users/x/.ssh` is never authorized. Without this, a compromised renderer gets arbitrary `fs` read (e.g. `vaultPath: '/'`, `relativePath: 'etc/passwd'`). The allowlist is in-memory and session-scoped (re-pick required after restart) and paths are `realpathSync`-canonicalised so `.`/`..`/symlinks can't bypass it. **Any new IPC channel that accepts a filesystem root from the renderer must gate that root the same way.** See [ADR-0004](docs/adr/0004-vault-root-authorization-allowlist.md).
 
 **DB backup must use `VACUUM INTO`, not `copyFileSync`**
 - In WAL mode SQLite has three files (`cinder.db`, `cinder.db-wal`, `cinder.db-shm`). Copying only the main file produces a backup that is either incomplete or corrupt if the WAL hasn't been fully checkpointed. `VACUUM INTO '/path/to/backup.db'` creates a consistent, fully-checkpointed snapshot in a single atomic operation, regardless of WAL state. The output is encrypted with the same SQLCipher key. This is what `exportBackup()` and `runAutoBackup()` both use.

@@ -8,6 +8,10 @@ import {
 import { VaultScanInput, VaultImportPlan } from '../../shared/schemas/vault';
 import { scanVault } from '../services/vaultScanner';
 import { importVault } from '../services/vaultImporter';
+import {
+  assertAuthorizedVault,
+  rememberAuthorizedVault,
+} from '../security/vault-access';
 
 export function registerVaultHandlers(): void {
   /** Open a native folder-picker and return the chosen path (or null). */
@@ -21,6 +25,10 @@ export function registerVaultHandlers(): void {
       buttonLabel: 'Choose Vault',
     });
     if (canceled || !filePaths[0]) return null;
+    // Record the user-chosen root so vault:scan / vault:import will accept it.
+    // Without this, the vaultPath in those payloads is an unvalidated renderer
+    // string and a compromised renderer could read arbitrary files off disk.
+    rememberAuthorizedVault(filePaths[0]);
     return filePaths[0];
   });
 
@@ -28,6 +36,9 @@ export function registerVaultHandlers(): void {
   ipcMain.handle(VAULT_SCAN, async (event, raw) => {
     assertMainFrame(event);
     const input = VaultScanInput.parse(raw);
+    // The renderer cannot point the scanner at an arbitrary directory — the
+    // root must be one the user picked via the native dialog.
+    assertAuthorizedVault(input.vaultPath);
     return scanVault(input);
   });
 
@@ -35,6 +46,7 @@ export function registerVaultHandlers(): void {
   ipcMain.handle(VAULT_IMPORT, async (event, raw) => {
     assertMainFrame(event);
     const plan = VaultImportPlan.parse(raw);
+    assertAuthorizedVault(plan.vaultPath);
     return importVault(plan, event.sender);
   });
 }
