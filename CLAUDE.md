@@ -44,7 +44,7 @@ Full architectural spec: [`../ARCHITECTURE.md`](../ARCHITECTURE.md) — read it 
 | + | Inter-note wiki links — TipTap `WikiLink` mark, `[[Note Title]]` syntax, click-to-navigate/create via `notes:findByTitle` IPC |
 | + | Vault service tests — `tryParseDailyDate`, `extractTitle`, `countWikiLinks`, `applyWikiLinks`, `buildTitle`, `safeVaultPath` |
 | + | Editor toolbar active-state — `useEditorState` replaces inline `editor.isActive()` calls, eliminating unnecessary re-renders |
-| + | Release workflow fix — sequential `--x64` then `--arm64` steps prevent parallel-publish 422 race on GitHub Releases |
+| + | Release workflow — single dual-arch (`--x64 --arm64`) build + decoupled `gh` publish; fetches both SQLCipher prebuilts so x64 ships its own binding (fixes v1.2.4 startup crash); see ADR-0005 |
 | + | Preflight script — `scripts/preflight.sh` validates env, signing identity, and tests before tagging a release |
 | + | Feedback & GitHub Issues — `app:openExternal` IPC channel, in-app "Feedback & Support" help section, GitHub issue templates (bug + feature request) |
 | + | Vault root authorization — `vault:scan`/`vault:import` roots must be confirmed against a session allowlist (`security/vault-access.ts`); closes a renderer arbitrary-fs-read (ADR-0004) |
@@ -441,10 +441,17 @@ These have burned us before. Check here before debugging similar symptoms.
 **`assertMainFrame` uses reference identity, not URL equality**
 - The guard in `src/main/security/ipc-guard.ts` checks `!event.senderFrame || event.senderFrame !== event.senderFrame.top`. Do not revert this to URL comparison — URL equality has two bypasses: a destroyed frame makes both sides `undefined` (which passes the `!==` check), and a subframe loaded from the same URL as the top frame also passes. Reference identity is unforgeable.
 
-**electron-builder parallel arch publish race — 422 `already_exists`**
-- Passing `--arm64 --x64` together causes electron-builder to publish both arches in parallel. Both find "release doesn't exist" at the same instant, both POST to create it, and the second gets `422 Unprocessable Entity: already_exists`.
-- **Do not list arches in `electron-builder.yml`'s `mac.target`** — use plain target names (`dmg`, `zip`) and control arches exclusively via CLI flags (`--x64`, `--arm64`). If `electron-builder.yml` lists `arch: [arm64, x64]`, the `--x64` CLI flag does NOT restrict the build to x64; both arches are built in the same step and race to create the release.
-- The workflow uses two sequential steps — `--x64` first (creates the draft release), then `--arm64` (uploads into the existing release). Do not collapse them or add arch arrays to the yml.
+**Multi-arch release: build both arches in ONE invocation, decouple publish (see ADR-0005)**
+- The release builds `--x64 --arm64` in a **single** `electron-builder` invocation with `--publish never`, then uploads everything with one `gh release` call. This is the cure for two distinct bugs the old two-step approach caused:
+  - **422 `already_exists`**: passing both arches with `--publish always` (or two parallel `--publish always` steps) makes electron-builder race to *create* the GitHub Release — the second POST gets `422`. `--publish never` + a single `gh` upload removes the create entirely, so there is no race.
+  - **Artifact/yml overwrite (this is how v1.2.4 shipped broken)**: two *separate* single-arch invocations each emit identically-named artifacts (`Cinder-<ver>.dmg` / `-mac.zip`) **and their own `latest-mac.yml`**. Whichever ran last overwrote the other on the Release, so the published feed only ever knew one arch. A single dual-arch invocation emits arch-suffixed artifacts and **one combined `latest-mac.yml`** listing both.
+- `electron-builder.yml` sets `mac.artifactName: ${productName}-${version}-${arch}.${ext}` so the two arches never collide. Do not remove the `${arch}`.
+- Keep `mac.target` as plain names (`dmg`, `zip`); control arches via the CLI flags in the single invocation. Do not split the build back into per-arch steps.
+
+**macos-latest is arm64 — the x64 SQLCipher prebuilt must be fetched explicitly, or the x64 build crashes on launch**
+- `@journeyapps/sqlcipher` ships per-arch node-pre-gyp prebuilts (`lib/binding/napi-v6-darwin-{arch}/node_sqlite3.node`). On the arm64 CI runner, `npm ci` fetches **only** the arm64 binding. electron-builder's `@electron/rebuild` does **not** cross-fetch the x64 prebuilt, so a `--x64` build packages the arm64 binding into an x64 app. At runtime sqlcipher requires `napi-v6-darwin-x64/node_sqlite3.node` (matching `process.arch`), can't find it, and the app dies at startup with `Cannot find module … node_sqlite3.node`. **This is the v1.2.4 outage** — the published x64 binary carried only the arm64 binding.
+- The release workflow fixes this with an explicit step after `npm ci`: `cd node_modules/@journeyapps/sqlcipher && npx node-pre-gyp install --target_arch=x64 --target_platform=darwin` (and arm64 for good measure). Both bindings then ship inside *each* arch app; sqlcipher's loader picks the right one by `process.arch`. Do not remove this step.
+- Symptom-to-cause shortcut: if a packaged build throws `Cannot find module .../napi-v6-darwin-<arch>/node_sqlite3.node`, the wrong-arch (or no) binding was bundled — check the prebuilt-fetch step and the artifact arch with `file Cinder.app/Contents/MacOS/Cinder`.
 
 **GitHub Actions: pin to commit SHAs, not mutable tags**
 - Both workflow files pin `actions/checkout`, `setup-node`, and `setup-python` to immutable commit SHAs with a `# vX.Y.Z` comment. The release workflow has access to signing certs and a `contents: write` token — mutable tags are the exact threat model where SHA pinning matters. Dependabot will keep the SHAs current via weekly PRs. Do not revert to `@v4`-style tags.

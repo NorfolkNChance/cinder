@@ -31,6 +31,23 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # macos-latest runners are arm64, so `npm ci` only fetches the arm64
+      # SQLCipher prebuilt. Building --x64 without the x64 binding present
+      # packages the WRONG-arch binding into the x64 app, which then crashes on
+      # launch ("Cannot find module … napi-v6-darwin-x64/node_sqlite3.node") —
+      # exactly how v1.2.4 broke on every Mac. electron-builder's own
+      # @electron/rebuild does NOT cross-fetch node-pre-gyp prebuilts, so we
+      # fetch both arches explicitly here. Both bindings then ship inside each
+      # app and SQLCipher resolves napi-v6-darwin-${process.arch} at runtime.
+      # See ADR-0005 and CLAUDE.md "Known gotchas".
+      - name: Fetch both-arch SQLCipher prebuilts
+        run: |
+          cd node_modules/@journeyapps/sqlcipher
+          npx node-pre-gyp install --target_arch=arm64 --target_platform=darwin
+          npx node-pre-gyp install --target_arch=x64   --target_platform=darwin
+          echo "SQLCipher bindings present:"
+          ls -1 lib/binding
+
       # ── CI gate ─────────────────────────────────────────────────────────────
       # Wait for the "validate" CI job to complete on this exact commit SHA
       # before we invest 45 minutes building, signing, and notarising.
@@ -89,25 +106,35 @@ jobs:
       - name: Compile (electron-vite)
         run: npm run build
 
-      # Build each arch sequentially so only one process tries to create the
-      # GitHub Release. The x64 step creates the draft release; the arm64 step
-      # finds it already open and uploads into it without a second create call.
-      - name: Package, sign, notarise and publish (x64)
+      # Build BOTH arches in ONE invocation so electron-builder emits a single
+      # combined latest-mac.yml describing both (electron-updater picks the
+      # entry matching the client's arch). Publishing is decoupled to the next
+      # step (--publish never) to avoid the parallel-create 422 race that the
+      # old two-step approach suffered, and so artifact upload is a single
+      # atomic gh call. Signing + notarisation still happen here (independent
+      # of publish). Artifact names are arch-suffixed via electron-builder.yml.
+      - name: Package, sign and notarise (x64 + arm64)
         env:
           CSC_LINK: ${{ secrets.CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx electron-builder --mac --x64 --publish always
+        run: npx electron-builder --mac --x64 --arm64 --publish never
 
-      - name: Package, sign, notarise and publish (arm64)
+      # Upload every artifact (both arch dmg + zip, their blockmaps, and the
+      # single combined latest-mac.yml) to the GitHub Release for this tag in
+      # one call. Idempotent: re-runs upload with --clobber instead of failing.
+      - name: Publish to GitHub Releases
         env:
-          CSC_LINK: ${{ secrets.CSC_LINK }}
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx electron-builder --mac --arm64 --publish always
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          ASSETS=(dist/Cinder-*.dmg dist/Cinder-*.zip dist/Cinder-*.blockmap dist/latest-mac.yml)
+          echo "Publishing $TAG with assets:"
+          printf '  %s\n' "${ASSETS[@]}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "${ASSETS[@]}" --clobber
+          else
+            gh release create "$TAG" --title "${TAG#v}" --generate-notes "${ASSETS[@]}"
+          fi

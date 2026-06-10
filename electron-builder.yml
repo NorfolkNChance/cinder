@@ -14,6 +14,13 @@ mac:
   gatekeeperAssess: false
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
+  # Arch-suffixed names so the x64 and arm64 builds produce DISTINCT artifacts.
+  # Without this, both arches emit identically-named files (Cinder-<ver>.dmg /
+  # -mac.zip) and the second overwrites the first on the GitHub Release —
+  # which is exactly how v1.2.4 shipped an x64 binary carrying only the arm64
+  # SQLCipher binding. Both arches are now built in ONE electron-builder
+  # invocation so a single combined latest-mac.yml describes both.
+  artifactName: ${productName}-${version}-${arch}.${ext}
   target:
     - dmg
     - zip
