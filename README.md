@@ -26,6 +26,8 @@ Most notes-and-todos products require you to send your content to someone else's
 - **Full-text search** across titles and bodies (SQLite FTS5)
 - **Local attachments** served via a custom `attachment://` protocol, pasted or dragged in
 - **Wiki links** — type `[[Note Title]]` to create clickable inter-note links; clicking navigates to the target note or creates it on the fly
+- **Project membership** — file a note under a project (the same projects that group tasks), so a project gathers both its notes and its tasks in one place
+- **Note ↔ task links** — link a note to related tasks (and vice versa) and jump between them in either direction
 - **Drag-and-drop import** — drop `.md`, `.markdown`, `.html`, or `.htm` files directly into the sidebar or the empty state; HTML is converted to Markdown automatically via Turndown
 - **Export** — export any note as a `.md` file, or all notes to a folder of `.md` files, via a native Save dialog
 
@@ -38,7 +40,7 @@ Most notes-and-todos products require you to send your content to someone else's
 
 ### Tasks
 - **Full task CRUD** with title, description, priority (P1–P4), due date, and project assignment
-- **Projects and sections** — hierarchical organisation with manual ordering
+- **Projects and sections** — hierarchical organisation with manual ordering; projects span both tasks and notes, and the project view lists its notes alongside its tasks
 - **Labels** — cross-cutting tags, multiple per task
 - **Recurring tasks** using RFC 5545 RRULE strings; completing a recurring task advances the due date automatically
 - **Saved filters** with a typed DSL (`today & p1`, `@work & overdue`, `!done & upcoming`)

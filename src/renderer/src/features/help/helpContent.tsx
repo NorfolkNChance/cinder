@@ -628,13 +628,14 @@ Weekly review every monday p2
     id: 'projects',
     title: 'Projects',
     icon: '📁',
-    keywords: ['project', 'folder', 'organise', 'organize', 'group'],
+    keywords: ['project', 'folder', 'organise', 'organize', 'group', 'note', 'notes', 'link', 'linked', 'cross-domain', 'related'],
     render: () => (
       <div>
         <H2>Projects</H2>
         <P>
-          Projects group related tasks. A task can belong to at most one project.
-          Tasks without a project live in the Inbox.
+          Projects group related work across both tasks <em>and</em> notes. A
+          task or a note can belong to at most one project. Tasks without a
+          project live in the Inbox.
         </P>
 
         <H3>Creating a project</H3>
@@ -660,11 +661,40 @@ Weekly review every monday p2
           </li>
         </ol>
 
+        <H3>Assigning notes to a project</H3>
+        <P>
+          Open a note and use the <Code>#</Code> project selector below the
+          title (next to the folder selector) to file it under a project. A
+          project's view in the Tasks sidebar then shows a <strong className="text-gray-800 dark:text-gray-200">Notes</strong> bar
+          above its task list — click any note there to jump straight to it.
+          (Folders and projects are independent: a note can sit in a folder and
+          a project at the same time.)
+        </P>
+
+        <H3>Linking notes and tasks</H3>
+        <P>
+          Notes and tasks can be linked directly, in either direction — useful
+          when a deep note spawns several tasks, or a task needs the context a
+          note holds.
+        </P>
+        <ul className="mb-3 ml-4 list-disc space-y-1.5 text-sm text-gray-600 dark:text-gray-400">
+          <li>
+            In a note, use <strong className="text-gray-800 dark:text-gray-200">+ Link task</strong> under
+            the title to attach related tasks. Click a linked task to open its
+            list.
+          </li>
+          <li>
+            In the Matrix task detail panel, use <strong className="text-gray-800 dark:text-gray-200">+ Link note</strong> to
+            attach related notes. Click a linked note to open it.
+          </li>
+          <li>Hover a linked item and click ✕ to unlink it. Unlinking never deletes the note or task itself.</li>
+        </ul>
+
         <H3>Deleting a project</H3>
         <P>
           Hover a project in the sidebar and click ✕. Tasks in that project are
-          moved to the Inbox (their <Code>projectId</Code> is set to null) —
-          they are not deleted.
+          moved to the Inbox (their <Code>projectId</Code> is set to null) and
+          any notes in it become unassigned — neither is deleted.
         </P>
 
         <Callout>

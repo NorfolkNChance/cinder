@@ -9,6 +9,7 @@ import { formatDueDate } from '../../lib/dates';
 import type { TaskWithLabels } from '../../../../shared/schemas/tasks';
 import { describeRecurrence } from '../../../../shared/recurrence';
 import { DatePicker } from '../../components/DatePicker';
+import { LinkedNotesPanel } from '../links/LinkPanels';
 
 /**
  * Task detail side panel for the Eisenhower matrix view.
@@ -176,6 +177,9 @@ export function MatrixTaskDetail({
             ))}
           </select>
         </div>
+
+        {/* Linked notes */}
+        <LinkedNotesPanel taskId={task.id} />
 
         {/* Labels (read-only) */}
         {task.labels.length > 0 && (

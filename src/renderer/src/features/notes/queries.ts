@@ -47,6 +47,25 @@ export function useNotesList(
 }
 
 /**
+ * Fetch the regular notes assigned to a specific project.
+ *
+ * Used by the project view (Tasks mode, project scope) to list a project's
+ * notes alongside its tasks. Daily notes are excluded by the service default.
+ */
+export function useProjectNotes(
+  projectId: string | null,
+): ReturnType<typeof useQuery<readonly Note[]>> {
+  return useQuery({
+    queryKey: [...queryKeys.notes.list(), 'project', projectId] as const,
+    queryFn: () =>
+      projectId === null
+        ? Promise.resolve([] as readonly Note[])
+        : window.api.notes.list({ projectId }),
+    enabled: projectId !== null,
+  });
+}
+
+/**
  * FTS5 search over note titles and bodies.
  *
  * Disabled (no query fired) for empty queries — the caller should be

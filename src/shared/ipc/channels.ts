@@ -28,6 +28,14 @@ export const NOTES_GET_OR_CREATE_DAILY = 'notes:getOrCreateDaily' as const;
 /** Find a regular (non-daily, non-deleted) note by exact title match. */
 export const NOTES_FIND_BY_TITLE = 'notes:findByTitle' as const;
 
+// ── Note ↔ Task links ─────────────────────────────────────────────────────────
+export const LINKS_CREATE = 'links:create' as const;
+export const LINKS_DELETE = 'links:delete' as const;
+/** List the tasks linked to a given note. */
+export const LINKS_LIST_FOR_NOTE = 'links:listForNote' as const;
+/** List the notes linked to a given task. */
+export const LINKS_LIST_FOR_TASK = 'links:listForTask' as const;
+
 // ── Attachments ──────────────────────────────────────────────────────────────
 export const ATTACHMENTS_SAVE = 'attachments:save' as const;
 

@@ -92,6 +92,7 @@ export const notesService = {
       body: input.body ?? '',
       bodyType: input.bodyType ?? 'markdown',
       folderId: input.folderId ?? null,
+      projectId: input.projectId ?? null,
       dailyDate: input.dailyDate ?? null,
       createdAt: now,
       updatedAt: now,
@@ -122,6 +123,13 @@ export const notesService = {
         input.folderId === null
           ? isNull(notes.folderId)
           : eq(notes.folderId, input.folderId),
+      );
+    }
+    if (input.projectId !== undefined) {
+      conditions.push(
+        input.projectId === null
+          ? isNull(notes.projectId)
+          : eq(notes.projectId, input.projectId),
       );
     }
     // Separate daily notes from regular notes — callers opt in to daily-only.
@@ -198,6 +206,7 @@ export const notesService = {
       body,
       bodyType: 'markdown',
       folderId: null,
+      projectId: null,
       dailyDate: input.date,
       createdAt: now,
       updatedAt: now,
@@ -244,6 +253,7 @@ export const notesService = {
                 notes.body         AS body,
                 notes.body_type    AS bodyType,
                 notes.folder_id    AS folderId,
+                notes.project_id   AS projectId,
                 notes.daily_date   AS dailyDate,
                 notes.created_at   AS createdAt,
                 notes.updated_at   AS updatedAt,

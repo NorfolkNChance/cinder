@@ -116,6 +116,17 @@ describe('NoteListInput', () => {
   it('rejects non-integer limit', () => {
     expect(() => NoteListInput.parse({ limit: 1.5 })).toThrow();
   });
+
+  it('accepts projectId filter (null and uuid)', () => {
+    expect(NoteListInput.parse({ projectId: null }).projectId).toBeNull();
+    expect(NoteListInput.parse({ projectId: VALID_UUID }).projectId).toBe(
+      VALID_UUID,
+    );
+  });
+
+  it('rejects malformed projectId', () => {
+    expect(() => NoteListInput.parse({ projectId: 'nope' })).toThrow();
+  });
 });
 
 describe('NoteGetInput / NoteDeleteInput', () => {
@@ -138,6 +149,7 @@ describe('Note (canonical shape)', () => {
       body: 'world',
       bodyType: 'markdown' as const,
       folderId: null,
+      projectId: null,
       dailyDate: null,
       createdAt: VALID_ISO,
       updatedAt: VALID_ISO,

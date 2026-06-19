@@ -15,6 +15,7 @@ import { registerProjectsHandlers } from './ipc/projects';
 import { registerSectionsHandlers } from './ipc/sections';
 import { registerTasksHandlers } from './ipc/tasks';
 import { registerLabelsHandlers } from './ipc/labels';
+import { registerLinksHandlers } from './ipc/links';
 import { registerSavedFiltersHandlers } from './ipc/savedFilters';
 import { registerExportHandlers } from './ipc/export';
 import { registerSettingsHandlers } from './ipc/settings';
@@ -239,6 +240,7 @@ app.whenReady().then(async () => {
   registerSectionsHandlers();
   registerTasksHandlers();
   registerLabelsHandlers();
+  registerLinksHandlers();
   registerSavedFiltersHandlers();
   registerExportHandlers();
   registerSettingsHandlers();

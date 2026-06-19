@@ -29,3 +29,4 @@ Status: Proposed | Accepted | Deprecated | Superseded by [NNNN](NNNN-...)
 | [0003](0003-capture-window-url-query-param.md) | Shared renderer bundle for capture popup via `?mode=capture` | Accepted |
 | [0004](0004-vault-root-authorization-allowlist.md) | Authorize vault roots via a session allowlist, not a persisted path | Accepted |
 | [0005](0005-multi-arch-release-build.md) | Build both macOS arches in one invocation and fetch both SQLCipher prebuilts | Accepted |
+| [0006](0006-cross-domain-projects-and-note-task-links.md) | Make projects cross-domain (notes + tasks) and add note ↔ task links | Accepted |

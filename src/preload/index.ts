@@ -39,6 +39,10 @@ import {
   LABELS_LIST,
   LABELS_SET_FOR_TASK,
   LABELS_UPDATE,
+  LINKS_CREATE,
+  LINKS_DELETE,
+  LINKS_LIST_FOR_NOTE,
+  LINKS_LIST_FOR_TASK,
   SAVED_FILTERS_CREATE,
   SAVED_FILTERS_DELETE,
   SAVED_FILTERS_GET,
@@ -111,6 +115,12 @@ import type {
   LabelUpdateInput,
   LabelsSetForTaskInput,
 } from '../shared/schemas/labels';
+import type {
+  LinkCreateInput,
+  LinkDeleteInput,
+  LinkListForNoteInput,
+  LinkListForTaskInput,
+} from '../shared/schemas/links';
 import type {
   SavedFilter,
   SavedFilterCreateInput,
@@ -234,6 +244,16 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke(LABELS_DELETE, input),
     setForTask: (input: LabelsSetForTaskInput): Promise<void> =>
       ipcRenderer.invoke(LABELS_SET_FOR_TASK, input),
+  },
+  links: {
+    create: (input: LinkCreateInput): Promise<void> =>
+      ipcRenderer.invoke(LINKS_CREATE, input),
+    delete: (input: LinkDeleteInput): Promise<void> =>
+      ipcRenderer.invoke(LINKS_DELETE, input),
+    listForNote: (input: LinkListForNoteInput): Promise<readonly Task[]> =>
+      ipcRenderer.invoke(LINKS_LIST_FOR_NOTE, input),
+    listForTask: (input: LinkListForTaskInput): Promise<readonly Note[]> =>
+      ipcRenderer.invoke(LINKS_LIST_FOR_TASK, input),
   },
   savedFilters: {
     create: (input: SavedFilterCreateInput): Promise<SavedFilter> =>

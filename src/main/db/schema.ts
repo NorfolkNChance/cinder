@@ -45,6 +45,13 @@ export const notes = sqliteTable(
     bodyType: text('body_type').notNull().default('markdown'),
     folderId: text('folder_id'),
     /**
+     * Optional project membership (migration 0012). Mirrors tasks.project_id
+     * so a project's view can list its notes alongside its tasks. Like
+     * `folder_id`, no schema-level FK exists — integrity is enforced in
+     * `projectsService` (project delete nulls this out).
+     */
+    projectId: text('project_id'),
+    /**
      * `daily_date` is set for daily notes (Daily mode) and NULL for regular
      * notes. Format: 'YYYY-MM-DD'. Daily notes are excluded from the main
      * Notes list and only visible in Daily mode.
@@ -58,6 +65,7 @@ export const notes = sqliteTable(
     deletedAtIdx: index('notes_deleted_at_idx').on(table.deletedAt),
     updatedAtIdx: index('notes_updated_at_idx').on(table.updatedAt),
     dailyDateIdx: index('notes_daily_date_idx').on(table.dailyDate),
+    projectIdx: index('notes_project_idx').on(table.projectId),
   }),
 );
 
@@ -307,6 +315,39 @@ export const taskLabels = sqliteTable(
 );
 
 export type TaskLabel = typeof taskLabels.$inferSelect;
+
+// ─── Note ↔ Task links ────────────────────────────────────────────────────────
+
+/**
+ * note_task_links — user-curated many-to-many association between notes and
+ * tasks (migration 0013).
+ *
+ * Distinct from `tasks.source_note_id`, which records the single triage-
+ * capture provenance and is not user-editable. This table lets a note link
+ * to any number of related tasks and vice versa.
+ *
+ * Both FKs CASCADE so deleting a note or a task cleanly removes its links.
+ * The composite PK is the note->task lookup index; `taskIdx` covers the
+ * task->note scan direction.
+ */
+export const noteTaskLinks = sqliteTable(
+  'note_task_links',
+  {
+    noteId: text('note_id')
+      .notNull()
+      .references(() => notes.id, { onDelete: 'cascade' }),
+    taskId: text('task_id')
+      .notNull()
+      .references(() => tasks.id, { onDelete: 'cascade' }),
+    createdAt: text('created_at').notNull(),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.noteId, table.taskId] }),
+    taskIdx: index('note_task_links_task_idx').on(table.taskId),
+  }),
+);
+
+export type NoteTaskLink = typeof noteTaskLinks.$inferSelect;
 
 // ─── Saved filters ───────────────────────────────────────────────────────────
 

@@ -49,6 +49,12 @@ import type {
   LabelsSetForTaskInput,
 } from '../shared/schemas/labels';
 import type {
+  LinkCreateInput,
+  LinkDeleteInput,
+  LinkListForNoteInput,
+  LinkListForTaskInput,
+} from '../shared/schemas/links';
+import type {
   SavedFilter,
   SavedFilterCreateInput,
   SavedFilterDeleteInput,
@@ -141,6 +147,16 @@ declare global {
         update: (input: LabelUpdateInput) => Promise<Label | null>;
         delete: (input: LabelDeleteInput) => Promise<void>;
         setForTask: (input: LabelsSetForTaskInput) => Promise<void>;
+      };
+      links: {
+        create: (input: LinkCreateInput) => Promise<void>;
+        delete: (input: LinkDeleteInput) => Promise<void>;
+        listForNote: (
+          input: LinkListForNoteInput,
+        ) => Promise<readonly Task[]>;
+        listForTask: (
+          input: LinkListForTaskInput,
+        ) => Promise<readonly Note[]>;
       };
       savedFilters: {
         create: (input: SavedFilterCreateInput) => Promise<SavedFilter>;

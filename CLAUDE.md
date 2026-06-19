@@ -50,6 +50,8 @@ Full architectural spec: [`../ARCHITECTURE.md`](../ARCHITECTURE.md) — read it 
 | + | Vault root authorization — `vault:scan`/`vault:import` roots must be confirmed against a session allowlist (`security/vault-access.ts`); closes a renderer arbitrary-fs-read (ADR-0004) |
 | + | Unattended smoke test — `npm run smoke` builds + launches the real app via Playwright `_electron`, asserts boot, DB init, renderer mount, and a notes IPC round-trip (catches runtime/packaging regressions like the v1.2.4 crash) |
 | + | Reproducible release tooling — `electron-builder` pinned exact in devDependencies; Electron bumped to 42 (with both-arch SQLCipher prebuilt fetch in CI) |
+| + | Cross-domain projects — notes gain `project_id` (migration 0012); project view lists its notes alongside tasks; NoteEditor has a project selector. See ADR-0006 |
+| + | Note ↔ task links — `note_task_links` join table (migration 0013), `links:*` IPC domain, "Link task"/"Link note" pickers in NoteEditor and task detail, bidirectional navigation. See ADR-0006 |
 
 ---
 
@@ -257,6 +259,26 @@ Key pieces:
 - **TriageCard** (`src/renderer/src/features/tasks/TriageCard.tsx`) renders each task with inline priority, due-date, project controls, and an `↗ [Note title]` backlink when `sourceNoteId` is set.
 - **Acknowledge** saves all setup fields and sets `triage = 0` in one mutation — the task then appears in Inbox or its assigned project.
 - The `tasksService.list()` always adds `AND triage = 0` by default; pass `triageOnly: true` in `TaskListInput` to fetch triage tasks.
+
+---
+
+## Projects across notes and tasks (ADR-0006)
+
+Projects are a **cross-domain container**: both tasks (`tasks.project_id`, 0002) and notes (`notes.project_id`, migration 0012) can belong to one. A note has at most one project. Folders stay the notes-only tree; project is the orthogonal axis.
+
+- **Assigning** — NoteEditor header has a `ProjectSelector` next to the folder selector (`src/renderer/src/features/notes/NoteEditor.tsx`). It patches `notes.project_id` via `useUpdateNote`.
+- **Listing** — `notesService.list({ projectId })` filters by project; `useProjectNotes(projectId)` (notes/queries.ts) fetches them. The Tasks project view renders a `ProjectNotesBar` (in `TaskList.tsx`) above the task list.
+- **Delete integrity** — `notes.project_id` has **no DB-level FK** (same reason as `folder_id` — column predates the projects table). `projectsService.delete()` explicitly nulls out `notes.project_id` for the project before deleting it; tasks rely on the schema-level `ON DELETE SET NULL`. Archiving a project leaves notes assigned. **Any new hard-delete path for projects must null out `notes.project_id` too.**
+
+## Note ↔ task links (ADR-0006)
+
+A user-curated many-to-many association in the `note_task_links` table (migration 0013), modelled on `task_labels`. Distinct from `tasks.source_note_id`, which is the single, non-editable triage-capture provenance.
+
+- **Domain files** — `src/shared/schemas/links.ts`, `src/main/services/links.ts`, `src/main/ipc/links.ts`, channels `links:create|delete|listForNote|listForTask`. Preload surface is `window.api.links.*`. Renderer hooks live in `src/renderer/src/features/links/queries.ts`; UI in `LinkPanels.tsx`.
+- **UI** — `LinkedTasksPanel` in the NoteEditor (link/unlink tasks, click → Tasks mode at the task's project/inbox scope); `LinkedNotesPanel` in `MatrixTaskDetail` (link/unlink notes, click → Notes mode + `setSelectedNoteId`).
+- **Idempotent create** — `linksService.create` uses `ON CONFLICT DO NOTHING`, so re-linking a pair is a no-op, not an error.
+- **Soft-delete aware** — links only CASCADE on **hard** delete; both notes and tasks soft-delete, so `listForNote`/`listForTask` filter `deleted_at IS NULL` to avoid phantom links.
+- **No new `tasks` column** — the join-table approach deliberately avoids touching the `tasks` schema, so the raw-SQL column list in `tasks.ts` `listByFilter` needs no change.
 
 ---
 

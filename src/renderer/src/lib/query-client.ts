@@ -60,4 +60,11 @@ export const queryKeys = {
     list: () => [...queryKeys.folders.all, 'list'] as const,
     detail: (id: string) => [...queryKeys.folders.all, 'detail', id] as const,
   },
+  links: {
+    all: ['links'] as const,
+    forNote: (noteId: string) =>
+      [...queryKeys.links.all, 'forNote', noteId] as const,
+    forTask: (taskId: string) =>
+      [...queryKeys.links.all, 'forTask', taskId] as const,
+  },
 } as const;

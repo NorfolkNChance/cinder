@@ -14,6 +14,7 @@ import { parseQuickAdd, type ParsedQuickAdd } from './quickAdd';
 import { describeRecurrence } from '../../../../shared/recurrence';
 import { useTaskShortcuts } from './useTaskShortcuts';
 import { AddTriageTodo } from '../notes/AddTriageTodo';
+import { useProjectNotes } from '../notes/queries';
 import type { TaskCreateInput } from '../../../../shared/schemas/tasks';
 
 /**
@@ -180,6 +181,10 @@ export function TaskList(): JSX.Element {
         </div>
       )}
 
+      {taskScope.kind === 'project' && (
+        <ProjectNotesBar projectId={taskScope.id} />
+      )}
+
       <div className="flex-1 overflow-y-auto">
         {isLoading ? (
           <p className="px-5 py-4 text-sm text-gray-500">Loading…</p>
@@ -217,6 +222,45 @@ export function TaskList(): JSX.Element {
       </div>
 
       {!isTriage && <ShortcutHint />}
+    </div>
+  );
+}
+
+/**
+ * Notes belonging to the current project, shown above its task list so a
+ * project reads as a cross-domain container. Clicking a note opens it in
+ * Notes mode. Hidden entirely when the project has no notes.
+ */
+function ProjectNotesBar({ projectId }: { projectId: string }): JSX.Element | null {
+  const { data: notes } = useProjectNotes(projectId);
+  const setMode = useUI((s) => s.setMode);
+  const setSelectedNoteId = useUI((s) => s.setSelectedNoteId);
+
+  if (!notes || notes.length === 0) return null;
+
+  return (
+    <div className="border-b border-gray-200 px-5 py-3 dark:border-gray-800">
+      <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-500">
+        Notes ({notes.length})
+      </p>
+      <div className="flex flex-wrap gap-1.5">
+        {notes.map((n) => (
+          <button
+            key={n.id}
+            onClick={() => {
+              setMode('notes');
+              setSelectedNoteId(n.id);
+            }}
+            className="inline-flex max-w-[16rem] items-center gap-1 truncate rounded-md border border-indigo-200 px-2 py-0.5 text-xs text-indigo-600 hover:bg-indigo-50 focus:outline-none focus:ring-1 focus:ring-indigo-400 dark:border-indigo-900 dark:text-indigo-400 dark:hover:bg-gray-800"
+            title="Open note"
+          >
+            <span aria-hidden="true">📄</span>
+            <span className="truncate">
+              {n.title.trim() === '' ? 'Untitled' : n.title}
+            </span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

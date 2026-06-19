@@ -3,10 +3,12 @@ import { TipTapEditor } from './TipTapEditor';
 import { HtmlBodyEditor } from './HtmlBodyEditor';
 import { useNote, useUpdateNote, useCreateNote } from './queries';
 import { useFoldersList } from './folderQueries';
+import { useProjectsList } from '../tasks/queries';
 import { useDebouncedCallback } from '../../hooks/useDebouncedCallback';
 import { useUI } from '../../state/ui';
 import { ExportMenu } from '../export/ExportMenu';
 import { AddTriageTodo } from './AddTriageTodo';
+import { LinkedTasksPanel } from '../links/LinkPanels';
 
 // ── Folder selector ───────────────────────────────────────────────────────────
 
@@ -38,7 +40,7 @@ function FolderSelector({
   };
 
   return (
-    <div className="mt-1 flex items-center gap-1">
+    <div className="flex items-center gap-1">
       <span className="text-[11px] text-gray-400 dark:text-gray-600" aria-hidden>📁</span>
       <select
         value={folderId ?? ''}
@@ -56,6 +58,54 @@ function FolderSelector({
       {currentFolder && (
         <span className="sr-only">Current folder: {currentFolder.name}</span>
       )}
+    </div>
+  );
+}
+
+// ── Project selector ──────────────────────────────────────────────────────────
+
+/**
+ * Project breadcrumb shown next to the folder selector. Assigns the note to a
+ * project (or none), the cross-domain counterpart to a task's project — so a
+ * project's view can list its notes alongside its tasks.
+ */
+function ProjectSelector({
+  noteId,
+  projectId,
+}: {
+  noteId: string;
+  projectId: string | null;
+}): JSX.Element | null {
+  const { data: projects } = useProjectsList();
+  const updateNote = useUpdateNote();
+
+  // Don't render until projects exist — keeps the header clean.
+  if (!projects || projects.length === 0) return null;
+
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>): void => {
+    const val = e.target.value;
+    updateNote.mutate({
+      id: noteId,
+      patch: { projectId: val === '' ? null : val },
+    });
+  };
+
+  return (
+    <div className="flex items-center gap-1">
+      <span className="text-[11px] text-gray-400 dark:text-gray-600" aria-hidden>#</span>
+      <select
+        value={projectId ?? ''}
+        onChange={handleChange}
+        aria-label="Assign to project"
+        className="bg-transparent text-[11px] text-gray-400 hover:text-gray-600 focus:outline-none dark:text-gray-600 dark:hover:text-gray-400"
+      >
+        <option value="">No project</option>
+        {projects.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.name}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }
@@ -241,7 +291,11 @@ export function NoteEditor({ noteId }: NoteEditorProps): JSX.Element {
             <ExportMenu noteId={note.id} />
           </div>
         </div>
-        <FolderSelector noteId={note.id} folderId={note.folderId} />
+        <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
+          <FolderSelector noteId={note.id} folderId={note.folderId} />
+          <ProjectSelector noteId={note.id} projectId={note.projectId} />
+        </div>
+        <LinkedTasksPanel noteId={note.id} />
       </div>
       <div className="flex min-h-0 flex-1 flex-col">
         {note.bodyType === 'html' ? (

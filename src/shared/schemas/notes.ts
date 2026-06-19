@@ -15,6 +15,7 @@ import { z } from 'zod';
 const ISO_8601 = z.string().datetime({ offset: false });
 const NoteId = z.string().uuid();
 const FolderId = z.string().uuid().nullable();
+const ProjectId = z.string().uuid().nullable();
 const DailyDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const BodyType = z.enum(['markdown', 'html']);
 
@@ -26,6 +27,8 @@ export const Note = z.object({
   /** 'markdown' (default) or 'html'. Determines which editor is shown. */
   bodyType: BodyType.default('markdown'),
   folderId: FolderId,
+  /** Optional project membership. null = not assigned to any project. */
+  projectId: ProjectId,
   /** NULL for regular notes; 'YYYY-MM-DD' for daily notes. */
   dailyDate: DailyDate.nullable(),
   createdAt: ISO_8601,
@@ -47,6 +50,8 @@ export const NoteCreateInput = z.object({
   /** 'markdown' (default) or 'html'. Set to 'html' when importing an HTML file. */
   bodyType: BodyType.optional(),
   folderId: FolderId.optional(),
+  /** Optional project membership at creation time. */
+  projectId: ProjectId.optional(),
   /** Omit for regular notes; supply 'YYYY-MM-DD' to create a daily note. */
   dailyDate: DailyDate.nullable().optional(),
 });
@@ -62,6 +67,8 @@ export const NoteListInput = z.object({
   includeDeleted: z.boolean().optional(),
   // Filter by folder. `null` means "notes not in any folder"; omit to match any.
   folderId: FolderId.optional(),
+  // Filter by project. `null` means "notes not in any project"; omit to match any.
+  projectId: ProjectId.optional(),
   limit: z.number().int().min(1).max(1000).optional(),
   /**
    * When true: return only daily notes (daily_date IS NOT NULL).
@@ -90,6 +97,7 @@ export const NoteUpdateInput = z.object({
       title: z.string().max(500).optional(),
       body: z.string().max(1_000_000).optional(),
       folderId: FolderId.optional(),
+      projectId: ProjectId.optional(),
     })
     .strict(),
 });

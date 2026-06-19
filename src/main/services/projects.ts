@@ -1,7 +1,7 @@
 import { v7 as uuidv7 } from 'uuid';
 import { asc, eq, isNull, sql } from 'drizzle-orm';
 import { getDrizzle } from '../db/drizzle';
-import { projects } from '../db/schema';
+import { notes, projects } from '../db/schema';
 import type {
   Project,
   ProjectArchiveInput,
@@ -114,7 +114,16 @@ export const projectsService = {
   async delete(id: string): Promise<void> {
     // Hard delete — FK cascades handle sections; tasks have their
     // project_id set to null so they become Inbox tasks.
+    //
+    // notes.project_id has no schema-level FK (added after the projects
+    // table — see migration 0012), so SQLite won't SET NULL it for us.
+    // Null it out explicitly first so notes survive project removal and
+    // become unassigned rather than dangling at a dead project id.
     const db = getDrizzle();
+    await db
+      .update(notes)
+      .set({ projectId: null })
+      .where(eq(notes.projectId, id));
     await db.delete(projects).where(eq(projects.id, id));
   },
 } as const;
