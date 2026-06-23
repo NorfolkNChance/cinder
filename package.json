@@ -28,7 +28,7 @@
     "zod": "^3.23.8"
   },
   "overrides": {
-    "tar": "^7.5.15",
+    "tar": "^7.5.16",
     "@esbuild-kit/core-utils": {
       "esbuild": "^0.25.0"
     }
