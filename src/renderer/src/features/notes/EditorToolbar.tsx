@@ -1,9 +1,12 @@
 import type { Editor } from '@tiptap/core';
 import { useEditorState } from '@tiptap/react';
 import clsx from 'clsx';
+import { InsertDrawingButton } from '../draw/InsertDrawingButton';
 
 interface EditorToolbarProps {
   editor: Editor | null;
+  /** The note being edited — needed to attach an inserted drawing to it. */
+  noteId: string;
 }
 
 // ── Toolbar button ────────────────────────────────────────────────────────────
@@ -97,7 +100,7 @@ function HeadingLabel({ level }: { level: 1 | 2 | 3 }): JSX.Element {
  * `onMouseDown` with `e.preventDefault()` is used instead of `onClick` so the
  * editor never loses focus when a button is pressed.
  */
-export function EditorToolbar({ editor }: EditorToolbarProps): JSX.Element {
+export function EditorToolbar({ editor, noteId }: EditorToolbarProps): JSX.Element {
   const disabled = editor === null;
 
   const state = useEditorState({
@@ -296,6 +299,11 @@ export function EditorToolbar({ editor }: EditorToolbarProps): JSX.Element {
           <rect x="1" y="7" width="14" height="2" rx="1" />
         </svg>
       </ToolbarButton>
+
+      <Divider />
+
+      {/* Insert a drawing (Draw mode) as a PNG image at the cursor */}
+      <InsertDrawingButton editor={editor} noteId={noteId} />
     </div>
   );
 }

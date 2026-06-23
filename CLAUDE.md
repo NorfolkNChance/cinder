@@ -53,6 +53,7 @@ Full architectural spec: [`../ARCHITECTURE.md`](../ARCHITECTURE.md) — read it 
 | + | Cross-domain projects — notes gain `project_id` (migration 0012); project view lists its notes alongside tasks; NoteEditor has a project selector. See ADR-0006 |
 | + | Note ↔ task links — `note_task_links` join table (migration 0013), `links:*` IPC domain, "Link task"/"Link note" pickers in NoteEditor and task detail, bidirectional navigation. See ADR-0006 |
 | + | Draw mode — embedded Excalidraw sketch canvas as a fifth mode; drawings stored as notes with `bodyType 'excalidraw'`; self-hosted assets over a custom `excalidraw-asset://` scheme (no CDN, no `unsafe-eval`); Mermaid import stubbed out. See ADR-0007/0008 |
+| + | Draw embeds in notes — "✏️ Drawing" toolbar button renders a drawing to PNG via `exportToBlob` (canvas raster, eval-free) → saves as an `attachment://` → inserts an image; copy-paste of Excalidraw PNGs reuses the existing TipTap image paste handler |
 
 ---
 
@@ -351,9 +352,15 @@ Draw is a fifth mode (alongside Notes, Tasks, Matrix, Daily) wrapping the `@exca
 - Excalidraw lazily fetches fonts/locales/subset-worker from `window.EXCALIDRAW_ASSET_PATH` (defaults to the esm.sh CDN). `scripts/copy-excalidraw-assets.mjs` copies `dist/prod` assets into `src/renderer/public/excalidraw-assets/` (gitignored, ~18 MB); the path is set by the **classic** script `src/renderer/public/set-excalidraw-asset-path.js` (must be classic, before the module bundle — Rollup reorders side-effect-only modules).
 - Under `file://`, the opaque origin can't satisfy `font-src 'self'`, so assets are served via the standard+secure `excalidraw-asset://` scheme (`src/main/protocol/excalidraw-asset.ts`), which **must add `Access-Control-Allow-Origin: *`** or cross-origin `@font-face` rejects the font and Excalidraw falls back to the CDN. CSP grants `excalidraw-asset:` in script/worker/font/connect-src plus `worker-src 'self' blob:`. **`script-src` keeps no `'unsafe-eval'`** — the canvas needs none; the only eval/wasm (harfbuzz) is confined to the lazy `subset-worker` and the avoided SVG-font-embed export.
 
+**Embedding drawings into notes (Phase 2):**
+- The `InsertDrawingButton` (`features/draw/InsertDrawingButton.tsx`) in the markdown `EditorToolbar` lists drawings; selecting one calls `drawingBodyToPng()` (`exportDrawing.ts` → Excalidraw `exportToBlob`, PNG), saves it via `attachments.save` under the **current note**, and inserts an image node (same low-level schema insertion as the paste handler, so it serializes to `![](attachment://…)`).
+- **PNG export stays off the eval path.** `exportToBlob` rasters via canvas using already-loaded fonts — it does NOT inline/subset fonts, so it never touches the harfbuzz worker. **Don't switch embeds to `exportToSvg`** (it inlines fonts → harfbuzz → needs eval).
+- Embeds are static snapshots; live re-editable embeds (a TipTap node-view) are deferred Phase 3.
+- Copy-paste of an Excalidraw PNG into a note works for free via the existing `TipTapEditor` `handlePaste`.
+
 **Key files:**
 - `src/main/protocol/excalidraw-asset.ts` — the asset scheme (privileges before `whenReady`, handler after).
-- `src/renderer/src/features/draw/` — `ExcalidrawEditor` (loads `body`→scene, debounced autosave keyed off `getSceneVersion`), `DrawSidebar`, `DrawMainPane`, `queries.ts`, `mermaidStub.ts`.
+- `src/renderer/src/features/draw/` — `ExcalidrawEditor` (loads `body`→scene, debounced autosave keyed off `getSceneVersion`), `DrawSidebar`, `DrawMainPane`, `queries.ts`, `exportDrawing.ts`, `InsertDrawingButton.tsx`, `mermaidStub.ts`.
 - `selectedDrawingId` in Zustand drives the open drawing (parallel to the other modes' selections).
 
 **Gotchas:**

@@ -387,6 +387,22 @@ export const HELP_SECTIONS: HelpSection[] = [
           do to the view is saved as a change, only edits to the drawing itself.
         </P>
 
+        <H3>Embedding a drawing in a note</H3>
+        <P>
+          In any Markdown note, click the{' '}
+          <strong className="text-gray-800 dark:text-gray-200">✏️ Drawing</strong> button at
+          the end of the formatting toolbar and pick a drawing. It&apos;s rendered
+          to a PNG image and inserted at your cursor, stored as an attachment on
+          that note. The embed is a snapshot — to change it, edit the drawing in
+          Draw mode and insert it again.
+        </P>
+        <P>
+          You can also <strong className="text-gray-800 dark:text-gray-200">copy &amp; paste</strong>:
+          select shapes in a drawing, copy them to the clipboard as an image
+          (Excalidraw&apos;s right-click → <em>Copy to clipboard as PNG</em>), and
+          paste straight into a note — the same way pasting any image works.
+        </P>
+
         <H3>How drawings relate to notes</H3>
         <ul className="mb-3 ml-4 list-disc space-y-1.5 text-sm text-gray-600 dark:text-gray-400">
           <li>They live in their own mode and do <strong className="text-gray-700 dark:text-gray-300">not</strong> appear in the main Notes list.</li>

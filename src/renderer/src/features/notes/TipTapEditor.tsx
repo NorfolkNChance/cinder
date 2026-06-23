@@ -196,7 +196,7 @@ export function TipTapEditor({
 
   return (
     <>
-      <EditorToolbar editor={editor} />
+      <EditorToolbar editor={editor} noteId={noteId} />
       <div className="flex-1 overflow-y-auto px-6 py-5">
         <EditorContent id="tiptap-editor-content" editor={editor} />
       </div>
