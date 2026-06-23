@@ -35,9 +35,14 @@ describe('NoteCreateInput', () => {
     expect(() => NoteCreateInput.parse({ title: 'a'.repeat(501) })).toThrow();
   });
 
-  it('rejects body > 1MB', () => {
+  it('accepts a large body up to the 8MB cap, rejects beyond it', () => {
+    // The cap was raised from 1MB to 8MB (MAX_BODY_CHARS) so Excalidraw drawing
+    // scenes — which can embed raster images — fit. See notes schema.
     expect(() =>
-      NoteCreateInput.parse({ title: 'x', body: 'b'.repeat(1_000_001) }),
+      NoteCreateInput.parse({ title: 'x', body: 'b'.repeat(2_000_000) }),
+    ).not.toThrow();
+    expect(() =>
+      NoteCreateInput.parse({ title: 'x', body: 'b'.repeat(8_000_001) }),
     ).toThrow();
   });
 
