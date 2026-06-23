@@ -8,6 +8,15 @@ import {
 } from '../../../../shared/markdown';
 import { EditorToolbar } from './EditorToolbar';
 import { useSettings } from '../settings/useSettings';
+import { ImageWithDrawingEmbed } from '../draw/DrawingEmbed';
+
+// The editor swaps the shared base Image node for one with a live-drawing
+// NodeView (renders drawing:// embeds). The node spec is identical, so the
+// markdown serde schema is unaffected — only editor-side rendering differs.
+const editorOnlyExtensions = [
+  ...editorExtensions.filter((e) => e.name !== 'image'),
+  ImageWithDrawingEmbed,
+];
 
 interface TipTapEditorProps {
   /** Markdown body to load. Editor is recreated when `noteId` changes. */
@@ -78,7 +87,7 @@ export function TipTapEditor({
     // Placeholder is purely cosmetic (no schema impact) so it's added
     // here only.
     extensions: [
-      ...editorExtensions,
+      ...editorOnlyExtensions,
       Placeholder.configure({ placeholder: 'Start writing…' }),
     ],
     content: deserialize(markdown).toJSON(),

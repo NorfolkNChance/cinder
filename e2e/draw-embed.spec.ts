@@ -93,6 +93,8 @@ test('Insert a drawing into a note as an attachment image, no eval', async () =>
     });
 
     await page.getByRole('button', { name: 'Insert drawing' }).click();
+    // Snapshot mode reads the drawing body directly via IPC (not the cache).
+    await page.getByRole('button', { name: 'snapshot', exact: true }).click();
     await page.getByRole('menuitem', { name: /Untitled drawing/ }).click();
 
     // The image lands in the editor with an attachment:// source.

@@ -41,7 +41,7 @@ Most notes-and-todos products require you to send your content to someone else's
 ### Draw
 - **Freehand sketches and diagrams** on an embedded Excalidraw canvas — rectangles, ellipses, arrows, lines, freehand strokes, and text
 - **Its own mode** with a sidebar list of drawings; create, rename, and delete from there
-- **Embed into notes** — insert any drawing into a note as a PNG (a ✏️ button in the editor toolbar), or copy & paste shapes straight from a drawing
+- **Embed into notes** — insert a drawing into a note as a **live** embed (always shows the drawing's current state; double-click to edit) or a static **snapshot** PNG; copy & paste shapes straight from a drawing also works
 - **Autosave** of the scene as you work; text inside a drawing is included in full-text search
 - **Fully local and offline** — fonts and assets are self-hosted (no CDN), drawings live in the encrypted database, and the renderer stays sandboxed under the same strict CSP (no `unsafe-eval`)
 

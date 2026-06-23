@@ -391,16 +391,28 @@ export const HELP_SECTIONS: HelpSection[] = [
         <P>
           In any Markdown note, click the{' '}
           <strong className="text-gray-800 dark:text-gray-200">✏️ Drawing</strong> button at
-          the end of the formatting toolbar and pick a drawing. It&apos;s rendered
-          to a PNG image and inserted at your cursor, stored as an attachment on
-          that note. The embed is a snapshot — to change it, edit the drawing in
-          Draw mode and insert it again.
+          the end of the formatting toolbar and pick a drawing. The dropdown has
+          two modes:
         </P>
+        <ul className="mb-3 ml-4 list-disc space-y-1.5 text-sm text-gray-600 dark:text-gray-400">
+          <li>
+            <strong className="text-gray-700 dark:text-gray-300">Live</strong> (default) — inserts a
+            link to the drawing that always shows its current state. Edit the
+            drawing and the embed updates. <strong className="text-gray-700 dark:text-gray-300">Double-click</strong> the
+            embed (or use its ✏️ Edit button) to jump straight to it in Draw mode.
+          </li>
+          <li>
+            <strong className="text-gray-700 dark:text-gray-300">Snapshot</strong> — inserts a static
+            PNG saved as an attachment. It won&apos;t change if the drawing
+            changes, but it&apos;s a real image file, so it survives export.
+          </li>
+        </ul>
         <P>
           You can also <strong className="text-gray-800 dark:text-gray-200">copy &amp; paste</strong>:
           select shapes in a drawing, copy them to the clipboard as an image
           (Excalidraw&apos;s right-click → <em>Copy to clipboard as PNG</em>), and
-          paste straight into a note — the same way pasting any image works.
+          paste straight into a note — a static image, the same as pasting any
+          other image.
         </P>
 
         <H3>How drawings relate to notes</H3>

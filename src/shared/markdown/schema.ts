@@ -36,7 +36,7 @@ import { WikiLink } from './extensions/WikiLink';
  * for img-src). The remote-image opt-in (§3.6) is enforced higher up
  * the stack — the schema layer is content-agnostic about the src string.
  */
-const ConfiguredImage = Image.configure({
+export const ConfiguredImage = Image.configure({
   inline: true,
   allowBase64: true,
 });

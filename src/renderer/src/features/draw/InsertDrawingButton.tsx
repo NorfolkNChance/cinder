@@ -4,18 +4,22 @@ import clsx from 'clsx';
 import { useUI } from '../../state/ui';
 import { useDrawingsList } from './queries';
 import { drawingBodyToPng } from './exportDrawing';
+import { drawingEmbedSrc } from './DrawingEmbed';
+
+type InsertMode = 'live' | 'snapshot';
 
 /**
- * Toolbar control that inserts one of the user's drawings into the current note
- * as a PNG image.
+ * Toolbar control that inserts one of the user's drawings into the current note.
  *
- * Flow: pick a drawing → load its scene from the DB → render it to PNG (canvas
- * raster, no font subsetting / eval) → persist as an attachment under this note
- * → insert an image node at the cursor. The embed is a static snapshot; to edit
- * the drawing, open it in Draw mode (live re-editable embeds are future work).
+ * Two modes:
+ *   - Live (default): inserts a `drawing://<id>` reference. The editor's
+ *     NodeView renders the drawing's current state and re-renders when it
+ *     changes; double-click opens it for editing. Not portable outside the app.
+ *   - Snapshot: renders the drawing to a PNG (canvas raster, no font subsetting
+ *     / eval), saves it as an attachment under this note, and inserts a static
+ *     `attachment://` image. Portable (a real file), but frozen at insert time.
  *
- * The inserted node uses the same low-level schema insertion as the editor's
- * image paste handler, so it round-trips to `![](attachment://…)` markdown.
+ * Both use the same low-level schema insertion as the image paste handler.
  */
 export function InsertDrawingButton({
   editor,
@@ -26,11 +30,26 @@ export function InsertDrawingButton({
 }): JSX.Element {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [insertMode, setInsertMode] = useState<InsertMode>('live');
   const ref = useRef<HTMLDivElement>(null);
   const { data: drawings } = useDrawingsList();
   const showToast = useUI((s) => s.showToast);
   const setMode = useUI((s) => s.setMode);
   const setSelectedDrawingId = useUI((s) => s.setSelectedDrawingId);
+
+  /** Insert an image node carrying the given src at the cursor. */
+  const insertImageNode = (drawingSrc: string, altText: string): void => {
+    if (!editor) return;
+    const node = editor.schema.nodes['image']?.create({
+      src: drawingSrc,
+      alt: altText,
+      title: null,
+    });
+    if (node) {
+      editor.view.dispatch(editor.view.state.tr.replaceSelectionWith(node));
+      editor.commands.focus();
+    }
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -48,8 +67,16 @@ export function InsertDrawingButton({
     };
   }, [open]);
 
-  const insert = (drawingId: string): void => {
+  const insert = (drawingId: string, title: string): void => {
     setOpen(false);
+
+    // Live embed: just insert the reference — the NodeView renders it. Instant.
+    if (insertMode === 'live') {
+      insertImageNode(drawingEmbedSrc(drawingId), title);
+      return;
+    }
+
+    // Snapshot: render to PNG, persist as an attachment, insert that.
     setBusy(true);
     void (async () => {
       try {
@@ -62,17 +89,7 @@ export function InsertDrawingButton({
           originalFilename: `${drawing.title || 'drawing'}.png`,
           mimeType: 'image/png',
         });
-        if (editor) {
-          const node = editor.schema.nodes['image']?.create({
-            src: result.url,
-            alt: drawing.title,
-            title: null,
-          });
-          if (node) {
-            editor.view.dispatch(editor.view.state.tr.replaceSelectionWith(node));
-            editor.commands.focus();
-          }
-        }
+        insertImageNode(result.url, drawing.title);
       } catch (err) {
         showToast(
           err instanceof Error ? err.message : 'Failed to insert drawing',
@@ -116,8 +133,34 @@ export function InsertDrawingButton({
       {open && (
         <div
           role="menu"
-          className="absolute left-0 top-full z-30 mt-1 max-h-72 w-56 overflow-y-auto rounded-lg border border-gray-300 bg-gray-100 py-1 shadow-xl dark:border-gray-700 dark:bg-gray-900"
+          className="absolute left-0 top-full z-30 mt-1 max-h-80 w-60 overflow-y-auto rounded-lg border border-gray-300 bg-gray-100 py-1 shadow-xl dark:border-gray-700 dark:bg-gray-900"
         >
+          {/* Live / Snapshot toggle */}
+          <div className="flex items-center gap-1 border-b border-gray-200 px-2 py-1.5 dark:border-gray-800">
+            {(['live', 'snapshot'] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  setInsertMode(m);
+                }}
+                title={
+                  m === 'live'
+                    ? 'Updates when the drawing changes; double-click to edit'
+                    : 'A static PNG snapshot (portable, frozen at insert)'
+                }
+                className={clsx(
+                  'flex-1 rounded px-2 py-1 text-xs capitalize transition',
+                  insertMode === m
+                    ? 'bg-emerald-600 text-white'
+                    : 'text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-800',
+                )}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
           {!drawings || drawings.length === 0 ? (
             <button
               role="menuitem"
@@ -136,7 +179,7 @@ export function InsertDrawingButton({
                 role="menuitem"
                 onMouseDown={(e) => {
                   e.preventDefault();
-                  insert(d.id);
+                  insert(d.id, d.title || 'Untitled drawing');
                 }}
                 className="block w-full truncate px-3 py-1.5 text-left text-sm text-gray-700 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-800"
               >
