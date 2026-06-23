@@ -69,6 +69,13 @@ export default defineConfig({
       alias: {
         '@renderer': resolve(__dirname, 'src/renderer/src'),
         '@shared': resolve(__dirname, 'src/shared'),
+        // Drop Excalidraw's heavy, advisory-carrying Mermaid import feature
+        // (~5MB of mermaid/katex/cytoscape) — Cinder is a sketch tool. See
+        // src/renderer/src/features/draw/mermaidStub.ts.
+        '@excalidraw/mermaid-to-excalidraw': resolve(
+          __dirname,
+          'src/renderer/src/features/draw/mermaidStub.ts',
+        ),
       },
     },
   },

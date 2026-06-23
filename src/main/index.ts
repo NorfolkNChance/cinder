@@ -29,10 +29,15 @@ import {
   registerAttachmentProtocol,
   registerAttachmentSchemePrivileges,
 } from './protocol/attachment';
+import {
+  registerExcalidrawAssetProtocol,
+  registerExcalidrawAssetSchemePrivileges,
+} from './protocol/excalidraw-asset';
 
 // Scheme privileges must be set BEFORE app.whenReady — Electron rejects
 // late changes. See protocol/attachment.ts for the rationale.
 registerAttachmentSchemePrivileges();
+registerExcalidrawAssetSchemePrivileges();
 
 /**
  * Return the canonical app URL for the current environment.
@@ -198,6 +203,7 @@ app.whenReady().then(async () => {
 
   // Wire the attachment:// file-serving handler now that the app is ready.
   registerAttachmentProtocol();
+  registerExcalidrawAssetProtocol();
 
   // Initialise the encrypted database, apply any pending schema migrations,
   // and wire the Drizzle query layer. All three must complete before IPC

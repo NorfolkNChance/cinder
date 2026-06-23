@@ -38,6 +38,12 @@ Most notes-and-todos products require you to send your content to someone else's
 - **Fully integrated** — daily notes support attachments, the triage "+ Todo" button, FTS5 search, and Markdown export; they're invisible in the main Notes list to keep both areas clean
 - **Markdown template** — configure a reusable template (e.g. `## Goals / ## Journal / ## Gratitude`) in Settings → Daily Notes; applied to every new daily note
 
+### Draw
+- **Freehand sketches and diagrams** on an embedded Excalidraw canvas — rectangles, ellipses, arrows, lines, freehand strokes, and text
+- **Its own mode** with a sidebar list of drawings; create, rename, and delete from there
+- **Autosave** of the scene as you work; text inside a drawing is included in full-text search
+- **Fully local and offline** — fonts and assets are self-hosted (no CDN), drawings live in the encrypted database, and the renderer stays sandboxed under the same strict CSP (no `unsafe-eval`)
+
 ### Tasks
 - **Full task CRUD** with title, description, priority (P1–P4), due date, and project assignment
 - **Projects and sections** — hierarchical organisation with manual ordering; projects span both tasks and notes, and the project view lists its notes alongside its tasks

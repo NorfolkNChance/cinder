@@ -17,7 +17,12 @@ const NoteId = z.string().uuid();
 const FolderId = z.string().uuid().nullable();
 const ProjectId = z.string().uuid().nullable();
 const DailyDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
-const BodyType = z.enum(['markdown', 'html']);
+const BodyType = z.enum(['markdown', 'html', 'excalidraw']);
+
+// Drawing scenes (bodyType 'excalidraw') store an Excalidraw scene as JSON in
+// `body`. Vector sketches are tiny, but a scene may embed raster images, so the
+// bound is more generous than prose notes would need. Still a hard DoS ceiling.
+const MAX_BODY_CHARS = 8_000_000;
 
 // ── Canonical note shape (returned by the service) ──────────────────────────
 export const Note = z.object({
@@ -44,9 +49,9 @@ export const NoteCreateInput = z.object({
   // and the user fills it in once they have a working title in mind. The
   // 500-char upper bound is the meaningful safety constraint.
   title: z.string().max(500),
-  // The body upper bound (1MB chars) matches §3.4 worked example. The default
-  // empty string is applied by the service so an explicit "" is unambiguous.
-  body: z.string().max(1_000_000).optional(),
+  // The default empty string is applied by the service so an explicit "" is
+  // unambiguous. See MAX_BODY_CHARS for the upper-bound rationale.
+  body: z.string().max(MAX_BODY_CHARS).optional(),
   /** 'markdown' (default) or 'html'. Set to 'html' when importing an HTML file. */
   bodyType: BodyType.optional(),
   folderId: FolderId.optional(),
@@ -75,6 +80,12 @@ export const NoteListInput = z.object({
    * When false/omitted: return only regular notes (daily_date IS NULL).
    */
   dailyOnly: z.boolean().optional(),
+  /**
+   * When true: return only drawings (body_type = 'excalidraw'), newest first.
+   * When false/omitted: drawings are excluded from the regular Notes list
+   * (mirrors the daily-notes default) so it stays text-only.
+   */
+  drawingsOnly: z.boolean().optional(),
 });
 export type NoteListInput = z.infer<typeof NoteListInput>;
 
@@ -95,7 +106,7 @@ export const NoteUpdateInput = z.object({
   patch: z
     .object({
       title: z.string().max(500).optional(),
-      body: z.string().max(1_000_000).optional(),
+      body: z.string().max(MAX_BODY_CHARS).optional(),
       folderId: FolderId.optional(),
       projectId: ProjectId.optional(),
     })

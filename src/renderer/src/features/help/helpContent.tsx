@@ -352,6 +352,57 @@ export const HELP_SECTIONS: HelpSection[] = [
     ),
   },
 
+  // ── Draw ─────────────────────────────────────────────────────────────────
+  {
+    id: 'draw',
+    title: 'Draw',
+    icon: '✏️',
+    keywords: ['draw', 'drawing', 'sketch', 'diagram', 'excalidraw', 'whiteboard', 'canvas'],
+    render: () => (
+      <div>
+        <H2>Draw</H2>
+        <P>
+          Draw is a mode for freehand sketches and diagrams, powered by an
+          embedded Excalidraw canvas. It runs entirely on your machine — no
+          account, no cloud, no network. Drawings are saved into the same
+          encrypted database as your notes.
+        </P>
+
+        <H3>Creating and opening drawings</H3>
+        <P>
+          Click the <strong className="text-gray-800 dark:text-gray-200">Draw</strong> button in
+          the toolbar, then{' '}
+          <strong className="text-gray-800 dark:text-gray-200">+ New drawing</strong> in the
+          sidebar. Every drawing shows in the sidebar list (newest first); click
+          one to open it, and rename it via the title field at the top. Changes
+          autosave — the indicator reads <em>Saved</em> when there&apos;s nothing
+          pending.
+        </P>
+
+        <H3>Sketching</H3>
+        <P>
+          Use the toolbar to draw rectangles, ellipses, arrows, lines, freehand
+          strokes, and text. The properties panel on the left controls stroke
+          colour, fill, width, and style. The canvas pans and zooms; nothing you
+          do to the view is saved as a change, only edits to the drawing itself.
+        </P>
+
+        <H3>How drawings relate to notes</H3>
+        <ul className="mb-3 ml-4 list-disc space-y-1.5 text-sm text-gray-600 dark:text-gray-400">
+          <li>They live in their own mode and do <strong className="text-gray-700 dark:text-gray-300">not</strong> appear in the main Notes list.</li>
+          <li>Any text you type inside a drawing <strong className="text-gray-700 dark:text-gray-300">is</strong> included in full-text search.</li>
+          <li>They follow the app&apos;s light/dark theme automatically.</li>
+        </ul>
+
+        <Callout type="tip">
+          Excalidraw&apos;s Mermaid-diagram import is intentionally disabled —
+          Cinder ships a lean, offline sketch canvas rather than the full
+          diagram-rendering stack.
+        </Callout>
+      </div>
+    ),
+  },
+
   // ── Tasks ────────────────────────────────────────────────────────────────
   {
     id: 'tasks',

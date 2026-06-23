@@ -16,7 +16,7 @@ import type { NotesFolderScope } from '../features/notes/queries';
  * modes doesn't clobber the other side's state.
  */
 
-export type Mode = 'notes' | 'tasks' | 'matrix' | 'daily';
+export type Mode = 'notes' | 'tasks' | 'matrix' | 'daily' | 'draw';
 
 /**
  * The scope a Tasks-mode view is showing.
@@ -53,6 +53,10 @@ interface UIState {
   /** The note open in Daily mode. Independent from Notes mode's selection. */
   dailySelectedNoteId: string | null;
   setDailySelectedNoteId: (id: string | null) => void;
+
+  /** The drawing open in Draw mode. Independent from the other modes. */
+  selectedDrawingId: string | null;
+  setSelectedDrawingId: (id: string | null) => void;
 
   /** The currently-selected YYYY-MM-DD date in Daily mode. null = none selected. */
   selectedDailyDate: string | null;
@@ -112,6 +116,9 @@ export const useUI = create<UIState>((set) => ({
 
   dailySelectedNoteId: null,
   setDailySelectedNoteId: (id) => set({ dailySelectedNoteId: id }),
+
+  selectedDrawingId: null,
+  setSelectedDrawingId: (id) => set({ selectedDrawingId: id }),
 
   selectedDailyDate: null,
   setSelectedDailyDate: (date) => set({ selectedDailyDate: date }),

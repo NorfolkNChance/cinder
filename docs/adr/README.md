@@ -30,3 +30,5 @@ Status: Proposed | Accepted | Deprecated | Superseded by [NNNN](NNNN-...)
 | [0004](0004-vault-root-authorization-allowlist.md) | Authorize vault roots via a session allowlist, not a persisted path | Accepted |
 | [0005](0005-multi-arch-release-build.md) | Build both macOS arches in one invocation and fetch both SQLCipher prebuilts | Accepted |
 | [0006](0006-cross-domain-projects-and-note-task-links.md) | Make projects cross-domain (notes + tasks) and add note ↔ task links | Accepted |
+| [0007](0007-embed-excalidraw-self-hosted-assets.md) | Embed Excalidraw via a self-hosted asset scheme under strict CSP | Accepted |
+| [0008](0008-drawings-as-excalidraw-bodytype-notes.md) | Store drawings as notes with `bodyType: 'excalidraw'` | Accepted |

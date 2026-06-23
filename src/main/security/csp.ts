@@ -25,11 +25,17 @@ import { is } from '@electron-toolkit/utils';
 
 const PROD_CSP = [
   "default-src 'self'",
-  "script-src 'self'",
+  // excalidraw-asset: serves Excalidraw's self-hosted fonts/locales/worker via a
+  // standard+secure scheme (file:// can't satisfy 'self'; see protocol/excalidraw-asset.ts).
+  "script-src 'self' excalidraw-asset:",
+  // Excalidraw spawns a module Worker for font subsetting. Note: NO 'unsafe-eval'
+  // — the core drawing canvas needs no eval; only the (avoided) SVG font-embed
+  // path does, and it runs inside this isolated worker realm.
+  "worker-src 'self' blob: excalidraw-asset:",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: attachment:",
-  "font-src 'self'",
-  "connect-src 'self'",
+  "font-src 'self' excalidraw-asset:",
+  "connect-src 'self' excalidraw-asset:",
   "object-src 'none'",
   "base-uri 'none'",
   "frame-ancestors 'none'",
@@ -38,11 +44,12 @@ const PROD_CSP = [
 
 const DEV_CSP = [
   "default-src 'self' http://localhost:* ws://localhost:*",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:*",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* excalidraw-asset:",
+  "worker-src 'self' blob: http://localhost:* excalidraw-asset:",
   "style-src 'self' 'unsafe-inline' http://localhost:*",
   "img-src 'self' data: blob: attachment: http://localhost:*",
-  "font-src 'self' http://localhost:*",
-  "connect-src 'self' http://localhost:* ws://localhost:*",
+  "font-src 'self' http://localhost:* excalidraw-asset:",
+  "connect-src 'self' http://localhost:* ws://localhost:* excalidraw-asset:",
   "object-src 'none'",
   "base-uri 'none'",
   "frame-ancestors 'none'",

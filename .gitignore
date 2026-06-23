@@ -45,3 +45,6 @@ yarn-error.log*
 *.db-shm
 *.db-wal
 *.key
+
+# Excalidraw self-hosted assets (copied from node_modules by scripts/copy-excalidraw-assets.mjs)
+src/renderer/public/excalidraw-assets/

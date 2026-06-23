@@ -1,5 +1,5 @@
 import { v7 as uuidv7 } from 'uuid';
-import { and, desc, eq, isNotNull, isNull, type SQL } from 'drizzle-orm';
+import { and, desc, eq, isNotNull, isNull, ne, type SQL } from 'drizzle-orm';
 import { getDb } from '../db/index';
 import { getDrizzle } from '../db/drizzle';
 import { notes } from '../db/schema';
@@ -37,6 +37,27 @@ function nowIso(): string {
 /** Strip HTML tags from a string, leaving only text content. */
 function stripHtml(html: string): string {
   return html.replace(/<[^>]*>/g, '');
+}
+
+/**
+ * Extract searchable text from an Excalidraw scene (bodyType 'excalidraw').
+ * The body is scene JSON, which must never hit the FTS index raw — index only
+ * the user-authored text elements. Returns '' if the body isn't parseable.
+ */
+function extractDrawingText(body: string): string {
+  try {
+    const scene = JSON.parse(body) as {
+      elements?: { type?: string; text?: string }[];
+    };
+    if (!Array.isArray(scene.elements)) return '';
+    return scene.elements
+      .filter((el) => el.type === 'text' && typeof el.text === 'string')
+      .map((el) => el.text)
+      .join(' ')
+      .trim();
+  } catch {
+    return '';
+  }
 }
 
 /**
@@ -100,10 +121,12 @@ export const notesService = {
     };
     await db.insert(notes).values(row);
 
-    // For HTML notes, overwrite the FTS body with stripped text — the
-    // SQL trigger writes raw HTML which pollutes search snippets.
+    // For HTML/drawing notes, overwrite the FTS body — the SQL trigger writes
+    // the raw body (HTML markup / scene JSON) which pollutes search snippets.
     if (row.bodyType === 'html' && row.body) {
       await updateFtsBody(row.id, stripHtml(row.body));
+    } else if (row.bodyType === 'excalidraw' && row.body) {
+      await updateFtsBody(row.id, extractDrawingText(row.body));
     }
 
     return row;
@@ -132,13 +155,19 @@ export const notesService = {
           : eq(notes.projectId, input.projectId),
       );
     }
-    // Separate daily notes from regular notes — callers opt in to daily-only.
-    // Default (dailyOnly omitted/false): exclude daily notes (main Notes list).
-    // dailyOnly: true → include only daily notes (Daily mode sidebar).
-    if (input.dailyOnly) {
+    // Separate the note "kinds" by their distinguishing column. Callers opt in
+    // to a single kind; the default returns regular notes only.
+    //   - drawingsOnly → only drawings (body_type = 'excalidraw')
+    //   - dailyOnly    → only daily notes (daily_date IS NOT NULL)
+    //   - neither      → regular notes: exclude both daily AND drawings, so the
+    //                    main Notes list stays text-only (mirrors daily).
+    if (input.drawingsOnly) {
+      conditions.push(eq(notes.bodyType, 'excalidraw'));
+    } else if (input.dailyOnly) {
       conditions.push(isNotNull(notes.dailyDate));
     } else {
       conditions.push(isNull(notes.dailyDate));
+      conditions.push(ne(notes.bodyType, 'excalidraw'));
     }
 
     const where = conditions.length === 0 ? undefined : and(...conditions);
@@ -162,11 +191,15 @@ export const notesService = {
     const patch = { ...input.patch, updatedAt: nowIso() };
     await db.update(notes).set(patch).where(eq(notes.id, input.id));
 
-    // For HTML notes, overwrite the FTS body with stripped text whenever
-    // body is part of the patch. The SQL trigger always writes raw HTML.
+    // For HTML/drawing notes, overwrite the FTS body whenever body is part of
+    // the patch. The SQL trigger always writes the raw body.
     const updated = await getById(input.id);
-    if ('body' in patch && patch.body !== undefined && updated?.bodyType === 'html') {
-      await updateFtsBody(input.id, stripHtml(patch.body));
+    if ('body' in patch && patch.body !== undefined) {
+      if (updated?.bodyType === 'html') {
+        await updateFtsBody(input.id, stripHtml(patch.body));
+      } else if (updated?.bodyType === 'excalidraw') {
+        await updateFtsBody(input.id, extractDrawingText(patch.body));
+      }
     }
 
     return updated;

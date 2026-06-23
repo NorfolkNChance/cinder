@@ -52,6 +52,7 @@ Full architectural spec: [`../ARCHITECTURE.md`](../ARCHITECTURE.md) — read it 
 | + | Reproducible release tooling — `electron-builder` pinned exact in devDependencies; Electron bumped to 42 (with both-arch SQLCipher prebuilt fetch in CI) |
 | + | Cross-domain projects — notes gain `project_id` (migration 0012); project view lists its notes alongside tasks; NoteEditor has a project selector. See ADR-0006 |
 | + | Note ↔ task links — `note_task_links` join table (migration 0013), `links:*` IPC domain, "Link task"/"Link note" pickers in NoteEditor and task detail, bidirectional navigation. See ADR-0006 |
+| + | Draw mode — embedded Excalidraw sketch canvas as a fifth mode; drawings stored as notes with `bodyType 'excalidraw'`; self-hosted assets over a custom `excalidraw-asset://` scheme (no CDN, no `unsafe-eval`); Mermaid import stubbed out. See ADR-0007/0008 |
 
 ---
 
@@ -333,6 +334,31 @@ Daily Notes is a fourth mode (alongside Notes, Tasks, Matrix) where every calend
 
 **`selectedDailyDate` vs `selectedNoteId`:**
 Both are tracked in Zustand. `selectedDailyDate` drives which date is highlighted in the sidebar tree. `selectedNoteId` is the note actually open in the editor — set to the result of `getOrCreateDaily` when a date is clicked. Switching away from Daily mode and back restores both (neither is cleared on mode switch).
+
+---
+
+## Draw mode (Excalidraw) — ADR-0007 / ADR-0008
+
+Draw is a fifth mode (alongside Notes, Tasks, Matrix, Daily) wrapping the `@excalidraw/excalidraw` component (MIT, bundled — not a hosted embed). Drawings are local, offline, and stored in the encrypted DB.
+
+**Storage — reuse the `notes` table (like daily notes):**
+- A drawing is a note with **`bodyType = 'excalidraw'`** and the serialized Excalidraw scene JSON in `body`. No new table, no migration.
+- `notesService.list()` **excludes drawings by default** (`body_type != 'excalidraw'`) and supports `drawingsOnly: true` for Draw mode — same shape as `dailyOnly`. **Any `list({})` that expects all notes now skips both daily AND drawings.**
+- FTS: scene JSON must never be indexed raw. `extractDrawingText()` parses the scene and indexes only text elements (mirrors `stripHtml()` for HTML notes).
+- Body cap raised to `MAX_BODY_CHARS` (8 MB) in `src/shared/schemas/notes.ts` — scenes can embed raster images. Embedded binary `files` currently persist inline in `body`; offloading them to `attachment://` is deferred.
+
+**Self-hosted assets — `excalidraw-asset://` scheme (the load-bearing part):**
+- Excalidraw lazily fetches fonts/locales/subset-worker from `window.EXCALIDRAW_ASSET_PATH` (defaults to the esm.sh CDN). `scripts/copy-excalidraw-assets.mjs` copies `dist/prod` assets into `src/renderer/public/excalidraw-assets/` (gitignored, ~18 MB); the path is set by the **classic** script `src/renderer/public/set-excalidraw-asset-path.js` (must be classic, before the module bundle — Rollup reorders side-effect-only modules).
+- Under `file://`, the opaque origin can't satisfy `font-src 'self'`, so assets are served via the standard+secure `excalidraw-asset://` scheme (`src/main/protocol/excalidraw-asset.ts`), which **must add `Access-Control-Allow-Origin: *`** or cross-origin `@font-face` rejects the font and Excalidraw falls back to the CDN. CSP grants `excalidraw-asset:` in script/worker/font/connect-src plus `worker-src 'self' blob:`. **`script-src` keeps no `'unsafe-eval'`** — the canvas needs none; the only eval/wasm (harfbuzz) is confined to the lazy `subset-worker` and the avoided SVG-font-embed export.
+
+**Key files:**
+- `src/main/protocol/excalidraw-asset.ts` — the asset scheme (privileges before `whenReady`, handler after).
+- `src/renderer/src/features/draw/` — `ExcalidrawEditor` (loads `body`→scene, debounced autosave keyed off `getSceneVersion`), `DrawSidebar`, `DrawMainPane`, `queries.ts`, `mermaidStub.ts`.
+- `selectedDrawingId` in Zustand drives the open drawing (parallel to the other modes' selections).
+
+**Gotchas:**
+- **Mermaid import is stubbed.** `@excalidraw/mermaid-to-excalidraw` (~5 MB mermaid/katex/cytoscape + an npm-audit "high") is aliased to `mermaidStub.ts` in `electron.vite.config.ts` so it's never in the shipped bundle. It's still in `node_modules` (transitive dep), so `npm audit` still flags it — that's expected; it doesn't ship. Don't remove the alias without re-auditing.
+- **CDN font-fallback noise.** Excalidraw eagerly fires its esm.sh font fallback even when the local primary works; those requests are CSP-blocked and harmless (console only). `e2e/draw.spec.ts` tolerates them and asserts the real wins (canvas mounts, Excalifont loads locally, no eval, drawing persists + is isolated from the Notes list).
 
 ---
 
