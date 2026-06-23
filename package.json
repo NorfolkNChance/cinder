@@ -34,6 +34,14 @@
     "tar": "^7.5.16",
     "@esbuild-kit/core-utils": {
       "esbuild": "^0.25.0"
+    },
+    "lodash-es": "^4.18.1",
+    "nanoid": "^3.3.8",
+    "@excalidraw/mermaid-to-excalidraw": {
+      "nanoid": "^5.0.9"
+    },
+    "vite": {
+      "esbuild": "^0.28.1"
     }
   },
   "devDependencies": {

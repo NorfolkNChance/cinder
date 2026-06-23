@@ -367,7 +367,7 @@ Draw is a fifth mode (alongside Notes, Tasks, Matrix, Daily) wrapping the `@exca
 - `selectedDrawingId` in Zustand drives the open drawing (parallel to the other modes' selections).
 
 **Gotchas:**
-- **Mermaid import is stubbed.** `@excalidraw/mermaid-to-excalidraw` (~5 MB mermaid/katex/cytoscape + an npm-audit "high") is aliased to `mermaidStub.ts` in `electron.vite.config.ts` so it's never in the shipped bundle. It's still in `node_modules` (transitive dep), so `npm audit` still flags it — that's expected; it doesn't ship. Don't remove the alias without re-auditing.
+- **Mermaid import is stubbed.** `@excalidraw/mermaid-to-excalidraw` (~5 MB mermaid/katex/cytoscape) is aliased to `mermaidStub.ts` in `electron.vite.config.ts` so it's never in the shipped bundle. It's still in `node_modules` (transitive dep); the advisories its chain carried (lodash-es, nanoid) are pinned to safe versions via npm `overrides`, so `npm audit` is clean. Don't remove the alias without re-auditing.
 - **CDN font-fallback noise.** Excalidraw eagerly fires its esm.sh font fallback even when the local primary works; those requests are CSP-blocked and harmless (console only). `e2e/draw.spec.ts` tolerates them and asserts the real wins (canvas mounts, Excalifont loads locally, no eval, drawing persists + is isolated from the Notes list).
 
 ---
@@ -539,9 +539,14 @@ These have burned us before. Check here before debugging similar symptoms.
 **electron-updater requires a `.zip` target — DMG alone is not enough**
 - The DMG is for first-time installation only. electron-updater downloads and applies a `.zip` for subsequent background updates. If `electron-builder.yml` only lists `dmg` as a target, the updater errors with `ZIP file not provided`. Both `dmg` and `zip` targets must be listed under `mac.target` for the full install + update flow to work.
 
-**npm overrides — two entries exist for good reasons**
+**npm overrides — each entry exists for a documented reason**
 - `"tar": "^7.5.15"` — forces a safe tar version for a known CVE in a transitive dep.
 - `"@esbuild-kit/core-utils": { "esbuild": "^0.25.0" }` — drizzle-kit@0.31.x still bundles the legacy `@esbuild-kit/esm-loader` which pins esbuild to ~0.18.20 (CVE GHSA-67mh-4wv8-2f99). drizzle-kit itself uses esbuild 0.25.x for its own operations; the @esbuild-kit path is legacy code that doesn't run a dev server, so the override carries no runtime risk. Remove once drizzle-kit drops @esbuild-kit.
+- The next four close Dependabot/`npm audit` advisories, **all in dev-only / build-time / stubbed-out transitive deps that never ship in the packaged app** — `npm audit` is clean (`found 0 vulnerabilities`):
+  - `"lodash-es": "^4.18.1"` — GHSA-r5fr-rjxr-66jc (high) + two moderates. Only reachable via the **stubbed** Mermaid chain (`@excalidraw/mermaid-to-excalidraw → @mermaid-js/parser → langium → chevrotain`), which is aliased out of the bundle.
+  - `"nanoid": "^3.3.8"` — fixes Excalidraw's own nested nanoid (3.3.3 → 3.3.8). Excalidraw ships a pre-bundled `dist/prod`, so this is audit-only, not runtime.
+  - `"@excalidraw/mermaid-to-excalidraw": { "nanoid": "^5.0.9" }` — the Mermaid chain pins nanoid 4.x (incompatible major with the `^3.3.8` above, hence a scoped override). Stubbed out; never runs.
+  - `"vite": { "esbuild": "^0.28.1" }` — GHSA-g7r4-m6w7-qqqr (low, esbuild dev-server). vite@7 declares `esbuild: ^0.27.0`, so 0.28.1 is **outside vite's declared range** — but it's a build-time tool that never ships, and the full suite (typecheck/lint/test/build/e2e) passes on it. Revisit if/when vite 8 lands (which uses esbuild 0.28 natively). Do not assume vite supports newer esbuild minors silently — re-run the build after any vite bump.
 
 **`vite` is pinned to v7 — do not upgrade to v8 without migrating plugin-react**
 - `@vitejs/plugin-react@4` declares peer support for vite `^4–7` only. Upgrading vite to v8 breaks `npm ci` with an `ERESOLVE` peer conflict. The migration path to vite 8 requires `@vitejs/plugin-react@6`, which in turn requires `babel-plugin-react-compiler` as a peer dep — a deliberate migration, not a routine bump. Do not run `npm update` blindly.
