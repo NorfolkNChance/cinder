@@ -28,7 +28,7 @@
     "zod": "^3.23.8"
   },
   "overrides": {
-    "tar": "^7.5.15",
+    "tar": "^7.5.16",
     "@esbuild-kit/core-utils": {
       "esbuild": "^0.25.0"
     }
@@ -73,7 +73,7 @@
     "tailwindcss": "^3.4.17",
     "turndown": "^7.2.4",
     "typescript": "^5.7.2",
-    "vite": "^7.3.3",
+    "vite": "^7.3.5",
     "vitest": "^4.1.7",
     "zustand": "^5.0.13"
   }
