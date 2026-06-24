@@ -209,9 +209,9 @@
   .f-copy h3 { font-family: var(--display); font-weight: 500; font-size: clamp(1.6rem, 3vw, 2.1rem); letter-spacing: -0.015em; margin-bottom: 16px; }
   .f-copy > p { color: var(--muted); margin-bottom: 22px; }
   .f-list { list-style: none; display: flex; flex-direction: column; gap: 11px; }
-  .f-list li { display: flex; gap: 12px; align-items: flex-start; font-size: 0.96rem; color: var(--text); }
+  .f-list li { position: relative; padding-left: 19px; font-size: 0.96rem; color: var(--text); }
   .f-list li::before {
-    content: ""; flex: none; width: 7px; height: 7px; margin-top: 9px; border-radius: 2px;
+    content: ""; position: absolute; left: 0; top: 9px; width: 7px; height: 7px; border-radius: 2px;
     background: var(--ember); box-shadow: 0 0 8px 0 var(--glow); transform: rotate(45deg);
   }
   .f-list .sub { color: var(--muted); }
