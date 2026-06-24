@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { useUI } from '../../state/ui';
+import { inlineDrawingEmbeds } from '../draw/inlineDrawingEmbeds';
 import type {
   ExportNoteInput,
   ExportTasksInput,
@@ -17,7 +18,20 @@ export function useExport() {
 
   const exportNote = useCallback(
     async (input: ExportNoteInput): Promise<void> => {
-      const result = await window.api.export.note(input);
+      // Pre-resolve live drawing:// embeds to inline PNGs so the exported .md is
+      // portable (only the renderer can rasterize them). Main inlines static
+      // attachment:// images on top. Best effort — on failure, export the
+      // stored body unchanged.
+      let body: string | undefined;
+      try {
+        const note = await window.api.notes.get({ id: input.noteId });
+        if (note) body = await inlineDrawingEmbeds(note.body);
+      } catch {
+        body = undefined;
+      }
+      const result = await window.api.export.note(
+        body !== undefined ? { ...input, body } : input,
+      );
       if (result.success) {
         showToast('Note exported successfully.', 'success');
       } else if (result.reason === 'error') {

@@ -594,8 +594,8 @@ Weekly review every monday p2
         <H3>Export options</H3>
         <div className="mb-4 overflow-hidden rounded-lg border border-gray-200 text-sm dark:border-gray-800">
           {[
-            ['Export note', 'Save the currently open note as a .md file.'],
-            ['Export all notes', 'Save every note as a .md file into a folder you choose. Filenames are collision-safe.'],
+            ['Export note', 'Save the currently open note as a self-contained .md file — images (including live drawing embeds) are inlined so the file is portable outside Cinder.'],
+            ['Export all notes', 'Save every note as a .md file into a folder you choose. Filenames are collision-safe. Attachment images are inlined; live drawing embeds are inlined only by single-note export.'],
             ['Export tasks', 'Save all active tasks as a .csv file with project, labels, priority, recurrence, and date columns.'],
             ['Backup database', 'Copy the encrypted .db file to a location you choose. Restoring: replace the database file in the app data folder.'],
           ].map(([name, desc]) => (

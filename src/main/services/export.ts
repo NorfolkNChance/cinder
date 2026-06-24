@@ -22,6 +22,7 @@ import { dialog, app } from 'electron';
 import {
   mkdirSync,
   writeFileSync,
+  readFileSync,
   readdirSync,
   unlinkSync,
   chmodSync,
@@ -32,11 +33,57 @@ import { getDb, getDbKey } from '../db/index';
 import { notes, tasks, taskLabels, labels, projects } from '../db/schema';
 import { and, asc, desc, eq, isNull, inArray } from 'drizzle-orm';
 import { getAll as getSettings } from './settings';
+// Import directly from the leaf module, NOT the markdown barrel — the barrel
+// pulls in schema.ts (TipTap/getSchema), which must never load in the main
+// process (no DOM in Node). imageSrcs.ts is pure string work.
+import { mapImageSrcs } from '../../shared/markdown/imageSrcs';
+import { resolveAttachmentPath, AttachmentPathError } from '../security/attachment-path';
 import type {
   ExportNoteInput,
   ExportTasksInput,
   ExportResult,
 } from '../../shared/schemas/export';
+
+/** Map a filename extension to an image MIME type for data: URIs. */
+const EXT_TO_MIME: Record<string, string> = {
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  gif: 'image/gif',
+  webp: 'image/webp',
+  svg: 'image/svg+xml',
+};
+
+/**
+ * Inline every `attachment://<noteId>/<file>` image in a markdown body as a
+ * self-contained `data:` URI, so the exported `.md` renders outside Cinder.
+ * The attachment path is validated (UUID note id, separator-free filename, no
+ * symlink escape) exactly as the protocol handler does; an unreadable or
+ * invalid reference is left untouched rather than failing the whole export.
+ *
+ * `drawing://` live embeds are inlined separately, by the renderer, before the
+ * body reaches here (see useExport) — main can't rasterize them.
+ */
+function inlineAttachments(body: string): Promise<string> {
+  return mapImageSrcs(body, (src) => {
+    if (!src.startsWith('attachment://')) return Promise.resolve(null);
+    try {
+      const url = new URL(src);
+      const noteId = url.hostname;
+      const filename = decodeURIComponent(url.pathname.replace(/^\//, ''));
+      const abs = resolveAttachmentPath(noteId, filename);
+      const ext = filename.slice(filename.lastIndexOf('.') + 1).toLowerCase();
+      const mime = EXT_TO_MIME[ext] ?? 'application/octet-stream';
+      const b64 = readFileSync(abs).toString('base64');
+      return Promise.resolve(`data:${mime};base64,${b64}`);
+    } catch (err) {
+      if (!(err instanceof AttachmentPathError)) {
+        // ENOENT etc. — leave the ref as-is; don't crash the export.
+      }
+      return Promise.resolve(null);
+    }
+  });
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -116,14 +163,20 @@ export async function exportNote(input: ExportNoteInput): Promise<ExportResult> 
     return { success: false, reason: 'cancelled' };
   }
 
+  // The renderer may pass a body with live `drawing://` embeds already inlined
+  // as data: URIs (only it can rasterize them); fall back to the stored body.
+  // Then inline `attachment://` images here so the .md is fully self-contained.
+  const baseBody = input.body ?? note.body;
+  const body = await inlineAttachments(baseBody);
+
   // Build the markdown file. Prepend the title as an H1 if the body
   // doesn't already start with it (so the file is self-contained).
   const titleLine =
-    note.title && !note.body.startsWith(`# ${note.title}`)
+    note.title && !body.startsWith(`# ${note.title}`)
       ? `# ${note.title}\n\n`
       : '';
 
-  writeFileSync(filePath, `${titleLine}${note.body}`, 'utf-8');
+  writeFileSync(filePath, `${titleLine}${body}`, 'utf-8');
   return { success: true, path: filePath };
 }
 
@@ -169,12 +222,17 @@ export async function exportAllNotes(): Promise<ExportResult> {
     }
     usedNames.add(filename);
 
+    // Inline attachment:// images so each .md is self-contained. (Live
+    // drawing:// embeds can't be rasterized here — main has no canvas — so in a
+    // bulk export they remain references; use single-note export or Snapshot
+    // mode for portable drawings.)
+    const body = await inlineAttachments(note.body);
     const titleLine =
-      note.title && !note.body.startsWith(`# ${note.title}`)
+      note.title && !body.startsWith(`# ${note.title}`)
         ? `# ${note.title}\n\n`
         : '';
 
-    writeFileSync(join(destDir, filename), `${titleLine}${note.body}`, 'utf-8');
+    writeFileSync(join(destDir, filename), `${titleLine}${body}`, 'utf-8');
   }
 
   return { success: true, path: destDir };

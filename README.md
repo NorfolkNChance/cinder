@@ -29,7 +29,7 @@ Most notes-and-todos products require you to send your content to someone else's
 - **Project membership** — file a note under a project (the same projects that group tasks), so a project gathers both its notes and its tasks in one place
 - **Note ↔ task links** — link a note to related tasks (and vice versa) and jump between them in either direction
 - **Drag-and-drop import** — drop `.md`, `.markdown`, `.html`, or `.htm` files directly into the sidebar or the empty state; HTML is converted to Markdown automatically via Turndown
-- **Export** — export any note as a `.md` file, or all notes to a folder of `.md` files, via a native Save dialog
+- **Export** — export any note as a **self-contained** `.md` file (images, including live drawing embeds, are inlined as data URIs so the file is portable outside the app), or all notes to a folder of `.md` files, via a native Save dialog
 
 ### Daily Notes
 - **One note per calendar day**, auto-created on first access — no setup required

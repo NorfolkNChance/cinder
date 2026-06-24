@@ -33,3 +33,4 @@ Status: Proposed | Accepted | Deprecated | Superseded by [NNNN](NNNN-...)
 | [0007](0007-embed-excalidraw-self-hosted-assets.md) | Embed Excalidraw via a self-hosted asset scheme under strict CSP | Accepted |
 | [0008](0008-drawings-as-excalidraw-bodytype-notes.md) | Store drawings as notes with `bodyType: 'excalidraw'` | Accepted |
 | [0009](0009-live-drawing-embeds-via-image-nodeview.md) | Live drawing embeds via a `drawing://` image NodeView | Accepted |
+| [0010](0010-self-contained-markdown-export.md) | Self-contained markdown export via data-URI inlining | Accepted |

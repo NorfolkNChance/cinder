@@ -55,6 +55,7 @@ Full architectural spec: [`../ARCHITECTURE.md`](../ARCHITECTURE.md) — read it 
 | + | Draw mode — embedded Excalidraw sketch canvas as a fifth mode; drawings stored as notes with `bodyType 'excalidraw'`; self-hosted assets over a custom `excalidraw-asset://` scheme (no CDN, no `unsafe-eval`); Mermaid import stubbed out. See ADR-0007/0008 |
 | + | Draw embeds in notes — "✏️ Drawing" toolbar button renders a drawing to PNG via `exportToBlob` (canvas raster, eval-free) → saves as an `attachment://` → inserts an image; copy-paste of Excalidraw PNGs reuses the existing TipTap image paste handler |
 | + | Live drawing embeds — "✏️ Drawing" dropdown has a Live/Snapshot toggle; Live inserts a `drawing://<id>` image rendered by a React NodeView that re-rasterizes the drawing's current scene (double-click → edit in Draw mode), Snapshot keeps the static PNG. No serde changes (`drawing://` round-trips like `attachment://`). See ADR-0009 |
+| + | Self-contained markdown export — exporting a note inlines images as base64 `data:` URIs so the `.md` is portable: `attachment://` resolved in the main export service (all export paths), live `drawing://` embeds rasterized in the renderer before single-note export. Shared DOM-free rewriter `mapImageSrcs`. See ADR-0010 |
 
 ---
 
@@ -554,6 +555,9 @@ These have burned us before. Check here before debugging similar symptoms.
 **`src/shared/` is compiled under both Node and web tsconfigs — avoid DOM types in shared code**
 - `tsconfig.node.json` has `"lib": ["ES2022"]` (no DOM), `tsconfig.web.json` has `"lib": ["ES2022", "DOM", "DOM.Iterable"]`. Since shared code is included in both, any DOM-specific type references cause `tsc -p tsconfig.node.json` compile errors.
 - If you need to call `getAttribute` or other DOM methods in a shared TipTap extension, use a structural type alias like `type DomElement = { getAttribute?: (name: string) => string | null }` instead of `HTMLElement`. See `src/shared/markdown/extensions/WikiLink.ts` for the pattern.
+
+**Don't import the `src/shared/markdown` barrel from the main process**
+- The barrel (`src/shared/markdown/index.ts`) re-exports `schema.ts`, which calls TipTap's `getSchema([...])` at module load — that needs the DOM and will break in the main process (Node). The main export service needs `mapImageSrcs`, so it imports the **leaf** `src/shared/markdown/imageSrcs.ts` directly. `mapImageSrcs` is deliberately NOT re-exported from the barrel to keep this from regressing. Any pure shared helper that main needs must be imported by leaf path, not the barrel.
 
 **`notesService.list()` excludes daily notes by default**
 - Since migration 0009, `list()` always appends `AND daily_date IS NULL` unless `dailyOnly: true` is passed. This means any code that calls `list({})` and expects to see all notes (e.g. export, FTS index rebuild) will silently skip daily notes. If a future feature needs all notes regardless of type, pass `includeAllTypes: true` — but first add that flag to the schema. Do not remove the default filter; it keeps the main Notes list clean.

@@ -15,6 +15,13 @@ const Uuid = z.string().uuid();
 /** Export a single note. Main fetches the body from the DB and shows a Save dialog. */
 export const ExportNoteInput = z.object({
   noteId: Uuid,
+  /**
+   * Optional renderer-resolved body to export instead of the stored body. The
+   * renderer uses this to inline live `drawing://` embeds (which only it can
+   * rasterize) as `data:` URIs before export. Main still inlines `attachment://`
+   * images on top. Bounded generously — inlined images can be large.
+   */
+  body: z.string().max(64_000_000).optional(),
 });
 export type ExportNoteInput = z.infer<typeof ExportNoteInput>;
 
