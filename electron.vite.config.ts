@@ -35,7 +35,13 @@ export default defineConfig({
   main: {
     plugins: [
       forceExternal(['@mapbox/node-pre-gyp', 'mock-aws-s3', 'aws-sdk', 'nock']),
-      externalizeDepsPlugin(),
+      // Bundle the MCP SDK (and its transitive deps) into the main output
+      // rather than externalising it. The SDK is ESM-only ("type": "module"
+      // with an exports map); leaving it external would emit a require() of an
+      // ESM package from the CJS main bundle, which is fragile across Node/
+      // Electron versions. Bundling converts it to CJS at build time. It is
+      // pure JS (no native bindings), so this is safe.
+      externalizeDepsPlugin({ exclude: ['@modelcontextprotocol/sdk'] }),
     ],
     build: {
       rollupOptions: {

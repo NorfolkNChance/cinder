@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useUI } from '../../state/ui';
 import { useSettings } from './useSettings';
+import { ConnectorsSection } from './ConnectorsSection';
 import type { AppSettings } from '../../../../shared/schemas/settings';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 
@@ -75,6 +76,7 @@ export function SettingsModal(): JSX.Element | null {
           <SidebarItem label="Notifications" icon="🔔" />
           <SidebarItem label="Backup" icon="💾" />
           <SidebarItem label="Daily Notes" icon="📅" />
+          <SidebarItem label="Connectors" icon="🔌" />
           <SidebarItem label="Matrix" icon="🔲" />
           <SidebarItem label="Tasks" icon="✅" />
         </nav>
@@ -108,6 +110,8 @@ export function SettingsModal(): JSX.Element | null {
                 <BackupSection settings={settings} set={setWithSync} />
                 <div className="my-6 border-t border-gray-200 dark:border-gray-800" />
                 <DailyNotesSection settings={settings} set={setWithSync} />
+                <div className="my-6 border-t border-gray-200 dark:border-gray-800" />
+                <ConnectorsSection />
                 <div className="my-6 border-t border-gray-200 dark:border-gray-800" />
                 <MatrixSection settings={settings} set={setWithSync} />
                 <div className="my-6 border-t border-gray-200 dark:border-gray-800" />

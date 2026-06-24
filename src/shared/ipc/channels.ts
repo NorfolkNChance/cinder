@@ -102,6 +102,18 @@ export const NOTIFY_TASK_DUE = 'notify:taskDue' as const;
 /** Renderer (capture window) → Main: hide the capture popup. */
 export const CAPTURE_HIDE = 'capture:hide' as const;
 
+// ── Connectors (local MCP server) ─────────────────────────────────────────────
+/** Get the current MCP connector status (running, port, token, url, …). */
+export const CONNECTORS_GET_STATUS = 'connectors:getStatus' as const;
+/** Enable/disable the connector — starts or stops the loopback HTTP server. */
+export const CONNECTORS_SET_ENABLED = 'connectors:setEnabled' as const;
+/** Toggle whether write tools are exposed to connected clients. */
+export const CONNECTORS_SET_ALLOW_WRITES = 'connectors:setAllowWrites' as const;
+/** Rotate the bearer token (invalidates any already-configured connector). */
+export const CONNECTORS_ROTATE_TOKEN = 'connectors:rotateToken' as const;
+/** Read the recent MCP tool-call audit log (read-only). */
+export const CONNECTORS_GET_AUDIT_LOG = 'connectors:getAuditLog' as const;
+
 // ── Export ───────────────────────────────────────────────────────────────────
 /** Export a single note as a .md file — opens a Save dialog. */
 export const EXPORT_NOTE = 'export:note' as const;

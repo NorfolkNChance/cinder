@@ -67,4 +67,9 @@ export const queryKeys = {
     forTask: (taskId: string) =>
       [...queryKeys.links.all, 'forTask', taskId] as const,
   },
+  connectors: {
+    all: ['connectors'] as const,
+    status: () => [...queryKeys.connectors.all, 'status'] as const,
+    auditLog: () => [...queryKeys.connectors.all, 'auditLog'] as const,
+  },
 } as const;

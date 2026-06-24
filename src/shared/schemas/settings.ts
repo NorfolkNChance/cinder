@@ -66,6 +66,21 @@ const DailyTemplate = z.string().max(50_000);
 /** UI colour scheme preference. */
 const AppearanceTheme = z.enum(['auto', 'light', 'dark']);
 
+// ── Connectors (MCP server) ──────────────────────────────────────────────────
+
+/** Whether the local MCP server (for connecting Claude) is running. */
+const McpEnabled = z.boolean();
+
+/**
+ * Whether write tools (create/update/complete) are exposed to Claude.
+ * Read tools are always available when the server is enabled; writes are
+ * opt-in so a connected client cannot modify or delete data by default.
+ */
+const McpAllowWrites = z.boolean();
+
+/** TCP port the loopback MCP server binds to (127.0.0.1 only). */
+const McpPort = z.number().int().min(1024).max(65_535);
+
 // ── Aggregated schema ────────────────────────────────────────────────────────
 
 export const AppSettingsSchema = z.object({
@@ -79,6 +94,9 @@ export const AppSettingsSchema = z.object({
   'notifications.enabled': NotificationsEnabled,
   'backup.autoOnQuit': BackupAutoOnQuit,
   'backup.keepCount': BackupKeepCount,
+  'connectors.mcp.enabled': McpEnabled,
+  'connectors.mcp.allowWrites': McpAllowWrites,
+  'connectors.mcp.port': McpPort,
 });
 
 export type AppSettings = z.infer<typeof AppSettingsSchema>;
@@ -95,6 +113,11 @@ export const DEFAULT_SETTINGS: AppSettings = {
   'notifications.enabled': true,
   'backup.autoOnQuit': true,
   'backup.keepCount': 7,
+  // Connector is OFF by default — nothing listens until the user opts in.
+  'connectors.mcp.enabled': false,
+  // Writes are OFF by default — Claude can read but not modify until enabled.
+  'connectors.mcp.allowWrites': false,
+  'connectors.mcp.port': 51789,
 };
 
 // ── IPC input/output schemas ─────────────────────────────────────────────────

@@ -72,12 +72,20 @@ Most notes-and-todos products require you to send your content to someone else's
 - Fuzzy-match search across all navigation targets, task scopes, projects, labels, saved filters, and actions
 - Navigate to Notes, Tasks, Matrix, or Daily; jump to any project or label; create notes; open Help, Settings, or trigger exports — all from the keyboard
 
+### Connect to Claude (MCP connector)
+- **Local Model Context Protocol server** lets Claude (Desktop) connect to Cinder as a custom connector and work with your notes and tasks
+- **Local-first and private** — the server runs inside Cinder, binds to `127.0.0.1` only, requires a secret bearer token, and runs only while the app is open; it is **off by default**
+- **Read by default, write on request** — Claude can search and read notes, daily notes, tasks, projects, folders, and labels out of the box; creating/updating notes and capturing tasks is gated behind an **Allow writes** toggle, and captured tasks land in the Triage queue
+- **Notes as @-mentions** via MCP resources, plus ready-made prompts (Triage my inbox, Summarize today, Weekly review)
+- **Audit log** in Settings → Connectors shows every action Claude takes, and the token can be rotated at any time
+
 ### Settings
 - Persistent preferences stored in the encrypted database
 - **Appearance:** Auto / Light / Dark theme with live system-preference tracking
 - **Matrix:** urgency window (days ahead that count as urgent) and importance cutoff (which priorities are "important")
 - **Tasks:** default scope on startup (Inbox / Today / Upcoming), show-completed toggle
 - **Notifications:** enable or disable due-task macOS alerts
+- **Connectors:** enable the Claude connector, copy the connection URL/token, toggle write access, rotate the token, and review the activity log
 - Changes take effect immediately; matrix updates live while the panel is open
 - Open with ⌘, or the ⚙ button in the toolbar
 

@@ -34,3 +34,4 @@ Status: Proposed | Accepted | Deprecated | Superseded by [NNNN](NNNN-...)
 | [0008](0008-drawings-as-excalidraw-bodytype-notes.md) | Store drawings as notes with `bodyType: 'excalidraw'` | Accepted |
 | [0009](0009-live-drawing-embeds-via-image-nodeview.md) | Live drawing embeds via a `drawing://` image NodeView | Accepted |
 | [0010](0010-self-contained-markdown-export.md) | Self-contained markdown export via data-URI inlining | Accepted |
+| [0011](0011-mcp-connector-in-main-process.md) | Run the MCP connector in the main process over loopback HTTP | Accepted |
