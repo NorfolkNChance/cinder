@@ -64,6 +64,11 @@ import {
   VAULT_SCAN,
   VAULT_IMPORT,
   VAULT_PROGRESS,
+  CONNECTORS_GET_STATUS,
+  CONNECTORS_SET_ENABLED,
+  CONNECTORS_SET_ALLOW_WRITES,
+  CONNECTORS_ROTATE_TOKEN,
+  CONNECTORS_GET_AUDIT_LOG,
 } from '../shared/ipc/channels';
 import type {
   Note,
@@ -150,6 +155,13 @@ import type {
   FolderDeleteInput,
 } from '../shared/schemas/folders';
 import type { UpdateStatus } from '../shared/schemas/update';
+import type {
+  McpServerStatus,
+  McpAuditEntry,
+  McpSetEnabledInput,
+  McpSetAllowWritesInput,
+  McpGetAuditLogInput,
+} from '../shared/schemas/connectors';
 import type {
   VaultScanInput,
   VaultScanResult,
@@ -291,6 +303,23 @@ contextBridge.exposeInMainWorld('api', {
      * Called by the capture renderer after task creation or Escape.
      */
     hide: (): Promise<void> => ipcRenderer.invoke(CAPTURE_HIDE),
+  },
+  connectors: {
+    /** Current MCP connector status (running, port, token, url, allowWrites). */
+    getStatus: (): Promise<McpServerStatus> =>
+      ipcRenderer.invoke(CONNECTORS_GET_STATUS),
+    /** Enable/disable the connector — starts or stops the loopback server. */
+    setEnabled: (input: McpSetEnabledInput): Promise<McpServerStatus> =>
+      ipcRenderer.invoke(CONNECTORS_SET_ENABLED, input),
+    /** Toggle whether write tools are exposed to connected clients. */
+    setAllowWrites: (input: McpSetAllowWritesInput): Promise<McpServerStatus> =>
+      ipcRenderer.invoke(CONNECTORS_SET_ALLOW_WRITES, input),
+    /** Rotate the bearer token; the old connector URL stops working. */
+    rotateToken: (): Promise<McpServerStatus> =>
+      ipcRenderer.invoke(CONNECTORS_ROTATE_TOKEN),
+    /** Read the recent MCP tool-call audit log (newest first). */
+    getAuditLog: (input: McpGetAuditLogInput): Promise<readonly McpAuditEntry[]> =>
+      ipcRenderer.invoke(CONNECTORS_GET_AUDIT_LOG, input),
   },
   notify: {
     /**

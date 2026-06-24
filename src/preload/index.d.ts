@@ -90,6 +90,13 @@ import type {
   VaultImportResult,
   VaultProgress,
 } from '../shared/schemas/vault';
+import type {
+  McpServerStatus,
+  McpAuditEntry,
+  McpSetEnabledInput,
+  McpSetAllowWritesInput,
+  McpGetAuditLogInput,
+} from '../shared/schemas/connectors';
 
 export {};
 
@@ -182,6 +189,17 @@ declare global {
       };
       capture: {
         hide: () => Promise<void>;
+      };
+      connectors: {
+        getStatus: () => Promise<McpServerStatus>;
+        setEnabled: (input: McpSetEnabledInput) => Promise<McpServerStatus>;
+        setAllowWrites: (
+          input: McpSetAllowWritesInput,
+        ) => Promise<McpServerStatus>;
+        rotateToken: () => Promise<McpServerStatus>;
+        getAuditLog: (
+          input: McpGetAuditLogInput,
+        ) => Promise<readonly McpAuditEntry[]>;
       };
       notify: {
         onTaskDue: (cb: () => void) => () => void;

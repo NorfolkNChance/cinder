@@ -1165,6 +1165,64 @@ Take vitamins every day`}</CodeBlock>
     },
   },
 
+  // ── Connectors (Claude / MCP) ────────────────────────────────────────────
+  {
+    id: 'connectors',
+    title: 'Connect to Claude',
+    icon: '🔌',
+    keywords: ['connector', 'claude', 'mcp', 'model context protocol', 'ai', 'assistant', 'token', 'integration'],
+    render: function ConnectorsHelpSection() {
+      return (
+        <div>
+          <H2>Connect Cinder to Claude</H2>
+          <P>
+            Cinder can run a small local server so Claude (Desktop) can connect to it as a
+            custom connector and work with your notes and tasks — searching, reading, and
+            (if you allow it) capturing new ones. Everything stays on your Mac: the server
+            binds to <Code>127.0.0.1</Code> only and runs only while Cinder is open.
+          </P>
+
+          <H3>Turn it on</H3>
+          <ol className="mb-3 list-inside list-decimal space-y-1 text-sm text-gray-600 dark:text-gray-400">
+            <li>Open <strong>Settings → Connectors</strong> and switch on <strong>Enable connector</strong>.</li>
+            <li>Copy the <strong>Connector URL</strong> and the <strong>Token</strong>.</li>
+            <li>
+              In Claude, go to <strong>Settings → Connectors → Add custom connector</strong>,
+              paste the URL, and supply the token as the authentication token
+              (<Code>Authorization: Bearer …</Code>). If your client only accepts a URL,
+              use the <strong>URL-with-token</strong> link instead.
+            </li>
+          </ol>
+
+          <H3>What Claude can do</H3>
+          <ul className="mb-3 list-inside list-disc space-y-1 text-sm text-gray-600 dark:text-gray-400">
+            <li><strong>Read</strong> — search notes, read notes and daily notes, list tasks, triage, projects, folders, and labels. Always available.</li>
+            <li>
+              <strong>Write</strong> — create and update notes, append to your daily note,
+              and capture tasks. <strong>Off by default.</strong> Turn on <strong>Allow
+              writes</strong> to enable it. Captured tasks land in your <strong>Triage</strong>
+              queue for you to review before they enter normal flow.
+            </li>
+            <li><strong>Prompts</strong> — ready-made workflows like &ldquo;Triage my inbox&rdquo;, &ldquo;Summarize today&rdquo;, and &ldquo;Weekly review&rdquo;.</li>
+          </ul>
+
+          <H3>Staying in control</H3>
+          <ul className="mb-3 list-inside list-disc space-y-1 text-sm text-gray-600 dark:text-gray-400">
+            <li><strong>Recent activity</strong> shows every action Claude took through the connector.</li>
+            <li><strong>Rotate token</strong> issues a fresh token; the old connector URL stops working until you re-paste the new one.</li>
+            <li>Switch <strong>Enable connector</strong> off to stop the server entirely.</li>
+          </ul>
+
+          <Callout type="info">
+            The token is your connector&apos;s password — anyone with it (and access to your
+            Mac) could read your notes through the connector. Keep it private, and rotate it
+            if you ever paste it somewhere you shouldn&apos;t have.
+          </Callout>
+        </div>
+      );
+    },
+  },
+
   // ── Feedback ─────────────────────────────────────────────────────────────
   {
     id: 'feedback',

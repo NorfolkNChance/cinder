@@ -52,6 +52,7 @@ Full architectural spec: [`../ARCHITECTURE.md`](../ARCHITECTURE.md) — read it 
 | + | Reproducible release tooling — `electron-builder` pinned exact in devDependencies; Electron bumped to 42 (with both-arch SQLCipher prebuilt fetch in CI) |
 | + | Cross-domain projects — notes gain `project_id` (migration 0012); project view lists its notes alongside tasks; NoteEditor has a project selector. See ADR-0006 |
 | + | Note ↔ task links — `note_task_links` join table (migration 0013), `links:*` IPC domain, "Link task"/"Link note" pickers in NoteEditor and task detail, bidirectional navigation. See ADR-0006 |
+| + | MCP connector — local Model Context Protocol server (in main process, loopback HTTP, bearer-token auth) so Claude Desktop can connect to Cinder; read tools always on, write tools opt-in (default off), captured tasks land in Triage; Settings → Connectors UI + audit log; resources (`cinder://note/{id}`) and prompts. See ADR-0011 |
 | + | Draw mode — embedded Excalidraw sketch canvas as a fifth mode; drawings stored as notes with `bodyType 'excalidraw'`; self-hosted assets over a custom `excalidraw-asset://` scheme (no CDN, no `unsafe-eval`); Mermaid import stubbed out. See ADR-0007/0008 |
 | + | Draw embeds in notes — "✏️ Drawing" toolbar button renders a drawing to PNG via `exportToBlob` (canvas raster, eval-free) → saves as an `attachment://` → inserts an image; copy-paste of Excalidraw PNGs reuses the existing TipTap image paste handler |
 | + | Live drawing embeds — "✏️ Drawing" dropdown has a Live/Snapshot toggle; Live inserts a `drawing://<id>` image rendered by a React NodeView that re-rasterizes the drawing's current scene (double-click → edit in Draw mode), Snapshot keeps the static PNG. No serde changes (`drawing://` round-trips like `attachment://`). See ADR-0009 |
@@ -283,6 +284,34 @@ A user-curated many-to-many association in the `note_task_links` table (migratio
 - **Idempotent create** — `linksService.create` uses `ON CONFLICT DO NOTHING`, so re-linking a pair is a no-op, not an error.
 - **Soft-delete aware** — links only CASCADE on **hard** delete; both notes and tasks soft-delete, so `listForNote`/`listForTask` filter `deleted_at IS NULL` to avoid phantom links.
 - **No new `tasks` column** — the join-table approach deliberately avoids touching the `tasks` schema, so the raw-SQL column list in `tasks.ts` `listByFilter` needs no change.
+
+---
+
+## MCP Connector (ADR-0011)
+
+A local **Model Context Protocol** server that lets Claude (Desktop) connect to Cinder as a custom connector. It runs **inside the main process** over **loopback HTTP** — *not* as a stdio subprocess — because the SQLCipher DB key is Keychain-scoped to the Cinder app and a foreign process can't decrypt it. Reuses the existing service layer; it is a new untrusted-input boundary, treated like the renderer/IPC edge.
+
+**The MCP boundary is a security boundary. These rules must never regress:**
+
+- **Service layer is the only data path.** Every MCP tool calls `notesService` / `tasksService` / etc. **No raw SQL in `src/main/mcp/`.** Same discipline as IPC handlers.
+- **Loopback bind only** — `server.listen(port, '127.0.0.1')`. Never `0.0.0.0`. Localhost is *not* a trust boundary (any local process can reach it), so:
+- **Bearer token is mandatory** on every request, compared with `timingSafeEqual` (`src/main/mcp/auth.ts`). Stored as a `safeStorage`-encrypted blob in `userData/mcp-token.key`, same pattern as `db.key`. Rotatable from Settings; rotation invalidates the old connector URL.
+- **Host-header allowlist** (`isLoopbackHost`, `src/main/mcp/host-guard.ts`) + the SDK transport's DNS-rebinding protection — blocks a browser tab from POSTing via a rebound hostname.
+- **Writes are opt-in.** Read tools are always registered; write tools are registered **only when `connectors.mcp.allowWrites` is true** (default false). Don't change this to "register always + error" — non-registration is the stronger gate. `create_task` defaults to `triage: 1` so Claude-captured todos land in the Triage queue, mirroring quick-capture.
+- **Off by default** (`connectors.mcp.enabled` = false). Only runs while Cinder is open.
+
+**Key files** (`src/main/mcp/`):
+- `server.ts` — Node `http` server (loopback), per-request stateless `StreamableHTTPServerTransport`, lifecycle (`startServer`/`stopServer`/`syncServerToSetting`/`getStatus`). Wired into `index.ts` boot (`syncMcpServer()`) and `will-quit` (`stopMcpServer()`).
+- `auth.ts` — token generate/rotate/verify (`safeStorage`, `timingSafeEqual`), `extractToken` (Bearer header preferred, `/mcp/<token>` path fallback for clients that can't set headers).
+- `host-guard.ts` — pure `isLoopbackHost` (unit-tested).
+- `tools.ts` — `buildMcpServer({ allowWrites })` registers read tools always, write tools conditionally, plus resources/prompts. Maps each tool to a service call; records every call to the audit log.
+- `resources.ts` — `cinder://note/{id}` and `cinder://daily/{date}` (listable → @-mentionable).
+- `prompts.ts` — `triage_inbox`, `summarize_today`, `weekly_review`.
+- `audit.ts` — append-only JSONL log at `userData/mcp-audit.log` (no secrets); surfaced read-only in Settings → Connectors.
+
+**Control surface:** `connectors:*` IPC domain (`src/main/ipc/connectors.ts`, channels in `channels.ts`, schemas in `src/shared/schemas/connectors.ts`, preload `window.api.connectors.*`). UI is `ConnectorsSection.tsx` in Settings. Settings keys `connectors.mcp.{enabled,allowWrites,port}` need **no migration** (settings service backfills defaults).
+
+**Build note:** `@modelcontextprotocol/sdk` is **ESM-only** and is **bundled** into the main output (not externalised) via `externalizeDepsPlugin({ exclude: ['@modelcontextprotocol/sdk'] })` in `electron.vite.config.ts` — leaving it external would emit a `require()` of an ESM package from the CJS main bundle. It lives in `devDependencies` (bundled deps aren't shipped in `node_modules`). After bumping it, re-check the main bundle size.
 
 ---
 

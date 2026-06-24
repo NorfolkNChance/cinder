@@ -22,6 +22,8 @@ import { registerSettingsHandlers } from './ipc/settings';
 import { registerUpdateHandlers } from './ipc/update';
 import { registerCaptureHandlers } from './ipc/capture';
 import { registerVaultHandlers } from './ipc/vault';
+import { registerConnectorsHandlers } from './ipc/connectors';
+import { syncServerToSetting as syncMcpServer, stopServer as stopMcpServer } from './mcp/server';
 import { initTray, cleanupTray } from './tray';
 import { initUpdater } from './services/updater';
 import { initNotifier, cleanupNotifier } from './services/notifier';
@@ -253,11 +255,18 @@ app.whenReady().then(async () => {
   registerUpdateHandlers();
   registerCaptureHandlers();
   registerVaultHandlers();
+  registerConnectorsHandlers();
 
   mainWindowRef = createWindow();
   initTray();
   initUpdater(mainWindowRef);
   initNotifier(() => mainWindowRef);
+
+  // Start the local MCP connector server if the user has enabled it. Failure
+  // here must never block app startup — the connector is an optional feature.
+  syncMcpServer().catch((err: unknown) => {
+    console.error('[cinder] MCP connector failed to start:', err);
+  });
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -292,6 +301,7 @@ app.on('will-quit', (event) => {
     } finally {
       cleanupNotifier();
       cleanupTray();
+      await stopMcpServer().catch(() => undefined);
       app.quit();
     }
   })();
