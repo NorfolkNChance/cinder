@@ -23,13 +23,25 @@ await mkdir(dest, { recursive: true });
 
 // fonts/ and locales/ are fetched at runtime by code path; the worker +
 // shared chunks are spawned as a module Worker for font subsetting.
+//
+// Skip the CJK font (Xiaolai, ~12 MB — 95% of the font payload): Excalidraw
+// eagerly preloads it through its esm.sh CDN fallback, NOT through
+// EXCALIDRAW_ASSET_PATH, so the local copy is never actually used (verified:
+// those requests hit esm.sh and are CSP-blocked whether or not we ship it).
+// Shipping it is dead weight; without it, CJK text in a drawing falls back to a
+// system font — fine for a sketch tool.
+const SKIP = new Set(['Xiaolai']);
+
 for (const entry of [
   'fonts',
   'locales',
   'subset-worker.chunk.js',
   'subset-shared.chunk.js',
 ]) {
-  await cp(join(src, entry), join(dest, entry), { recursive: true });
+  await cp(join(src, entry), join(dest, entry), {
+    recursive: true,
+    filter: (s) => !s.split(/[\\/]/).some((seg) => SKIP.has(seg)),
+  });
 }
 
 console.log(`[excalidraw] assets copied → ${dest}`);
