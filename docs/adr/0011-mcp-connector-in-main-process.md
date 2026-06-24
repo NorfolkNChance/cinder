@@ -84,6 +84,13 @@ Key implementation points:
   using the `mcp-remote` bridge (stdio↔HTTP) with the bearer token passed as a header and
   `--transport http-only` (our transport is JSON-only, no SSE). The in-app instructions and
   help now generate this config ("Copy config"); do not document the URL-field approach.
+- **Host-check bug (fixed in 1.6.2):** the SDK transport's `enableDnsRebindingProtection`
+  matches the *full* Host header including the port, so the original port-less
+  `allowedHosts: ['127.0.0.1', …]` 403'd every authenticated request ("Invalid Host header")
+  and the connector returned zero tools. The transport now uses only `enableJsonResponse`;
+  our own `isLoopbackHost` (port-stripping) is the host guard. Regression test:
+  `src/main/mcp/server.transport.test.ts`. Verified end-to-end against the real `mcp-remote`
+  bridge.
 - The connector only works **while Cinder is running**. Documented in-app.
 - A localhost listener is reachable by other local processes; the bearer token is the only
   thing protecting the data, so token handling (timing-safe compare, encrypted at rest,

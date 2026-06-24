@@ -24,6 +24,22 @@ const MCP_PATH = '/mcp';
 let httpServer: Server | null = null;
 let boundPort: number | null = null;
 
+/**
+ * Construct the per-request Streamable HTTP transport.
+ *
+ * Stateless (no sessionIdGenerator) + JSON responses (no SSE) suit simple tool
+ * request/response. **DNS-rebinding protection is handled by our own
+ * `isLoopbackHost` check** in `handle()`, which strips the port before
+ * comparing. We deliberately do NOT enable the SDK's `enableDnsRebindingProtection`
+ * with `allowedHosts`: that path matches the *full* Host header including the
+ * port (e.g. `127.0.0.1:51789`), so a port-less allowlist 403s every real
+ * request ("Invalid Host header") after our own check has already passed.
+ * See the "MCP host check" gotcha in CLAUDE.md.
+ */
+export function createMcpTransport(): StreamableHTTPServerTransport {
+  return new StreamableHTTPServerTransport({ enableJsonResponse: true });
+}
+
 function send(res: ServerResponse, status: number, body: string): void {
   res.writeHead(status, { 'content-type': 'application/json' });
   res.end(body);
@@ -67,13 +83,7 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
   // 3. Build a fresh, stateless server reflecting the current write setting.
   const settings = await settingsService.getAll();
   const server = buildMcpServer({ allowWrites: settings['connectors.mcp.allowWrites'] });
-  const transport = new StreamableHTTPServerTransport({
-    // Stateless mode: omit sessionIdGenerator (session management disabled).
-    // Plain JSON responses (no SSE) suit simple tool request/response.
-    enableJsonResponse: true,
-    enableDnsRebindingProtection: true,
-    allowedHosts: ['127.0.0.1', 'localhost', '[::1]'],
-  });
+  const transport = createMcpTransport();
 
   res.on('close', () => {
     void transport.close();
