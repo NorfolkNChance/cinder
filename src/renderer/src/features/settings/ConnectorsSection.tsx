@@ -57,6 +57,32 @@ export function ConnectorsSection(): JSX.Element {
     );
   }
 
+  // Paste-ready Claude Desktop config. Claude Desktop can't reach a local HTTP
+  // server through its "Add custom connector" box (that requires a public https
+  // URL); it bridges to local servers over stdio via `mcp-remote`. We keep the
+  // real token in the env block (referenced by the header) rather than the args.
+  const claudeConfig = JSON.stringify(
+    {
+      mcpServers: {
+        cinder: {
+          command: 'npx',
+          args: [
+            '-y',
+            'mcp-remote',
+            status.url,
+            '--transport',
+            'http-only',
+            '--header',
+            'Authorization: Bearer ${CINDER_TOKEN}',
+          ],
+          env: { CINDER_TOKEN: status.token },
+        },
+      },
+    },
+    null,
+    2,
+  );
+
   return (
     <section>
       <SectionHeading icon="🔌" title="Connectors (Claude)" />
@@ -105,19 +131,39 @@ export function ConnectorsSection(): JSX.Element {
             onCopy={() => copy('token', status.token)}
           />
 
-          <p className="mb-4 mt-2 text-[11px] leading-relaxed text-gray-500 dark:text-gray-500">
-            In Claude → Settings → Connectors → <em>Add custom connector</em>, paste the
-            Connector URL and supply the token as the authentication token
-            (<span className="font-mono">Authorization: Bearer …</span>). If your client
-            only accepts a URL, use{' '}
-            <button
-              onClick={() => copy('capurl', `${status.url}/${status.token}`)}
-              className="font-mono underline decoration-dotted hover:text-gray-700 dark:hover:text-gray-300"
-            >
-              {copied === 'capurl' ? 'Copied!' : 'URL-with-token'}
-            </button>{' '}
-            instead.
-          </p>
+          {/* Claude Desktop setup — the loopback server is reached over a
+              stdio bridge (mcp-remote), NOT the "Add custom connector" URL box
+              (which only accepts public https URLs). */}
+          <div className="mb-5 mt-3 rounded border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-950">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-[12px] font-medium text-gray-700 dark:text-gray-300">
+                Connect Claude Desktop
+              </p>
+              <button
+                onClick={() => copy('config', claudeConfig)}
+                className="flex-shrink-0 rounded border border-gray-300 px-2 py-1 text-xs text-gray-600 transition-colors hover:border-gray-400 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-gray-700 dark:text-gray-400 dark:hover:border-gray-600 dark:hover:text-gray-200"
+              >
+                {copied === 'config' ? 'Copied!' : 'Copy config'}
+              </button>
+            </div>
+            <p className="mb-2 text-[11px] leading-relaxed text-gray-500 dark:text-gray-500">
+              Claude Desktop reaches local servers through its config file — its
+              &ldquo;Add custom connector&rdquo; box only accepts public{' '}
+              <span className="font-mono">https</span> URLs. Paste the config below into{' '}
+              <span className="font-mono">
+                ~/Library/Application Support/Claude/claude_desktop_config.json
+              </span>{' '}
+              (create it if it doesn&apos;t exist), then fully quit and reopen Claude Desktop.
+            </p>
+            <pre className="max-h-44 overflow-auto rounded bg-gray-100 p-2 font-mono text-[10px] leading-relaxed text-gray-700 dark:bg-gray-900 dark:text-gray-300">
+              {claudeConfig}
+            </pre>
+            <p className="mt-2 text-[11px] leading-relaxed text-gray-500 dark:text-gray-600">
+              Requires Node.js (<span className="font-mono">npx</span>) on your PATH. The bridge
+              (<span className="font-mono">mcp-remote</span>) relays Claude to this server using
+              the token above. The raw URL and token are also shown for other MCP clients.
+            </p>
+          </div>
 
           <Field
             label="Allow writes"

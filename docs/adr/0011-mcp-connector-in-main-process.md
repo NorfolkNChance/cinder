@@ -77,6 +77,13 @@ Key implementation points:
 - The connector experience is one toggle in Settings; the user pastes a URL + token.
 
 **Negative / watch points**
+- **Connection mechanism correction (post-ship):** Claude Desktop's "Add custom connector"
+  URL field only accepts **public `https`** URLs and rejects `http://127.0.0.1:…` with
+  "URL must start with 'https'". A loopback HTTP server therefore cannot be added that way.
+  The working path is Claude Desktop's **stdio** transport via `claude_desktop_config.json`
+  using the `mcp-remote` bridge (stdio↔HTTP) with the bearer token passed as a header and
+  `--transport http-only` (our transport is JSON-only, no SSE). The in-app instructions and
+  help now generate this config ("Copy config"); do not document the URL-field approach.
 - The connector only works **while Cinder is running**. Documented in-app.
 - A localhost listener is reachable by other local processes; the bearer token is the only
   thing protecting the data, so token handling (timing-safe compare, encrypted at rest,

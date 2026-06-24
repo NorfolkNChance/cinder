@@ -1182,17 +1182,29 @@ Take vitamins every day`}</CodeBlock>
             binds to <Code>127.0.0.1</Code> only and runs only while Cinder is open.
           </P>
 
-          <H3>Turn it on</H3>
+          <H3>Connect Claude Desktop</H3>
+          <P>
+            Claude Desktop can&apos;t reach a local server through its
+            &ldquo;Add custom connector&rdquo; box — that field only accepts public{' '}
+            <Code>https</Code> URLs. Instead, Claude Desktop talks to local servers through
+            its config file, using a small bridge (<Code>mcp-remote</Code>).
+          </P>
           <ol className="mb-3 list-inside list-decimal space-y-1 text-sm text-gray-600 dark:text-gray-400">
             <li>Open <strong>Settings → Connectors</strong> and switch on <strong>Enable connector</strong>.</li>
-            <li>Copy the <strong>Connector URL</strong> and the <strong>Token</strong>.</li>
+            <li>Click <strong>Copy config</strong> to copy a ready-made Claude Desktop configuration (it already includes your URL and token).</li>
             <li>
-              In Claude, go to <strong>Settings → Connectors → Add custom connector</strong>,
-              paste the URL, and supply the token as the authentication token
-              (<Code>Authorization: Bearer …</Code>). If your client only accepts a URL,
-              use the <strong>URL-with-token</strong> link instead.
+              Paste it into{' '}
+              <Code>~/Library/Application Support/Claude/claude_desktop_config.json</Code>{' '}
+              (create the file if it doesn&apos;t exist). If the file already has an
+              <Code>mcpServers</Code> block, add the <Code>cinder</Code> entry inside it.
             </li>
+            <li>Fully quit and reopen Claude Desktop — Cinder&apos;s tools then appear.</li>
           </ol>
+          <Callout type="info">
+            The bridge needs <Code>Node.js</Code> (<Code>npx</Code>) on your PATH, and Cinder
+            must be running with the connector enabled. The raw URL and token are also shown
+            in Settings for other MCP clients that accept an HTTP endpoint directly.
+          </Callout>
 
           <H3>What Claude can do</H3>
           <ul className="mb-3 list-inside list-disc space-y-1 text-sm text-gray-600 dark:text-gray-400">
