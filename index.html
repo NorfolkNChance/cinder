@@ -4,12 +4,12 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Cinder — Local-first notes &amp; todos for macOS</title>
-<meta name="description" content="Cinder is a local-first macOS notes-and-todos app. Markdown notes, a full todo system, and an Eisenhower matrix — all in an encrypted, hardened Electron shell. No account, no server." />
+<meta name="description" content="Cinder is a local-first macOS notes-and-todos app. Markdown notes, daily journals, freehand sketches, a full todo system, and an Eisenhower matrix — all in an encrypted, hardened Electron shell. No account, no server." />
 
 <!-- Open Graph -->
 <meta property="og:type" content="website" />
 <meta property="og:title" content="Cinder — Local-first notes &amp; todos for macOS" />
-<meta property="og:description" content="Markdown notes, a full todo system, and an Eisenhower matrix — encrypted at rest, no account, no server." />
+<meta property="og:description" content="Markdown notes, daily journals, freehand sketches, a full todo system, and an Eisenhower matrix — encrypted at rest, no account, no server." />
 <meta property="og:url" content="https://cinder.jameswburns.com" />
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -336,7 +336,7 @@
     <div class="hero-inner">
       <span class="eyebrow"><span class="dot"></span> Local-first · macOS · Encrypted</span>
       <h1><span class="gl">Cinder</span><br /><em>your notes, kept&nbsp;close.</em></h1>
-      <p class="lede">A local-first notes-and-todos app for macOS. Markdown notes, a full task system, and an Eisenhower matrix — all in a hardened shell. <strong>No account. No server. No one else's cloud.</strong></p>
+      <p class="lede">A local-first notes-and-todos app for macOS. Markdown notes, daily journals, freehand sketches, a full task system, and an Eisenhower matrix — all in a hardened shell. <strong>No account. No server. No one else's cloud.</strong></p>
       <div class="cta-row">
         <a class="btn btn-primary js-download" href="https://github.com/NorfolkNChance/cinder/releases" target="_blank" rel="noopener">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -348,7 +348,7 @@
         </a>
       </div>
       <p class="dl-alt"><a class="js-download-alt" href="https://github.com/NorfolkNChance/cinder/releases" target="_blank" rel="noopener"></a></p>
-      <p class="hero-note">// Feature-complete · 279 tests · MIT licensed · <span id="ver">v1.0.5</span></p>
+      <p class="hero-note">// Feature-complete · 352 tests · MIT licensed · <span id="ver">v1.5.0</span></p>
     </div>
   </div>
 </header>
@@ -386,8 +386,8 @@
   <div class="wrap">
     <div class="sec-head reveal">
       <div class="kicker">What works today</div>
-      <h2>Three tools, one keystroke apart.</h2>
-      <p>Notes, tasks, and prioritisation — woven together and reachable entirely from the keyboard.</p>
+      <h2>Five modes, one keystroke apart.</h2>
+      <p>Notes, daily journals, sketches, tasks, and prioritisation — woven together and reachable entirely from the keyboard.</p>
     </div>
 
     <!-- Notes -->
@@ -410,6 +410,63 @@
             <div class="doc-line w1"></div><div class="doc-line w2"></div><div class="doc-line w3"></div><div class="doc-line w4"></div>
             <div class="doc-chk"><span class="bx on"></span><span class="ln" style="width:65%"></span></div>
             <div class="doc-chk"><span class="bx"></span><span class="ln" style="width:80%"></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Daily Notes -->
+    <div class="feature flip">
+      <div class="f-copy reveal">
+        <h3>A note for every day</h3>
+        <p>Daily Notes gives each calendar day its own page — created the moment you open it, organised in a year → month → day tree.</p>
+        <ul class="f-list">
+          <li>One note per day, auto-created on first visit</li>
+          <li>Jump to today with a click; browse the past in a collapsible tree</li>
+          <li>Pre-fill new days from a Markdown template</li>
+          <li>Capture todos straight from a daily note into triage</li>
+        </ul>
+      </div>
+      <div class="f-visual reveal">
+        <div class="mock">
+          <div class="mock-bar"><span class="tl"></span><span class="tl"></span><span class="tl"></span><span class="mock-title">Daily</span></div>
+          <div class="mock-body" style="font-family: var(--mono); font-size: 0.82rem; line-height: 1.9;">
+            <div style="color: var(--text);">▾ 2026</div>
+            <div style="margin-left: 18px; color: var(--text);">▾ June</div>
+            <div style="margin-left: 36px; color: var(--amber); display: flex; align-items: center; gap: 9px;"><span style="width: 6px; height: 6px; border-radius: 50%; background: var(--ember);"></span>24 · Tuesday</div>
+            <div style="margin-left: 36px; color: var(--muted);">23 · Monday</div>
+            <div style="margin-left: 36px; color: var(--muted);">21 · Saturday</div>
+            <div style="margin-left: 18px; color: var(--faint);">▸ May</div>
+            <div style="color: var(--faint);">▸ 2025</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Draw -->
+    <div class="feature">
+      <div class="f-copy reveal">
+        <h3>Sketch and diagram, right where you think</h3>
+        <p>A built-in Excalidraw canvas for freehand diagrams — fully offline, no CDN, no account. Drop a drawing into any note and keep it live.</p>
+        <ul class="f-list">
+          <li>Freehand shapes, arrows, and text on an infinite canvas</li>
+          <li>Embed a drawing into a note — <strong>live</strong> (it updates as you edit) or as a static snapshot</li>
+          <li>Double-click an embed to jump straight back to the canvas</li>
+          <li>Drawings live in the same encrypted database as your notes</li>
+        </ul>
+      </div>
+      <div class="f-visual reveal">
+        <div class="mock">
+          <div class="mock-bar"><span class="tl"></span><span class="tl"></span><span class="tl"></span><span class="mock-title">Draw · Flow sketch</span></div>
+          <div class="mock-body">
+            <svg viewBox="0 0 320 150" width="100%" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="22" y="46" width="92" height="56" rx="9" style="stroke: var(--amber); stroke-width: 2.5px;" transform="rotate(-0.8 68 74)"/>
+              <ellipse cx="252" cy="74" rx="48" ry="33" style="stroke: var(--ember); stroke-width: 2.5px;"/>
+              <path d="M118 75 C 150 74, 168 73, 198 73" style="stroke: var(--muted); stroke-width: 2.5px;"/>
+              <path d="M189 67 L 200 73 L 189 80" style="stroke: var(--muted); stroke-width: 2.5px;"/>
+              <line x1="40" y1="122" x2="118" y2="122" style="stroke: var(--faint); stroke-width: 2px;"/>
+              <line x1="40" y1="132" x2="96" y2="132" style="stroke: var(--faint); stroke-width: 2px;"/>
+            </svg>
           </div>
         </div>
       </div>
@@ -537,9 +594,10 @@
       <p>TypeScript end to end, strict everywhere, with pure tested logic kept framework-free.</p>
     </div>
     <div class="stack-grid">
-      <div class="stack-cell reveal"><div class="lbl">Shell</div><div class="val">Electron 41</div></div>
+      <div class="stack-cell reveal"><div class="lbl">Shell</div><div class="val">Electron 42</div></div>
       <div class="stack-cell reveal"><div class="lbl">UI</div><div class="val">React 18 · Tailwind</div></div>
       <div class="stack-cell reveal"><div class="lbl">Editor</div><div class="val">TipTap · ProseMirror</div></div>
+      <div class="stack-cell reveal"><div class="lbl">Drawing</div><div class="val">Excalidraw</div></div>
       <div class="stack-cell reveal"><div class="lbl">Database</div><div class="val">SQLCipher · AES-256</div></div>
       <div class="stack-cell reveal"><div class="lbl">ORM</div><div class="val">Drizzle</div></div>
       <div class="stack-cell reveal"><div class="lbl">State</div><div class="val">Zustand · TanStack</div></div>
@@ -550,7 +608,7 @@
     </div>
 
     <div class="metrics">
-      <div class="metric reveal"><div class="num">279</div><div class="cap">tests across 15 suites</div></div>
+      <div class="metric reveal"><div class="num">352</div><div class="cap">tests across 20 suites</div></div>
       <div class="metric reveal"><div class="num">0</div><div class="cap">accounts or servers</div></div>
       <div class="metric reveal"><div class="num">AES-256</div><div class="cap">encryption at rest</div></div>
       <div class="metric reveal"><div class="num">MIT</div><div class="cap">open source licence</div></div>
