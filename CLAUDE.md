@@ -309,6 +309,8 @@ A local **Model Context Protocol** server that lets Claude (Desktop) connect to 
 - `prompts.ts` — `triage_inbox`, `summarize_today`, `weekly_review`.
 - `audit.ts` — append-only JSONL log at `userData/mcp-audit.log` (no secrets); surfaced read-only in Settings → Connectors.
 
+**Connecting Claude Desktop (important):** Claude Desktop's "Add custom connector" URL box **only accepts public `https` URLs** — it will reject `http://127.0.0.1:…` with "URL must start with 'https'". Claude Desktop reaches a *local* server over **stdio**, so the connector is wired up via `claude_desktop_config.json` using the `mcp-remote` bridge (stdio↔HTTP), passing the bearer token as a header. The Settings → Connectors UI generates this config ("Copy config" button); `--transport http-only` is required because our transport is JSON-response only (no SSE). Do **not** document the URL-field approach — it does not work for a loopback server.
+
 **Control surface:** `connectors:*` IPC domain (`src/main/ipc/connectors.ts`, channels in `channels.ts`, schemas in `src/shared/schemas/connectors.ts`, preload `window.api.connectors.*`). UI is `ConnectorsSection.tsx` in Settings. Settings keys `connectors.mcp.{enabled,allowWrites,port}` need **no migration** (settings service backfills defaults).
 
 **Build note:** `@modelcontextprotocol/sdk` is **ESM-only** and is **bundled** into the main output (not externalised) via `externalizeDepsPlugin({ exclude: ['@modelcontextprotocol/sdk'] })` in `electron.vite.config.ts` — leaving it external would emit a `require()` of an ESM package from the CJS main bundle. It lives in `devDependencies` (bundled deps aren't shipped in `node_modules`). After bumping it, re-check the main bundle size.

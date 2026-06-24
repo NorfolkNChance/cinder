@@ -2,7 +2,8 @@ import { z } from 'zod';
 
 /**
  * Zod schemas for the `connectors` domain — the local MCP server that lets
- * Claude (Desktop / claude.ai) connect to Cinder as a custom connector.
+ * Claude Desktop connect to Cinder (over a stdio↔HTTP `mcp-remote` bridge;
+ * a loopback HTTP server can't be added via Claude's https-only URL field).
  *
  * The server runs inside the main process, bound to 127.0.0.1, and is a new
  * untrusted-input boundary (like the renderer/IPC boundary). These schemas
