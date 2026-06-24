@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 # Preflight check — runs before commits, pushes, tags, and releases.
 # Exits 0 (pass) or 1 (fail with a clear error message).
+#
+# The supported (documented) release path is the CI tag-push: `npm version …`
+# then `git push --follow-tags`, where GitHub Actions (release.yml) does the
+# signed + notarised build and the GitHub publish using *repo secrets*. That
+# path needs no local signing identity, Apple credentials, or GH_TOKEN, so those
+# are WARNINGS here, not hard failures. They are only required for a local
+# `npm run release` (electron-builder --publish always); the warnings call that
+# out. The hard gates that matter on every machine — config validity and a green
+# test suite — still fail the script.
 
 set -euo pipefail
 
@@ -47,12 +56,15 @@ fi
 ok "electron-builder.yml: no invalid publisherName field"
 
 # ── macOS code-signing identities ────────────────────────────────────────────
+# Warn (don't fail): the CI release signs with the CSC_LINK repo secret, not the
+# local keychain. A local Developer ID is only needed for a local publish.
 if [[ "$(uname)" == "Darwin" ]]; then
   IDENTITIES=$(security find-identity -v -p codesigning 2>/dev/null | grep -c "Developer ID" || true)
   if [[ "$IDENTITIES" -eq 0 ]]; then
-    fail "No 'Developer ID' code-signing identity found — signing will fail. Check Keychain or switch machines."
+    warn "No local 'Developer ID' code-signing identity — fine for the CI release (signs via CSC_LINK); a local 'npm run release' would fail."
+  else
+    ok "Code-signing: $IDENTITIES Developer ID identity/identities found"
   fi
-  ok "Code-signing: $IDENTITIES Developer ID identity/identities found"
 
   # Check notarize script exists and has credentials configured
   NOTARIZE="$SCRIPT_DIR/notarize.js"
@@ -70,10 +82,13 @@ if [[ "$(uname)" == "Darwin" ]]; then
 fi
 
 # ── GH_TOKEN ──────────────────────────────────────────────────────────────────
+# Warn (don't fail): the CI release publishes with the Actions-provided
+# GITHUB_TOKEN. A local GH_TOKEN is only needed for a local publish.
 if [[ -z "${GH_TOKEN:-}" ]]; then
-  fail "GH_TOKEN is not set — electron-builder cannot publish to GitHub"
+  warn "GH_TOKEN not set — fine for the CI release (uses the Actions GITHUB_TOKEN); a local 'npm run release' would fail to publish."
+else
+  ok "GH_TOKEN present"
 fi
-ok "GH_TOKEN present"
 
 # ── Test suite ────────────────────────────────────────────────────────────────
 echo ""
