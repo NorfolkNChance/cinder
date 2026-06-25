@@ -57,6 +57,7 @@ Full architectural spec: [`../ARCHITECTURE.md`](../ARCHITECTURE.md) — read it 
 | + | Draw embeds in notes — "✏️ Drawing" toolbar button renders a drawing to PNG via `exportToBlob` (canvas raster, eval-free) → saves as an `attachment://` → inserts an image; copy-paste of Excalidraw PNGs reuses the existing TipTap image paste handler |
 | + | Live drawing embeds — "✏️ Drawing" dropdown has a Live/Snapshot toggle; Live inserts a `drawing://<id>` image rendered by a React NodeView that re-rasterizes the drawing's current scene (double-click → edit in Draw mode), Snapshot keeps the static PNG. No serde changes (`drawing://` round-trips like `attachment://`). See ADR-0009 |
 | + | Self-contained markdown export — exporting a note inlines images as base64 `data:` URIs so the `.md` is portable: `attachment://` resolved in the main export service (all export paths), live `drawing://` embeds rasterized in the renderer before single-note export. Shared DOM-free rewriter `mapImageSrcs`. See ADR-0010 |
+| + | Application search + in-document find — ⌘⇧F overlay (`features/globalSearch/`) searches all notes (FTS5, every type) **and** tasks (new `tasks:search` IPC, `LIKE` scan over title+description incl. completed/triage) and jumps to the result in the right mode; ⌘F find-in-note bar (`FindInNote.tsx` + dependency-free `searchHighlight` ProseMirror decoration extension) highlights matches with next/prev navigation in the Markdown editor. See ADR-0012 |
 
 ---
 

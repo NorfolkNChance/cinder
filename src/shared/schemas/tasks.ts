@@ -165,3 +165,13 @@ export type TaskCompleteInput = z.infer<typeof TaskCompleteInput>;
 
 export const TaskDeleteInput = z.object({ id: Uuid });
 export type TaskDeleteInput = z.infer<typeof TaskDeleteInput>;
+
+export const TaskSearchInput = z.object({
+  // Free-text query. The service matches it case-insensitively as a
+  // substring against the task title and description. Unlike the notes
+  // FTS index, tasks are short and few, so a LIKE scan is more than fast
+  // enough and avoids a second virtual table.
+  query: z.string().max(500),
+  limit: z.number().int().min(1).max(200).optional(),
+});
+export type TaskSearchInput = z.infer<typeof TaskSearchInput>;

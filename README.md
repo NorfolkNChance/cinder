@@ -23,7 +23,7 @@ Most notes-and-todos products require you to send your content to someone else's
 ### Notes
 - **WYSIWYG Markdown editor** via TipTap (ProseMirror) with full keyboard support
 - **Autosave** with a 500 ms debounce and explicit ⌘S flush
-- **Full-text search** across titles and bodies (SQLite FTS5)
+- **Full-text search** across titles and bodies (SQLite FTS5), plus a **⌘F find-in-note** bar that highlights matches and steps through them inside the editor
 - **Local attachments** served via a custom `attachment://` protocol, pasted or dragged in
 - **Wiki links** — type `[[Note Title]]` to create clickable inter-note links; clicking navigates to the target note or creates it on the fly
 - **Project membership** — file a note under a project (the same projects that group tasks), so a project gathers both its notes and its tasks in one place
@@ -71,6 +71,11 @@ Most notes-and-todos products require you to send your content to someone else's
 ### ⌘K Command Palette
 - Fuzzy-match search across all navigation targets, task scopes, projects, labels, saved filters, and actions
 - Navigate to Notes, Tasks, Matrix, or Daily; jump to any project or label; create notes; open Help, Settings, or trigger exports — all from the keyboard
+
+### ⌘⇧F Search everything
+- **Application-wide content search** across every note (regular, daily, drawings, imported HTML) and every task — including completed and triage tasks — from one overlay
+- Matching text is highlighted in the results; selecting one jumps straight to it in the right mode (Notes, Daily, Draw, or the task's project/Inbox/Triage view)
+- Distinct from the ⌘K palette (which navigates) and the Notes-sidebar box (which filters the current folder)
 
 ### Connect to Claude (MCP connector)
 - **Local Model Context Protocol server** lets Claude (Desktop) connect to Cinder as a custom connector and work with your notes and tasks

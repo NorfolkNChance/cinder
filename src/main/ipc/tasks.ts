@@ -6,6 +6,7 @@ import {
   TaskDeleteInput,
   TaskGetInput,
   TaskListInput,
+  TaskSearchInput,
   TaskUpdateInput,
 } from '../../shared/schemas/tasks';
 import {
@@ -14,6 +15,7 @@ import {
   TASKS_DELETE,
   TASKS_GET,
   TASKS_LIST,
+  TASKS_SEARCH,
   TASKS_UPDATE,
 } from '../../shared/ipc/channels';
 import { tasksService } from '../services/tasks';
@@ -33,6 +35,11 @@ export function registerTasksHandlers(): void {
   ipcMain.handle(TASKS_LIST, async (event, raw) => {
     assertMainFrame(event);
     return tasksService.list(TaskListInput.parse(raw));
+  });
+
+  ipcMain.handle(TASKS_SEARCH, async (event, raw) => {
+    assertMainFrame(event);
+    return tasksService.search(TaskSearchInput.parse(raw));
   });
 
   ipcMain.handle(TASKS_UPDATE, async (event, raw) => {

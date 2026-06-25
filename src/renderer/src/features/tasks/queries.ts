@@ -141,6 +141,22 @@ export function useTasksList(
   });
 }
 
+/**
+ * Substring search over task title + description. Includes completed and
+ * triage tasks (a global "find anything" should surface them). Disabled for
+ * empty queries — pass a debounced value so we don't hammer the IPC.
+ */
+export function useTasksSearch(
+  query: string,
+): ReturnType<typeof useQuery<readonly TaskWithLabels[]>> {
+  const trimmed = query.trim();
+  return useQuery({
+    queryKey: [...queryKeys.tasks.all, 'search', trimmed] as const,
+    queryFn: () => window.api.tasks.search({ query: trimmed }),
+    enabled: trimmed.length > 0,
+  });
+}
+
 export function useCreateTask(): ReturnType<
   typeof useMutation<Task, Error, TaskCreateInput>
 > {

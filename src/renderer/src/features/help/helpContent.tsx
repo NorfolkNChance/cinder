@@ -636,6 +636,8 @@ Weekly review every monday p2
         <ShortcutTable
           rows={[
             { keys: ['⌘K'], description: 'Open command palette' },
+            { keys: ['⌘⇧F'], description: 'Search everything (notes + tasks)' },
+            { keys: ['⌘,'], description: 'Open settings' },
             { keys: ['⌘/'], description: 'Open this help panel' },
             { keys: ['?'], description: 'Open this help panel (when not typing)' },
           ]}
@@ -645,6 +647,8 @@ Weekly review every monday p2
         <ShortcutTable
           rows={[
             { keys: ['⌘N'], description: 'New note' },
+            { keys: ['⌘F'], description: 'Find in note' },
+            { keys: ['⌘S'], description: 'Save now' },
             { keys: ['⌘⌫'], description: 'Delete selected note' },
             { keys: ['↑', '↓'], description: 'Navigate note list' },
           ]}
@@ -1104,6 +1108,81 @@ Take vitamins every day`}</CodeBlock>
             { keys: ['Esc'], description: 'Close without executing' },
           ]}
         />
+      </div>
+    ),
+  },
+
+  // ── Search ───────────────────────────────────────────────────────────────
+  {
+    id: 'search',
+    title: 'Search',
+    icon: '🔍',
+    keywords: [
+      'search', 'find', 'find in note', 'application search', 'global search',
+      'full text', 'fts', 'lookup', 'cmd f', 'cmd shift f',
+    ],
+    render: () => (
+      <div>
+        <H2>Search</H2>
+        <P>
+          Cinder has two kinds of search: an application-wide search that finds
+          any note or task, and a find-in-note bar that highlights matches
+          inside the note you&apos;re editing.
+        </P>
+
+        <H3>Search everything (⌘⇧F)</H3>
+        <P>
+          Press <Kbd>⌘⇧F</Kbd> (or click the <strong>🔍 Search</strong> button in
+          the top bar) to open the application search. Start typing to search the
+          full text of:
+        </P>
+        <ul className="mb-3 list-inside list-disc space-y-1 text-sm text-gray-600 dark:text-gray-400">
+          <li>All notes — regular, daily, drawings, and imported HTML</li>
+          <li>All tasks, including completed and triage tasks</li>
+        </ul>
+        <P>
+          Results are grouped by type with the matching text highlighted.
+          Selecting a result jumps straight to it in the right mode — a daily
+          note opens in Daily, a drawing in Draw, and a task opens its
+          project, Inbox, or Triage view.
+        </P>
+        <ShortcutTable
+          rows={[
+            { keys: ['⌘⇧F'], description: 'Open application search' },
+            { keys: ['↑', '↓'], description: 'Move through results' },
+            { keys: ['Enter'], description: 'Open the highlighted result' },
+            { keys: ['Esc'], description: 'Close search' },
+          ]}
+        />
+
+        <H3>Find in note (⌘F)</H3>
+        <P>
+          While editing a note, press <Kbd>⌘F</Kbd> to open the find bar at the
+          top of the editor. Every match is highlighted; the active match is
+          ringed. Use <Kbd>Enter</Kbd> / <Kbd>⇧Enter</Kbd> or the up/down arrows
+          to step through matches — the editor scrolls to keep the active match
+          in view. The counter shows your position (e.g. <Code>3 / 12</Code>).
+        </P>
+        <ShortcutTable
+          rows={[
+            { keys: ['⌘F'], description: 'Open find-in-note' },
+            { keys: ['Enter'], description: 'Next match' },
+            { keys: ['⇧', 'Enter'], description: 'Previous match' },
+            { keys: ['Esc'], description: 'Close find' },
+          ]}
+        />
+        <Callout type="info">
+          Find-in-note works in the Markdown editor (regular and daily notes).
+          A search term split across formatting (e.g. part of it bold) is
+          matched per text run, so each styled fragment is found separately.
+        </Callout>
+
+        <H3>Sidebar search vs. application search</H3>
+        <P>
+          The search box at the top of the Notes sidebar filters the current
+          folder&apos;s note list only. For an everything-everywhere search that
+          also spans tasks and other modes, use <Kbd>⌘⇧F</Kbd>.
+        </P>
       </div>
     ),
   },

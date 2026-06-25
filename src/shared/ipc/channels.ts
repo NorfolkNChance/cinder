@@ -61,6 +61,8 @@ export const TASKS_LIST = 'tasks:list' as const;
 export const TASKS_UPDATE = 'tasks:update' as const;
 export const TASKS_COMPLETE = 'tasks:complete' as const;
 export const TASKS_DELETE = 'tasks:delete' as const;
+/** Free-text substring search over task title + description. */
+export const TASKS_SEARCH = 'tasks:search' as const;
 
 // ── Labels ───────────────────────────────────────────────────────────────────
 export const LABELS_CREATE = 'labels:create' as const;

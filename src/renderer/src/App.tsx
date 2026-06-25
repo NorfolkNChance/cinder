@@ -11,6 +11,7 @@ import { DailyMainPane } from './features/dailyNotes/DailyMainPane';
 import { DrawSidebar } from './features/draw/DrawSidebar';
 import { DrawMainPane } from './features/draw/DrawMainPane';
 import { CommandPalette } from './features/commandPalette/CommandPalette';
+import { GlobalSearch } from './features/globalSearch/GlobalSearch';
 import { HelpModal } from './features/help/HelpModal';
 import { VaultImportModal } from './features/vaultImport/VaultImportModal';
 import { SettingsModal } from './features/settings/SettingsModal';
@@ -40,6 +41,7 @@ import { ThemeWatcher } from './features/settings/ThemeWatcher';
 export default function App(): JSX.Element {
   const mode = useUI((s) => s.mode);
   const openCommandPalette = useUI((s) => s.openCommandPalette);
+  const openGlobalSearch = useUI((s) => s.openGlobalSearch);
   const openHelp = useUI((s) => s.openHelp);
   const openSettings = useUI((s) => s.openSettings);
   const helpOpen = useUI((s) => s.helpOpen);
@@ -61,6 +63,13 @@ export default function App(): JSX.Element {
       if (e.key === 'k' && e.metaKey && !e.shiftKey && !e.altKey) {
         e.preventDefault();
         openCommandPalette();
+        return;
+      }
+      // ⌘⇧F — application-wide content search (always, even while typing).
+      // Note: lower-cased compare because Shift makes e.key 'F'.
+      if (e.key.toLowerCase() === 'f' && e.metaKey && e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        openGlobalSearch();
         return;
       }
       // ⌘, — settings
@@ -92,7 +101,7 @@ export default function App(): JSX.Element {
     }
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [openCommandPalette, openHelp, openSettings, helpOpen]);
+  }, [openCommandPalette, openGlobalSearch, openHelp, openSettings, helpOpen]);
 
   return (
     <div className="flex h-screen flex-col bg-white text-gray-900 dark:bg-gray-950 dark:text-white">
@@ -149,6 +158,7 @@ export default function App(): JSX.Element {
       </div>
       {/* Global overlays — always mounted, shown when open */}
       <CommandPalette />
+      <GlobalSearch />
       <HelpModal />
       <SettingsModal />
       <VaultImportModal />
@@ -197,6 +207,7 @@ function TopBar(): JSX.Element {
   const mode = useUI((s) => s.mode);
   const setMode = useUI((s) => s.setMode);
   const openCommandPalette = useUI((s) => s.openCommandPalette);
+  const openGlobalSearch = useUI((s) => s.openGlobalSearch);
   const openHelp = useUI((s) => s.openHelp);
   const openSettings = useUI((s) => s.openSettings);
 
@@ -218,6 +229,15 @@ function TopBar(): JSX.Element {
         Draw
       </ModeButton>
       <div className="flex-1" />
+      <button
+        onClick={openGlobalSearch}
+        title="Search everything (⌘⇧F)"
+        aria-label="Search everything"
+        className="mr-1 flex items-center gap-1.5 rounded-md border border-gray-300 bg-gray-100 px-2 py-1 text-xs text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-gray-700 dark:bg-gray-900 dark:hover:text-gray-300"
+      >
+        <span aria-hidden="true">🔍</span>
+        <span className="hidden sm:inline">Search</span>
+      </button>
       <button
         onClick={openCommandPalette}
         title="Command palette (⌘K)"

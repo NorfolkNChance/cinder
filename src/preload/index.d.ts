@@ -36,6 +36,7 @@ import type {
   TaskDeleteInput,
   TaskGetInput,
   TaskListInput,
+  TaskSearchInput,
   TaskUpdateInput,
   TaskWithLabels,
 } from '../shared/schemas/tasks';
@@ -144,6 +145,7 @@ declare global {
         create: (input: TaskCreateInput) => Promise<Task>;
         get: (input: TaskGetInput) => Promise<Task | null>;
         list: (input: TaskListInput) => Promise<readonly TaskWithLabels[]>;
+        search: (input: TaskSearchInput) => Promise<readonly TaskWithLabels[]>;
         update: (input: TaskUpdateInput) => Promise<Task | null>;
         complete: (input: TaskCompleteInput) => Promise<Task | null>;
         delete: (input: TaskDeleteInput) => Promise<void>;

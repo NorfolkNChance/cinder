@@ -35,3 +35,4 @@ Status: Proposed | Accepted | Deprecated | Superseded by [NNNN](NNNN-...)
 | [0009](0009-live-drawing-embeds-via-image-nodeview.md) | Live drawing embeds via a `drawing://` image NodeView | Accepted |
 | [0010](0010-self-contained-markdown-export.md) | Self-contained markdown export via data-URI inlining | Accepted |
 | [0011](0011-mcp-connector-in-main-process.md) | Run the MCP connector in the main process over loopback HTTP | Accepted |
+| [0012](0012-application-and-in-document-search.md) | Application-wide search overlay (⌘⇧F) and in-document find (⌘F) | Accepted |

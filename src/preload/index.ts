@@ -32,6 +32,7 @@ import {
   TASKS_DELETE,
   TASKS_GET,
   TASKS_LIST,
+  TASKS_SEARCH,
   TASKS_UPDATE,
   LABELS_CREATE,
   LABELS_DELETE,
@@ -109,6 +110,7 @@ import type {
   TaskDeleteInput,
   TaskGetInput,
   TaskListInput,
+  TaskSearchInput,
   TaskUpdateInput,
   TaskWithLabels,
 } from '../shared/schemas/tasks';
@@ -238,6 +240,8 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke(TASKS_GET, input),
     list: (input: TaskListInput): Promise<readonly TaskWithLabels[]> =>
       ipcRenderer.invoke(TASKS_LIST, input),
+    search: (input: TaskSearchInput): Promise<readonly TaskWithLabels[]> =>
+      ipcRenderer.invoke(TASKS_SEARCH, input),
     update: (input: TaskUpdateInput): Promise<Task | null> =>
       ipcRenderer.invoke(TASKS_UPDATE, input),
     complete: (input: TaskCompleteInput): Promise<Task | null> =>

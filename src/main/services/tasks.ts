@@ -1,5 +1,5 @@
 import { v7 as uuidv7 } from 'uuid';
-import { and, asc, eq, exists, gte, isNull, lt, type SQL } from 'drizzle-orm';
+import { and, asc, desc, eq, exists, gte, isNull, lt, sql, type SQL } from 'drizzle-orm';
 import { getDb } from '../db/index';
 import { getDrizzle } from '../db/drizzle';
 import { tasks, taskLabels } from '../db/schema';
@@ -11,6 +11,7 @@ import type {
   TaskCompleteInput,
   TaskCreateInput,
   TaskListInput,
+  TaskSearchInput,
   TaskUpdateInput,
   TaskWithLabels,
 } from '../../shared/schemas/tasks';
@@ -197,6 +198,39 @@ export const tasksService = {
     const labelsByTask = await getLabelsForTaskIds(
       taskRows.map((t) => t.id),
     );
+    return taskRows.map((t) => ({
+      ...t,
+      labels: [...(labelsByTask.get(t.id) ?? [])],
+    }));
+  },
+
+  async search(input: TaskSearchInput): Promise<readonly TaskWithLabels[]> {
+    const term = input.query.trim();
+    if (term.length === 0) return [];
+
+    const db = getDrizzle();
+    const limit = input.limit ?? 50;
+
+    // Substring match over title + description. Escape the LIKE wildcards
+    // (% _ \) in the user term so a literal "50%" doesn't match everything.
+    // Unlike the normal list views, search deliberately includes completed
+    // and triage tasks — a global "find anything" should surface them — but
+    // still excludes soft-deleted rows.
+    const pattern = `%${term.replace(/[%_\\]/g, (c) => `\\${c}`)}%`;
+    const where = and(
+      isNull(tasks.deletedAt),
+      sql`(${tasks.title} LIKE ${pattern} ESCAPE '\\' OR ${tasks.description} LIKE ${pattern} ESCAPE '\\')`,
+    );
+
+    const rows = await db
+      .select()
+      .from(tasks)
+      .where(where)
+      .orderBy(desc(tasks.updatedAt))
+      .limit(limit);
+
+    const taskRows = rows as Task[];
+    const labelsByTask = await getLabelsForTaskIds(taskRows.map((t) => t.id));
     return taskRows.map((t) => ({
       ...t,
       labels: [...(labelsByTask.get(t.id) ?? [])],

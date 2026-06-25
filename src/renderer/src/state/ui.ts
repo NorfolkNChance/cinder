@@ -80,6 +80,11 @@ interface UIState {
   openCommandPalette: () => void;
   closeCommandPalette: () => void;
 
+  /** Whether the ⌘⇧F application-wide content search overlay is open. */
+  globalSearchOpen: boolean;
+  openGlobalSearch: () => void;
+  closeGlobalSearch: () => void;
+
   /** Whether the help documentation overlay is open. */
   helpOpen: boolean;
   openHelp: () => void;
@@ -137,6 +142,10 @@ export const useUI = create<UIState>((set) => ({
   commandPaletteOpen: false,
   openCommandPalette: () => set({ commandPaletteOpen: true }),
   closeCommandPalette: () => set({ commandPaletteOpen: false }),
+
+  globalSearchOpen: false,
+  openGlobalSearch: () => set({ globalSearchOpen: true }),
+  closeGlobalSearch: () => set({ globalSearchOpen: false }),
 
   helpOpen: false,
   openHelp: () => set({ helpOpen: true }),
