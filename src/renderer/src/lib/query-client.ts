@@ -71,5 +71,6 @@ export const queryKeys = {
     all: ['connectors'] as const,
     status: () => [...queryKeys.connectors.all, 'status'] as const,
     auditLog: () => [...queryKeys.connectors.all, 'auditLog'] as const,
+    claudeConfig: () => [...queryKeys.connectors.all, 'claudeConfig'] as const,
   },
 } as const;

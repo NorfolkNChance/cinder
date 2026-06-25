@@ -69,6 +69,7 @@ import {
   CONNECTORS_SET_ALLOW_WRITES,
   CONNECTORS_ROTATE_TOKEN,
   CONNECTORS_GET_AUDIT_LOG,
+  CONNECTORS_GET_CLAUDE_CONFIG,
 } from '../shared/ipc/channels';
 import type {
   Note,
@@ -158,6 +159,7 @@ import type { UpdateStatus } from '../shared/schemas/update';
 import type {
   McpServerStatus,
   McpAuditEntry,
+  McpClaudeConfig,
   McpSetEnabledInput,
   McpSetAllowWritesInput,
   McpGetAuditLogInput,
@@ -320,6 +322,9 @@ contextBridge.exposeInMainWorld('api', {
     /** Read the recent MCP tool-call audit log (newest first). */
     getAuditLog: (input: McpGetAuditLogInput): Promise<readonly McpAuditEntry[]> =>
       ipcRenderer.invoke(CONNECTORS_GET_AUDIT_LOG, input),
+    /** Build the ready-to-paste Claude Desktop config (absolute npx resolved). */
+    getClaudeConfig: (): Promise<McpClaudeConfig> =>
+      ipcRenderer.invoke(CONNECTORS_GET_CLAUDE_CONFIG),
   },
   notify: {
     /**

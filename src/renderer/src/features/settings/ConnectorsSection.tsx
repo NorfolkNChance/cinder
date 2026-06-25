@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../../lib/query-client';
-import type { McpServerStatus, McpAuditEntry } from '../../../../shared/schemas/connectors';
+import type {
+  McpServerStatus,
+  McpAuditEntry,
+  McpClaudeConfig,
+} from '../../../../shared/schemas/connectors';
 
 /**
  * Settings → Connectors. Controls the local MCP server that lets Claude
@@ -22,6 +26,14 @@ export function ConnectorsSection(): JSX.Element {
     staleTime: Infinity,
   });
 
+  // Built in the main process so it can resolve an absolute npx path.
+  const { data: claudeCfg } = useQuery<McpClaudeConfig>({
+    queryKey: queryKeys.connectors.claudeConfig(),
+    queryFn: () => window.api.connectors.getClaudeConfig(),
+    enabled: status?.enabled ?? false,
+    staleTime: Infinity,
+  });
+
   const setStatus = (s: McpServerStatus): void => {
     qc.setQueryData(queryKeys.connectors.status(), s);
   };
@@ -38,6 +50,8 @@ export function ConnectorsSection(): JSX.Element {
     mutationFn: () => window.api.connectors.rotateToken(),
     onSuccess: (s) => {
       setStatus(s);
+      // The token changed — the cached config and audit log are now stale.
+      void qc.invalidateQueries({ queryKey: queryKeys.connectors.claudeConfig() });
       void qc.invalidateQueries({ queryKey: queryKeys.connectors.auditLog() });
     },
   });
@@ -56,32 +70,6 @@ export function ConnectorsSection(): JSX.Element {
       </section>
     );
   }
-
-  // Paste-ready Claude Desktop config. Claude Desktop can't reach a local HTTP
-  // server through its "Add custom connector" box (that requires a public https
-  // URL); it bridges to local servers over stdio via `mcp-remote`. We keep the
-  // real token in the env block (referenced by the header) rather than the args.
-  const claudeConfig = JSON.stringify(
-    {
-      mcpServers: {
-        cinder: {
-          command: 'npx',
-          args: [
-            '-y',
-            'mcp-remote',
-            status.url,
-            '--transport',
-            'http-only',
-            '--header',
-            'Authorization: Bearer ${CINDER_TOKEN}',
-          ],
-          env: { CINDER_TOKEN: status.token },
-        },
-      },
-    },
-    null,
-    2,
-  );
 
   return (
     <section>
@@ -140,8 +128,9 @@ export function ConnectorsSection(): JSX.Element {
                 Connect Claude Desktop
               </p>
               <button
-                onClick={() => copy('config', claudeConfig)}
-                className="flex-shrink-0 rounded border border-gray-300 px-2 py-1 text-xs text-gray-600 transition-colors hover:border-gray-400 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-gray-700 dark:text-gray-400 dark:hover:border-gray-600 dark:hover:text-gray-200"
+                onClick={() => claudeCfg && copy('config', claudeCfg.config)}
+                disabled={!claudeCfg}
+                className="flex-shrink-0 rounded border border-gray-300 px-2 py-1 text-xs text-gray-600 transition-colors hover:border-gray-400 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 dark:border-gray-700 dark:text-gray-400 dark:hover:border-gray-600 dark:hover:text-gray-200"
               >
                 {copied === 'config' ? 'Copied!' : 'Copy config'}
               </button>
@@ -153,16 +142,28 @@ export function ConnectorsSection(): JSX.Element {
               <span className="font-mono">
                 ~/Library/Application Support/Claude/claude_desktop_config.json
               </span>{' '}
-              (create it if it doesn&apos;t exist), then fully quit and reopen Claude Desktop.
+              (create it if it doesn&apos;t exist; if it already has an{' '}
+              <span className="font-mono">mcpServers</span> block, add the{' '}
+              <span className="font-mono">cinder</span> entry inside it), then fully quit
+              (<span className="font-mono">⌘Q</span>) and reopen Claude Desktop.
             </p>
             <pre className="max-h-44 overflow-auto rounded bg-gray-100 p-2 font-mono text-[10px] leading-relaxed text-gray-700 dark:bg-gray-900 dark:text-gray-300">
-              {claudeConfig}
+              {claudeCfg ? claudeCfg.config : 'Loading…'}
             </pre>
-            <p className="mt-2 text-[11px] leading-relaxed text-gray-500 dark:text-gray-600">
-              Requires Node.js (<span className="font-mono">npx</span>) on your PATH. The bridge
-              (<span className="font-mono">mcp-remote</span>) relays Claude to this server using
-              the token above. The raw URL and token are also shown for other MCP clients.
-            </p>
+            {claudeCfg && !claudeCfg.npxFound ? (
+              <p className="mt-2 text-[11px] leading-relaxed text-amber-700 dark:text-amber-500">
+                Couldn&apos;t find <span className="font-mono">npx</span> automatically. Install
+                Node.js, or set <span className="font-mono">command</span> above to the absolute
+                path from <span className="font-mono">which npx</span> in your terminal.
+              </p>
+            ) : (
+              <p className="mt-2 text-[11px] leading-relaxed text-gray-500 dark:text-gray-600">
+                The bridge (<span className="font-mono">mcp-remote</span>) relays Claude to this
+                server. Cinder fills in the absolute <span className="font-mono">npx</span> path
+                so it works even though Claude Desktop doesn&apos;t inherit your shell PATH. The
+                raw URL and token above are for other MCP clients.
+              </p>
+            )}
           </div>
 
           <Field

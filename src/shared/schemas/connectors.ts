@@ -40,6 +40,24 @@ export const McpServerStatus = z.object({
 });
 export type McpServerStatus = z.infer<typeof McpServerStatus>;
 
+// ── Claude Desktop config ─────────────────────────────────────────────────────
+
+/**
+ * The ready-to-paste Claude Desktop config snippet, assembled in the main
+ * process so it can resolve an absolute `npx` path (Claude Desktop doesn't
+ * inherit the shell PATH). `npxFound` is false when no absolute npx was located
+ * and the snippet falls back to bare `npx`, so the UI can warn.
+ */
+export const McpClaudeConfig = z.object({
+  /** Pretty-printed JSON to paste into claude_desktop_config.json. */
+  config: z.string(),
+  /** Whether an absolute npx path was resolved on disk. */
+  npxFound: z.boolean(),
+  /** The resolved command (absolute path, or bare 'npx'). */
+  command: z.string(),
+});
+export type McpClaudeConfig = z.infer<typeof McpClaudeConfig>;
+
 // ── Audit log ────────────────────────────────────────────────────────────────
 
 /** One recorded MCP tool invocation. Never contains secrets. */

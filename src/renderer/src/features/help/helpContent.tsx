@@ -1201,9 +1201,12 @@ Take vitamins every day`}</CodeBlock>
             <li>Fully quit and reopen Claude Desktop — Cinder&apos;s tools then appear.</li>
           </ol>
           <Callout type="info">
-            The bridge needs <Code>Node.js</Code> (<Code>npx</Code>) on your PATH, and Cinder
-            must be running with the connector enabled. The raw URL and token are also shown
-            in Settings for other MCP clients that accept an HTTP endpoint directly.
+            The bridge needs <Code>Node.js</Code> installed and Cinder running with the
+            connector enabled. Claude Desktop launches without your shell PATH, so Cinder
+            fills the generated config with the absolute path to <Code>npx</Code>
+            automatically (nvm / Homebrew / system). If it can&apos;t find one, the config
+            warns you to set <Code>command</Code> to the path from <Code>which npx</Code>.
+            The raw URL and token are also shown for other MCP clients.
           </Callout>
 
           <H3>What Claude can do</H3>
