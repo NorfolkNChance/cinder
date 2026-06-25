@@ -93,6 +93,7 @@ import type {
 import type {
   McpServerStatus,
   McpAuditEntry,
+  McpClaudeConfig,
   McpSetEnabledInput,
   McpSetAllowWritesInput,
   McpGetAuditLogInput,
@@ -200,6 +201,7 @@ declare global {
         getAuditLog: (
           input: McpGetAuditLogInput,
         ) => Promise<readonly McpAuditEntry[]>;
+        getClaudeConfig: () => Promise<McpClaudeConfig>;
       };
       notify: {
         onTaskDue: (cb: () => void) => () => void;

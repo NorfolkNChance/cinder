@@ -113,6 +113,8 @@ export const CONNECTORS_SET_ALLOW_WRITES = 'connectors:setAllowWrites' as const;
 export const CONNECTORS_ROTATE_TOKEN = 'connectors:rotateToken' as const;
 /** Read the recent MCP tool-call audit log (read-only). */
 export const CONNECTORS_GET_AUDIT_LOG = 'connectors:getAuditLog' as const;
+/** Build the ready-to-paste Claude Desktop config (resolves absolute npx). */
+export const CONNECTORS_GET_CLAUDE_CONFIG = 'connectors:getClaudeConfig' as const;
 
 // ── Export ───────────────────────────────────────────────────────────────────
 /** Export a single note as a .md file — opens a Save dialog. */
