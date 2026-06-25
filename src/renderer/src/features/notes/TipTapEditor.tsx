@@ -1,21 +1,26 @@
 import { useEditor, EditorContent } from '@tiptap/react';
 import Placeholder from '@tiptap/extension-placeholder';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   serialize,
   deserialize,
   editorExtensions,
 } from '../../../../shared/markdown';
 import { EditorToolbar } from './EditorToolbar';
+import { FindInNote } from './FindInNote';
+import { SearchHighlight } from './searchHighlight';
 import { useSettings } from '../settings/useSettings';
 import { ImageWithDrawingEmbed } from '../draw/DrawingEmbed';
 
 // The editor swaps the shared base Image node for one with a live-drawing
 // NodeView (renders drawing:// embeds). The node spec is identical, so the
 // markdown serde schema is unaffected — only editor-side rendering differs.
+// SearchHighlight is also editor-only (decorations, no schema impact) and
+// powers the ⌘F find-in-note bar.
 const editorOnlyExtensions = [
   ...editorExtensions.filter((e) => e.name !== 'image'),
   ImageWithDrawingEmbed,
+  SearchHighlight,
 ];
 
 interface TipTapEditorProps {
@@ -80,6 +85,9 @@ export function TipTapEditor({
   useEffect(() => {
     noteIdRef.current = noteId;
   }, [noteId]);
+
+  // ⌘F find-in-note bar visibility.
+  const [findOpen, setFindOpen] = useState(false);
 
   const editor = useEditor({
     // Schema-affecting extensions come from the shared module so the
@@ -189,7 +197,27 @@ export function TipTapEditor({
     isHydratingRef.current = true;
     editor.commands.setContent(deserialize(markdown).toJSON(), false);
     isHydratingRef.current = false;
+    // A find bar from the previous note shouldn't linger across a switch.
+    setFindOpen(false);
   }, [editor, noteId, markdown]);
+
+  // ⌘F — open the find-in-note bar. ⌘⇧F is reserved for the global search
+  // overlay (handled in App), so we ignore it here.
+  useEffect(() => {
+    const handler = (e: KeyboardEvent): void => {
+      if (
+        (e.metaKey || e.ctrlKey) &&
+        !e.shiftKey &&
+        !e.altKey &&
+        e.key.toLowerCase() === 'f'
+      ) {
+        e.preventDefault();
+        setFindOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
 
   // Sync the spellcheck DOM attribute whenever the setting changes. We
   // cannot pass this through editorProps after construction (TipTap doesn't
@@ -206,6 +234,9 @@ export function TipTapEditor({
   return (
     <>
       <EditorToolbar editor={editor} noteId={noteId} />
+      {findOpen && (
+        <FindInNote editor={editor} onClose={() => setFindOpen(false)} />
+      )}
       <div className="flex-1 overflow-y-auto px-6 py-5">
         <EditorContent id="tiptap-editor-content" editor={editor} />
       </div>

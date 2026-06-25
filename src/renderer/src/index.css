@@ -105,6 +105,24 @@
   height: 0;
 }
 
+/* ── Find-in-note highlights (SearchHighlight extension) ───────────── */
+.ProseMirror .cinder-search-match {
+  background-color: rgb(253 230 138); /* amber-200 */
+  border-radius: 2px;
+}
+.ProseMirror .cinder-search-match-current {
+  background-color: rgb(251 191 36); /* amber-400 */
+  box-shadow: 0 0 0 1px rgb(217 119 6); /* amber-600 ring */
+}
+.dark .ProseMirror .cinder-search-match {
+  background-color: rgba(245, 158, 11, 0.35); /* amber-500 @ 35% */
+  color: inherit;
+}
+.dark .ProseMirror .cinder-search-match-current {
+  background-color: rgba(245, 158, 11, 0.6);
+  box-shadow: 0 0 0 1px rgb(251 191 36);
+}
+
 /* ── Light mode overrides for ProseMirror ──────────────────────────── */
 :root:not(.dark) .ProseMirror {
   color: rgb(17 24 39);
