@@ -1,6 +1,6 @@
 {
   "name": "cinder",
-  "version": "1.6.3",
+  "version": "1.7.0",
   "description": "Cinder — hardened Electron + React macOS application",
   "main": "./out/main/index.js",
   "author": "",
