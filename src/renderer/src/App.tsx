@@ -47,6 +47,8 @@ export default function App(): JSX.Element {
   const helpOpen = useUI((s) => s.helpOpen);
   const setMode = useUI((s) => s.setMode);
   const setTaskScope = useUI((s) => s.setTaskScope);
+  const sidebarCollapsed = useUI((s) => s.sidebarCollapsed);
+  const toggleSidebar = useUI((s) => s.toggleSidebar);
 
   // Navigate to Tasks › Today when the user clicks a due-task notification.
   useEffect(() => {
@@ -70,6 +72,13 @@ export default function App(): JSX.Element {
       if (e.key.toLowerCase() === 'f' && e.metaKey && e.shiftKey && !e.altKey) {
         e.preventDefault();
         openGlobalSearch();
+        return;
+      }
+      // ⌘\ — collapse / expand the left nav panel (always, even while typing).
+      // Backslash is used (not ⌘B) to avoid clashing with the editor's bold.
+      if (e.key === '\\' && e.metaKey && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        toggleSidebar();
         return;
       }
       // ⌘, — settings
@@ -101,7 +110,7 @@ export default function App(): JSX.Element {
     }
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [openCommandPalette, openGlobalSearch, openHelp, openSettings, helpOpen]);
+  }, [openCommandPalette, openGlobalSearch, openHelp, openSettings, toggleSidebar, helpOpen]);
 
   return (
     <div className="flex h-screen flex-col bg-white text-gray-900 dark:bg-gray-950 dark:text-white">
@@ -116,32 +125,34 @@ export default function App(): JSX.Element {
       <ThemeWatcher />
       <TopBar />
       <div className="flex min-h-0 flex-1">
-        <aside
-          aria-label={
-            mode === 'notes'
-              ? 'Notes sidebar'
-              : mode === 'tasks'
-              ? 'Tasks sidebar'
-              : mode === 'daily'
-              ? 'Daily notes sidebar'
-              : mode === 'draw'
-              ? 'Drawings sidebar'
-              : 'Matrix sidebar'
-          }
-          className="flex h-full w-64 flex-col border-r border-gray-200 bg-gray-100 dark:border-gray-800 dark:bg-gray-950"
-        >
-          {mode === 'notes' ? (
-            <NoteList />
-          ) : mode === 'tasks' ? (
-            <TasksSidebar />
-          ) : mode === 'daily' ? (
-            <DailySidebar />
-          ) : mode === 'draw' ? (
-            <DrawSidebar />
-          ) : (
-            <MatrixSidebar />
-          )}
-        </aside>
+        {!sidebarCollapsed && (
+          <aside
+            aria-label={
+              mode === 'notes'
+                ? 'Notes sidebar'
+                : mode === 'tasks'
+                ? 'Tasks sidebar'
+                : mode === 'daily'
+                ? 'Daily notes sidebar'
+                : mode === 'draw'
+                ? 'Drawings sidebar'
+                : 'Matrix sidebar'
+            }
+            className="flex h-full w-64 flex-col border-r border-gray-200 bg-gray-100 dark:border-gray-800 dark:bg-gray-950"
+          >
+            {mode === 'notes' ? (
+              <NoteList />
+            ) : mode === 'tasks' ? (
+              <TasksSidebar />
+            ) : mode === 'daily' ? (
+              <DailySidebar />
+            ) : mode === 'draw' ? (
+              <DrawSidebar />
+            ) : (
+              <MatrixSidebar />
+            )}
+          </aside>
+        )}
         <main id="main-content" className="min-w-0 flex-1 overflow-hidden" tabIndex={-1}>
           {mode === 'notes' ? (
             <NotesMainPane />
@@ -210,9 +221,20 @@ function TopBar(): JSX.Element {
   const openGlobalSearch = useUI((s) => s.openGlobalSearch);
   const openHelp = useUI((s) => s.openHelp);
   const openSettings = useUI((s) => s.openSettings);
+  const sidebarCollapsed = useUI((s) => s.sidebarCollapsed);
+  const toggleSidebar = useUI((s) => s.toggleSidebar);
 
   return (
     <header className="flex items-center gap-1 border-b border-gray-200 px-3 py-1.5 dark:border-gray-800" aria-label="Application toolbar">
+      <button
+        onClick={toggleSidebar}
+        aria-pressed={sidebarCollapsed}
+        title={sidebarCollapsed ? 'Show sidebar (⌘\\)' : 'Hide sidebar (⌘\\)'}
+        aria-label={sidebarCollapsed ? 'Show sidebar' : 'Hide sidebar'}
+        className="mr-1 flex items-center rounded-md px-2 py-1 text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-gray-200"
+      >
+        <span aria-hidden="true">{sidebarCollapsed ? '⇥' : '⇤'}</span>
+      </button>
       <ModeButton active={mode === 'notes'} onClick={() => setMode('notes')}>
         Notes
       </ModeButton>

@@ -72,6 +72,10 @@ Most notes-and-todos products require you to send your content to someone else's
 - Fuzzy-match search across all navigation targets, task scopes, projects, labels, saved filters, and actions
 - Navigate to Notes, Tasks, Matrix, or Daily; jump to any project or label; create notes; open Help, Settings, or trigger exports — all from the keyboard
 
+### Collapsible sidebar
+- **Hide the left nav panel** with ⌘\, the ⇤/⇥ button at the far left of the toolbar, or the "Hide/Show sidebar" command in the ⌘K palette
+- Gives the editor (or any mode's main pane) the full window width — good for distraction-free writing and for hiding your document list when screen-sharing on a call
+
 ### ⌘⇧F Search everything
 - **Application-wide content search** across every note (regular, daily, drawings, imported HTML) and every task — including completed and triage tasks — from one overlay
 - Matching text is highlighted in the results; selecting one jumps straight to it in the right mode (Notes, Daily, Draw, or the task's project/Inbox/Triage view)

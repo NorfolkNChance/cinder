@@ -89,6 +89,8 @@ export function CommandPalette(): JSX.Element | null {
   const setSelectedNoteId = useUI((s) => s.setSelectedNoteId);
   const openHelp = useUI((s) => s.openHelp);
   const openSettings = useUI((s) => s.openSettings);
+  const sidebarCollapsed = useUI((s) => s.sidebarCollapsed);
+  const toggleSidebar = useUI((s) => s.toggleSidebar);
   const selectedNoteId = useUI((s) => s.selectedNoteId);
   const { exportNote, exportAllNotes, exportTasks, exportBackup } = useExport();
 
@@ -257,6 +259,17 @@ export function CommandPalette(): JSX.Element | null {
       },
     });
     cmds.push({
+      id: 'action:toggle-sidebar',
+      group: 'Actions',
+      label: sidebarCollapsed ? 'Show sidebar' : 'Hide sidebar',
+      hint: '⌘\\',
+      icon: sidebarCollapsed ? '⇥' : '⇤',
+      execute: () => {
+        close();
+        toggleSidebar();
+      },
+    });
+    cmds.push({
       id: 'action:help',
       group: 'Actions',
       label: 'Help & documentation',
@@ -369,6 +382,7 @@ export function CommandPalette(): JSX.Element | null {
     projects, labels, savedFilters,
     setMode, setTaskScope, setSelectedNoteId,
     openHelp, openSettings, close,
+    sidebarCollapsed, toggleSidebar,
     selectedNoteId,
     exportNote, exportAllNotes, exportTasks, exportBackup,
   ]);

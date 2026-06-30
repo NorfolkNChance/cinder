@@ -149,6 +149,12 @@ export const HELP_SECTIONS: HelpSection[] = [
           <strong className="text-gray-800 dark:text-gray-200">Daily</strong> using the buttons at
           the top. <Kbd>⌘K</Kbd> opens the command palette from anywhere.
         </P>
+        <P>
+          Press <Kbd>⌘\</Kbd> (or the <span aria-hidden="true">⇤</span> button at the
+          far left of the toolbar) to collapse the left sidebar and give the editor
+          the full width — handy for distraction-free writing or for hiding your
+          document list when screen-sharing. Press it again to bring the sidebar back.
+        </P>
 
         <H3>Five things to try first</H3>
         <ol className="mb-3 ml-4 list-decimal space-y-1.5 text-sm text-gray-600 dark:text-gray-400">
@@ -637,6 +643,7 @@ Weekly review every monday p2
           rows={[
             { keys: ['⌘K'], description: 'Open command palette' },
             { keys: ['⌘⇧F'], description: 'Search everything (notes + tasks)' },
+            { keys: ['⌘\\'], description: 'Collapse / expand the left sidebar' },
             { keys: ['⌘,'], description: 'Open settings' },
             { keys: ['⌘/'], description: 'Open this help panel' },
             { keys: ['?'], description: 'Open this help panel (when not typing)' },

@@ -65,6 +65,15 @@ interface UIState {
   taskScope: TaskScope;
   setTaskScope: (s: TaskScope) => void;
 
+  /**
+   * Whether the left nav/sidebar panel is collapsed to reclaim the working
+   * area. Handy for a distraction-free view and for hiding the document list
+   * when screen-sharing. Ephemeral — resets to expanded on reload.
+   */
+  sidebarCollapsed: boolean;
+  toggleSidebar: () => void;
+  setSidebarCollapsed: (collapsed: boolean) => void;
+
   /** Eisenhower matrix classification thresholds and optional scope filter. */
   matrixPrefs: MatrixPrefs;
   setMatrixPrefs: (prefs: Partial<MatrixPrefs>) => void;
@@ -130,6 +139,10 @@ export const useUI = create<UIState>((set) => ({
 
   taskScope: { kind: 'inbox' },
   setTaskScope: (s) => set({ taskScope: s }),
+
+  sidebarCollapsed: false,
+  toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
+  setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
 
   matrixPrefs: DEFAULT_MATRIX_PREFS,
   setMatrixPrefs: (prefs) =>
