@@ -38,11 +38,44 @@ import { getAll as getSettings } from './settings';
 // process (no DOM in Node). imageSrcs.ts is pure string work.
 import { mapImageSrcs } from '../../shared/markdown/imageSrcs';
 import { resolveAttachmentPath, AttachmentPathError } from '../security/attachment-path';
+import { markdownToDocx, markdownToPdf } from './markdown-export';
 import type {
   ExportNoteInput,
+  ExportAllNotesInput,
   ExportTasksInput,
   ExportResult,
+  ExportFormat,
 } from '../../shared/schemas/export';
+
+/** Per-format file extension + Save-dialog filter label for note exports. */
+const NOTE_FORMAT_META: Record<ExportFormat, { ext: string; filterName: string }> = {
+  md: { ext: 'md', filterName: 'Markdown' },
+  docx: { ext: 'docx', filterName: 'Word Document' },
+  pdf: { ext: 'pdf', filterName: 'PDF' },
+};
+
+/**
+ * Render a note's full Markdown (title + inlined body) into the bytes for the
+ * requested format. Markdown passes through verbatim; docx/pdf are built from it.
+ */
+function renderNoteBytes(
+  fullMarkdown: string,
+  format: ExportFormat,
+): Promise<string | Buffer> {
+  switch (format) {
+    case 'md':
+      return Promise.resolve(fullMarkdown);
+    case 'docx':
+      return markdownToDocx(fullMarkdown);
+    case 'pdf':
+      return markdownToPdf(fullMarkdown);
+  }
+}
+
+/** Prepend the title as an H1 unless the body already starts with it. */
+function withTitle(title: string, body: string): string {
+  return title && !body.startsWith(`# ${title}`) ? `# ${title}\n\n${body}` : body;
+}
 
 /** Map a filename extension to an image MIME type for data: URIs. */
 const EXT_TO_MIME: Record<string, string> = {
@@ -150,12 +183,14 @@ export async function exportNote(input: ExportNoteInput): Promise<ExportResult> 
     return { success: false, reason: 'error', message: 'Note not found.' };
   }
 
-  const defaultFilename = `${safeName(note.title || 'untitled')}.md`;
+  const format = input.format ?? 'md';
+  const meta = NOTE_FORMAT_META[format];
+  const defaultFilename = `${safeName(note.title || 'untitled')}.${meta.ext}`;
 
   const { filePath, canceled } = await dialog.showSaveDialog({
     title: 'Export Note',
     defaultPath: join(app.getPath('documents'), defaultFilename),
-    filters: [{ name: 'Markdown', extensions: ['md'] }],
+    filters: [{ name: meta.filterName, extensions: [meta.ext] }],
     properties: ['createDirectory'],
   });
 
@@ -165,24 +200,31 @@ export async function exportNote(input: ExportNoteInput): Promise<ExportResult> 
 
   // The renderer may pass a body with live `drawing://` embeds already inlined
   // as data: URIs (only it can rasterize them); fall back to the stored body.
-  // Then inline `attachment://` images here so the .md is fully self-contained.
+  // Then inline `attachment://` images here so the export is self-contained.
   const baseBody = input.body ?? note.body;
   const body = await inlineAttachments(baseBody);
 
-  // Build the markdown file. Prepend the title as an H1 if the body
-  // doesn't already start with it (so the file is self-contained).
-  const titleLine =
-    note.title && !body.startsWith(`# ${note.title}`)
-      ? `# ${note.title}\n\n`
-      : '';
-
-  writeFileSync(filePath, `${titleLine}${body}`, 'utf-8');
+  // Prepend the title as an H1 if the body doesn't already start with it, then
+  // render to the chosen format (md verbatim, docx/pdf built from the markdown).
+  const fullMarkdown = withTitle(note.title, body);
+  try {
+    writeFileSync(filePath, await renderNoteBytes(fullMarkdown, format));
+  } catch (err) {
+    return {
+      success: false,
+      reason: 'error',
+      message: err instanceof Error ? err.message : String(err),
+    };
+  }
   return { success: true, path: filePath };
 }
 
 // ── Export all notes ─────────────────────────────────────────────────────────
 
-export async function exportAllNotes(): Promise<ExportResult> {
+export async function exportAllNotes(input: ExportAllNotesInput): Promise<ExportResult> {
+  const format = input.format ?? 'md';
+  const meta = NOTE_FORMAT_META[format];
+
   const db = getDrizzle();
   const allNotes = await db
     .select()
@@ -199,7 +241,7 @@ export async function exportAllNotes(): Promise<ExportResult> {
     defaultPath: app.getPath('documents'),
     properties: ['openDirectory', 'createDirectory'],
     buttonLabel: 'Export here',
-    message: `${allNotes.length} note${allNotes.length === 1 ? '' : 's'} will be exported as .md files`,
+    message: `${allNotes.length} note${allNotes.length === 1 ? '' : 's'} will be exported as .${meta.ext} files`,
   });
 
   if (canceled || !filePaths[0]) {
@@ -212,27 +254,31 @@ export async function exportAllNotes(): Promise<ExportResult> {
   // the same title.
   const usedNames = new Set<string>();
 
-  for (const note of allNotes) {
-    const name = safeName(note.title || 'untitled');
-    let filename = `${name}.md`;
-    let counter = 1;
-    while (usedNames.has(filename)) {
-      filename = `${name}-${counter}.md`;
-      counter++;
+  try {
+    for (const note of allNotes) {
+      const name = safeName(note.title || 'untitled');
+      let filename = `${name}.${meta.ext}`;
+      let counter = 1;
+      while (usedNames.has(filename)) {
+        filename = `${name}-${counter}.${meta.ext}`;
+        counter++;
+      }
+      usedNames.add(filename);
+
+      // Inline attachment:// images so each file is self-contained. (Live
+      // drawing:// embeds can't be rasterized here — main has no canvas — so in
+      // a bulk export they remain references; use single-note export or Snapshot
+      // mode for portable drawings.)
+      const body = await inlineAttachments(note.body);
+      const fullMarkdown = withTitle(note.title, body);
+      writeFileSync(join(destDir, filename), await renderNoteBytes(fullMarkdown, format));
     }
-    usedNames.add(filename);
-
-    // Inline attachment:// images so each .md is self-contained. (Live
-    // drawing:// embeds can't be rasterized here — main has no canvas — so in a
-    // bulk export they remain references; use single-note export or Snapshot
-    // mode for portable drawings.)
-    const body = await inlineAttachments(note.body);
-    const titleLine =
-      note.title && !body.startsWith(`# ${note.title}`)
-        ? `# ${note.title}\n\n`
-        : '';
-
-    writeFileSync(join(destDir, filename), `${titleLine}${body}`, 'utf-8');
+  } catch (err) {
+    return {
+      success: false,
+      reason: 'error',
+      message: err instanceof Error ? err.message : String(err),
+    };
   }
 
   return { success: true, path: destDir };

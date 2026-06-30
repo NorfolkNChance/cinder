@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useExport } from './useExport';
+import type { ExportFormat } from '../../../../shared/schemas/export';
 
 interface ExportMenuProps {
   /** The currently-open note. When provided, "Export this note" is shown. */
@@ -8,7 +9,8 @@ interface ExportMenuProps {
 
 /**
  * Small ↑ button that opens a pop-over menu with export actions relevant
- * to the current context (single note, all notes, tasks CSV, backup).
+ * to the current context. Note exports offer a format choice (Markdown,
+ * Word, PDF); tasks export to CSV and the database backs up to .db.
  *
  * Closes on outside click, Escape, or after an action is selected.
  */
@@ -61,21 +63,19 @@ export function ExportMenu({ noteId }: ExportMenuProps): JSX.Element {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-full z-20 mt-1 w-52 overflow-hidden rounded-lg border border-gray-300 bg-gray-100 shadow-xl dark:border-gray-700 dark:bg-gray-900"
+          className="absolute right-0 top-full z-20 mt-1 w-64 overflow-hidden rounded-lg border border-gray-300 bg-gray-100 shadow-xl dark:border-gray-700 dark:bg-gray-900"
         >
           {noteId !== undefined && (
-            <MenuItem
+            <FormatRow
               icon="📄"
-              label="Export this note…"
-              description=".md file"
-              onClick={() => run(() => exportNote({ noteId }))}
+              label="This note"
+              onPick={(format) => run(() => exportNote({ noteId, format }))}
             />
           )}
-          <MenuItem
+          <FormatRow
             icon="📁"
-            label="Export all notes…"
-            description="folder of .md files"
-            onClick={() => run(exportAllNotes)}
+            label="All notes"
+            onPick={(format) => run(() => exportAllNotes({ format }))}
           />
           <div className="my-1 border-t border-gray-200 dark:border-gray-800" />
           <MenuItem
@@ -93,6 +93,50 @@ export function ExportMenu({ noteId }: ExportMenuProps): JSX.Element {
           />
         </div>
       )}
+    </div>
+  );
+}
+
+// ── FormatRow ────────────────────────────────────────────────────────────────
+
+const FORMATS: { format: ExportFormat; label: string }[] = [
+  { format: 'md', label: 'MD' },
+  { format: 'docx', label: 'DOCX' },
+  { format: 'pdf', label: 'PDF' },
+];
+
+/**
+ * A labelled export target (this note / all notes) with one pill per output
+ * format. Each pill is a menu item that triggers the export in that format.
+ */
+function FormatRow({
+  icon,
+  label,
+  onPick,
+}: {
+  icon: string;
+  label: string;
+  onPick: (format: ExportFormat) => void;
+}): JSX.Element {
+  return (
+    <div className="flex items-center gap-3 px-3 py-2">
+      <span className="text-base leading-none" aria-hidden="true">
+        {icon}
+      </span>
+      <span className="flex-1 text-sm text-gray-700 dark:text-gray-300">{label}</span>
+      <span className="flex gap-1">
+        {FORMATS.map(({ format, label: fmt }) => (
+          <button
+            key={format}
+            role="menuitem"
+            onClick={() => onPick(format)}
+            aria-label={`Export ${label} as ${fmt}`}
+            className="rounded border border-gray-300 bg-white px-1.5 py-0.5 text-[11px] font-medium text-gray-600 hover:bg-gray-200 hover:text-gray-900 transition-colors dark:border-gray-700 dark:bg-gray-950 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+          >
+            {fmt}
+          </button>
+        ))}
+      </span>
     </div>
   );
 }

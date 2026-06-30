@@ -10,6 +10,17 @@ import { z } from 'zod';
 
 const Uuid = z.string().uuid();
 
+/**
+ * Output format for note exports.
+ *   'md'   → portable Markdown (default; images inlined as data: URIs)
+ *   'docx' → Word document, built from the Markdown via the `docx` library
+ *   'pdf'  → PDF, rendered Markdown→HTML and printed in an offscreen window
+ *
+ * Only notes support docx/pdf — tasks (CSV) and the DB backup do not.
+ */
+export const ExportFormat = z.enum(['md', 'docx', 'pdf']);
+export type ExportFormat = z.infer<typeof ExportFormat>;
+
 // ── Inputs ───────────────────────────────────────────────────────────────────
 
 /** Export a single note. Main fetches the body from the DB and shows a Save dialog. */
@@ -22,6 +33,8 @@ export const ExportNoteInput = z.object({
    * images on top. Bounded generously — inlined images can be large.
    */
   body: z.string().max(64_000_000).optional(),
+  /** Output format. Defaults to 'md' in the service when omitted. */
+  format: ExportFormat.optional(),
 });
 export type ExportNoteInput = z.infer<typeof ExportNoteInput>;
 
@@ -29,7 +42,10 @@ export type ExportNoteInput = z.infer<typeof ExportNoteInput>;
  * Export all notes. Main lists all non-deleted notes and shows an
  * Open-directory dialog to pick the destination folder.
  */
-export const ExportAllNotesInput = z.object({});
+export const ExportAllNotesInput = z.object({
+  /** Output format for every exported file. Defaults to 'md' when omitted. */
+  format: ExportFormat.optional(),
+});
 export type ExportAllNotesInput = z.infer<typeof ExportAllNotesInput>;
 
 /**

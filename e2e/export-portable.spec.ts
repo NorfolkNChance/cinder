@@ -83,7 +83,8 @@ test('export inlines drawing:// and attachment:// images as data URIs', async ()
     }, outMd);
 
     await page.getByRole('button', { name: 'Export options' }).click();
-    await page.getByRole('menuitem', { name: /Export this note/ }).click();
+    // "This note" row → Markdown format pill.
+    await page.getByRole('menuitem', { name: 'Export This note as MD' }).click();
 
     // The written file is self-contained: data URIs, no app-only refs.
     await expect.poll(() => {

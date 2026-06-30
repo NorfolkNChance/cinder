@@ -3,6 +3,7 @@ import { useUI } from '../../state/ui';
 import { inlineDrawingEmbeds } from '../draw/inlineDrawingEmbeds';
 import type {
   ExportNoteInput,
+  ExportAllNotesInput,
   ExportTasksInput,
 } from '../../../../shared/schemas/export';
 
@@ -42,14 +43,17 @@ export function useExport() {
     [showToast],
   );
 
-  const exportAllNotes = useCallback(async (): Promise<void> => {
-    const result = await window.api.export.allNotes({});
-    if (result.success) {
-      showToast('All notes exported successfully.', 'success');
-    } else if (result.reason === 'error') {
-      showToast(result.message ?? 'Export failed.', 'error');
-    }
-  }, [showToast]);
+  const exportAllNotes = useCallback(
+    async (input: ExportAllNotesInput = {}): Promise<void> => {
+      const result = await window.api.export.allNotes(input);
+      if (result.success) {
+        showToast('All notes exported successfully.', 'success');
+      } else if (result.reason === 'error') {
+        showToast(result.message ?? 'Export failed.', 'error');
+      }
+    },
+    [showToast],
+  );
 
   const exportTasks = useCallback(
     async (input: ExportTasksInput = {}): Promise<void> => {

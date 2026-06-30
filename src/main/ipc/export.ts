@@ -31,8 +31,8 @@ export function registerExportHandlers(): void {
 
   ipcMain.handle(EXPORT_ALL_NOTES, async (event, raw) => {
     assertMainFrame(event);
-    ExportAllNotesInput.parse(raw);
-    return exportAllNotes();
+    const input = ExportAllNotesInput.parse(raw);
+    return exportAllNotes(input);
   });
 
   ipcMain.handle(EXPORT_TASKS, async (event, raw) => {

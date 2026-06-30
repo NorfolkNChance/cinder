@@ -308,30 +308,39 @@ export function CommandPalette(): JSX.Element | null {
     });
 
     // ── Export ──
+    const NOTE_FORMATS = [
+      { format: 'md' as const, hint: '.md' },
+      { format: 'docx' as const, hint: '.docx' },
+      { format: 'pdf' as const, hint: '.pdf' },
+    ];
     if (selectedNoteId !== null) {
+      for (const { format, hint } of NOTE_FORMATS) {
+        cmds.push({
+          id: `export:note:${format}`,
+          group: 'Export',
+          label: `Export current note as ${hint.slice(1).toUpperCase()}…`,
+          hint,
+          icon: '📄',
+          execute: () => {
+            close();
+            void exportNote({ noteId: selectedNoteId, format });
+          },
+        });
+      }
+    }
+    for (const { format, hint } of NOTE_FORMATS) {
       cmds.push({
-        id: 'export:note',
+        id: `export:all-notes:${format}`,
         group: 'Export',
-        label: 'Export current note…',
-        hint: '.md',
-        icon: '📄',
+        label: `Export all notes as ${hint.slice(1).toUpperCase()}…`,
+        hint: `folder of ${hint}`,
+        icon: '📁',
         execute: () => {
           close();
-          void exportNote({ noteId: selectedNoteId });
+          void exportAllNotes({ format });
         },
       });
     }
-    cmds.push({
-      id: 'export:all-notes',
-      group: 'Export',
-      label: 'Export all notes…',
-      hint: 'folder of .md',
-      icon: '📁',
-      execute: () => {
-        close();
-        void exportAllNotes();
-      },
-    });
     cmds.push({
       id: 'export:tasks',
       group: 'Export',

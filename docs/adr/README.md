@@ -36,3 +36,4 @@ Status: Proposed | Accepted | Deprecated | Superseded by [NNNN](NNNN-...)
 | [0010](0010-self-contained-markdown-export.md) | Self-contained markdown export via data-URI inlining | Accepted |
 | [0011](0011-mcp-connector-in-main-process.md) | Run the MCP connector in the main process over loopback HTTP | Accepted |
 | [0012](0012-application-and-in-document-search.md) | Application-wide search overlay (⌘⇧F) and in-document find (⌘F) | Accepted |
+| [0013](0013-docx-and-pdf-note-export.md) | Export notes to DOCX and PDF | Accepted |
