@@ -1,10 +1,22 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../../lib/query-client';
+import { useUI } from '../../state/ui';
 import type {
   Note,
   NoteCreateInput,
   NoteUpdateInput,
 } from '../../../../shared/schemas/notes';
+
+/**
+ * Surface a failed note mutation to the user. Without this, a rejected IPC
+ * call (disk error, corrupted FTS index, validation failure) is invisible —
+ * the editor just sits on "Unsaved…" with no explanation. The full error
+ * goes to the console for diagnosis; the toast keeps the message short.
+ */
+function reportNoteError(message: string, err: Error): void {
+  console.error(`[cinder] ${message}:`, err);
+  useUI.getState().showToast(message, 'error');
+}
 
 /** Query key for the flat list of all daily notes. */
 const dailyNotesQueryKey = [...queryKeys.notes.all, 'daily'] as const;
@@ -102,6 +114,7 @@ export function useCreateNote(): ReturnType<
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: queryKeys.notes.all });
     },
+    onError: (err) => reportNoteError('Failed to create note', err),
   });
 }
 
@@ -121,6 +134,7 @@ export function useUpdateNote(): ReturnType<
       }
       void qc.invalidateQueries({ queryKey: queryKeys.notes.all });
     },
+    onError: (err) => reportNoteError('Failed to save note', err),
   });
 }
 
@@ -133,6 +147,7 @@ export function useDeleteNote(): ReturnType<
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: queryKeys.notes.all });
     },
+    onError: (err) => reportNoteError('Failed to delete note', err),
   });
 }
 
