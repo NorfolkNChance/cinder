@@ -5,6 +5,7 @@ import { useNote, useUpdateNote, useCreateNote } from './queries';
 import { useFoldersList } from './folderQueries';
 import { useProjectsList } from '../tasks/queries';
 import { useDebouncedCallback } from '../../hooks/useDebouncedCallback';
+import { useFlushBeforeUnload } from '../../hooks/useFlushBeforeUnload';
 import { useUI } from '../../state/ui';
 import { ExportMenu } from '../export/ExportMenu';
 import { AddTriageTodo } from './AddTriageTodo';
@@ -186,6 +187,10 @@ export function NoteEditor({ noteId }: NoteEditorProps): JSX.Element {
       debouncedSave.flush();
     };
   }, [noteId, debouncedSave]);
+
+  // Flush on window close / app quit — the renderer is destroyed without a
+  // React unmount, so the effect cleanup above never runs on that path.
+  useFlushBeforeUnload(debouncedSave);
 
   // ── ⌘S explicit save ─────────────────────────────────────────────────────
 

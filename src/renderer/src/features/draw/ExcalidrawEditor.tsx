@@ -13,6 +13,7 @@ import type {
 import type { OrderedExcalidrawElement } from '@excalidraw/excalidraw/element/types';
 import { useNote, useUpdateNote } from '../notes/queries';
 import { useDebouncedCallback } from '../../hooks/useDebouncedCallback';
+import { useFlushBeforeUnload } from '../../hooks/useFlushBeforeUnload';
 
 const AUTOSAVE_DELAY_MS = 800;
 
@@ -110,6 +111,10 @@ export function ExcalidrawEditor({ drawingId }: { drawingId: string }): JSX.Elem
 
   useEffect(() => () => debouncedSave.flush(), [drawingId, debouncedSave]);
 
+  // Flush on window close / app quit — the renderer is destroyed without a
+  // React unmount, so the cleanup flush above never runs on that path.
+  useFlushBeforeUnload(debouncedSave);
+
   const onChange = useCallback(
     (
       elements: readonly OrderedExcalidrawElement[],
@@ -175,6 +180,11 @@ function DrawingHeader({
   const saveTitle = useDebouncedCallback((t: string) => {
     updateNote.mutate({ id: drawingId, patch: { title: t } });
   }, 400);
+
+  // Flush a pending title save when the header unmounts (drawing switch —
+  // the parent is keyed by drawing id) and on window close / app quit.
+  useEffect(() => () => saveTitle.flush(), [saveTitle]);
+  useFlushBeforeUnload(saveTitle);
 
   return (
     <div className="flex items-center justify-between border-b border-gray-200 px-6 py-3 dark:border-gray-800">
