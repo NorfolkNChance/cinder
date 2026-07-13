@@ -141,9 +141,17 @@ export function NoteList(): JSX.Element {
   // ── Create / delete ───────────────────────────────────────────────────────
 
   const createNew = useCallback(async (): Promise<void> => {
-    const created = await createNote.mutateAsync({ title: '' });
+    // File the new note into the folder currently being viewed — otherwise
+    // it lands in Unfiled and never appears in the sidebar list the user is
+    // looking at, which reads as "the note didn't save".
+    const created = await createNote.mutateAsync({
+      title: '',
+      ...(notesFolderScope.kind === 'folder'
+        ? { folderId: notesFolderScope.id }
+        : {}),
+    });
     setSelectedNoteId(created.id);
-  }, [createNote, setSelectedNoteId]);
+  }, [createNote, setSelectedNoteId, notesFolderScope]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent): void => {
