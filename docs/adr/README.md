@@ -37,3 +37,4 @@ Status: Proposed | Accepted | Deprecated | Superseded by [NNNN](NNNN-...)
 | [0011](0011-mcp-connector-in-main-process.md) | Run the MCP connector in the main process over loopback HTTP | Accepted |
 | [0012](0012-application-and-in-document-search.md) | Application-wide search overlay (⌘⇧F) and in-document find (⌘F) | Accepted |
 | [0013](0013-docx-and-pdf-note-export.md) | Export notes to DOCX and PDF | Accepted |
+| [0014](0014-gfm-pipe-tables-in-markdown-serde.md) | Represent editor tables as GFM pipe tables in the markdown serde | Accepted |

@@ -1,5 +1,6 @@
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
+import { Table, TableRow, TableHeader, TableCell } from '@tiptap/extension-table';
 import { getSchema } from '@tiptap/core';
 import type { Schema } from '@tiptap/pm/model';
 import { WikiLink } from './extensions/WikiLink';
@@ -12,7 +13,7 @@ import { WikiLink } from './extensions/WikiLink';
  * Nodes/marks the serde layer handles:
  *   nodes: doc, paragraph, text, heading, blockquote, codeBlock,
  *          bulletList, orderedList, listItem, hardBreak, horizontalRule,
- *          image
+ *          image, table, tableRow, tableHeader, tableCell
  *   marks: bold, italic, code
  *
  * Image is layered on top of StarterKit. Per ARCHITECTURE.md §3.6, src
@@ -41,6 +42,30 @@ export const ConfiguredImage = Image.configure({
   allowBase64: true,
 });
 
-export const editorExtensions = [StarterKit, ConfiguredImage, WikiLink] as const;
+/**
+ * Tables map to GFM pipe tables in markdown (markdown-it parses them in
+ * its default preset; the serialiser emits them). Structural notes:
+ *   - The first row is always the header row — GFM requires one, so the
+ *     serialiser emits row 1 as `| … |` + delimiter and the deserialiser
+ *     rebuilds row 1 as tableHeader cells. Tables inserted via the
+ *     toolbar always have a header row, so this is lossless in practice.
+ *   - Merged cells (colspan/rowspan) and per-column alignment have no
+ *     GFM representation and are not exposed in the UI.
+ *   - `resizable: false` — colwidth attrs would not survive the markdown
+ *     round-trip, so column resizing is deliberately off.
+ */
+export const tableExtensions = [
+  Table.configure({ resizable: false }),
+  TableRow,
+  TableHeader,
+  TableCell,
+] as const;
+
+export const editorExtensions = [
+  StarterKit,
+  ConfiguredImage,
+  WikiLink,
+  ...tableExtensions,
+] as const;
 
 export const markdownSchema: Schema = getSchema([...editorExtensions]);

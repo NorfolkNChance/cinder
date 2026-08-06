@@ -330,6 +330,165 @@ describe('serde — unit cases', () => {
     expectRoundTrip(doc);
   });
 
+  // ── Tables ────────────────────────────────────────────────────────────────
+
+  /** Build a table cell/header node holding one paragraph of text. */
+  function cell(type: 'tableHeader' | 'tableCell', text: string): object {
+    return {
+      type,
+      content: [
+        {
+          type: 'paragraph',
+          ...(text.length > 0
+            ? { content: [{ type: 'text', text }] }
+            : {}),
+        },
+      ],
+    };
+  }
+
+  it('2×2 table with header row', () => {
+    const doc = docFromJson({
+      type: 'doc',
+      content: [
+        {
+          type: 'table',
+          content: [
+            {
+              type: 'tableRow',
+              content: [cell('tableHeader', 'Name'), cell('tableHeader', 'Age')],
+            },
+            {
+              type: 'tableRow',
+              content: [cell('tableCell', 'Ada'), cell('tableCell', '36')],
+            },
+          ],
+        },
+      ],
+    });
+    expectRoundTrip(doc);
+  });
+
+  it('table cell containing a pipe character', () => {
+    const doc = docFromJson({
+      type: 'doc',
+      content: [
+        {
+          type: 'table',
+          content: [
+            {
+              type: 'tableRow',
+              content: [cell('tableHeader', 'cmd')],
+            },
+            {
+              type: 'tableRow',
+              content: [cell('tableCell', 'a | b')],
+            },
+          ],
+        },
+      ],
+    });
+    expectRoundTrip(doc);
+  });
+
+  it('table with an empty cell', () => {
+    const doc = docFromJson({
+      type: 'doc',
+      content: [
+        {
+          type: 'table',
+          content: [
+            {
+              type: 'tableRow',
+              content: [cell('tableHeader', 'a'), cell('tableHeader', 'b')],
+            },
+            {
+              type: 'tableRow',
+              content: [cell('tableCell', 'x'), cell('tableCell', '')],
+            },
+          ],
+        },
+      ],
+    });
+    expectRoundTrip(doc);
+  });
+
+  it('table cell with inline marks', () => {
+    const doc = docFromJson({
+      type: 'doc',
+      content: [
+        {
+          type: 'table',
+          content: [
+            {
+              type: 'tableRow',
+              content: [cell('tableHeader', 'style')],
+            },
+            {
+              type: 'tableRow',
+              content: [
+                {
+                  type: 'tableCell',
+                  content: [
+                    {
+                      type: 'paragraph',
+                      content: [
+                        { type: 'text', text: 'strong', marks: [{ type: 'bold' }] },
+                        { type: 'text', text: ' and ' },
+                        { type: 'text', text: 'mono', marks: [{ type: 'code' }] },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    expectRoundTrip(doc);
+  });
+
+  it('table surrounded by other blocks', () => {
+    const doc = docFromJson({
+      type: 'doc',
+      content: [
+        {
+          type: 'heading',
+          attrs: { level: 2 },
+          content: [{ type: 'text', text: 'Data' }],
+        },
+        {
+          type: 'table',
+          content: [
+            {
+              type: 'tableRow',
+              content: [cell('tableHeader', 'k'), cell('tableHeader', 'v')],
+            },
+            {
+              type: 'tableRow',
+              content: [cell('tableCell', 'one'), cell('tableCell', '1')],
+            },
+          ],
+        },
+        {
+          type: 'paragraph',
+          content: [{ type: 'text', text: 'after the table' }],
+        },
+      ],
+    });
+    expectRoundTrip(doc);
+  });
+
+  it('deserialises a hand-written GFM pipe table', () => {
+    const back = deserialize('| a | b |\n| --- | --- |\n| c | d |');
+    const json = back.toJSON() as {
+      content: Array<{ type: string; content: unknown[] }>;
+    };
+    expect(json.content[0]?.type).toBe('table');
+    expect(json.content[0]?.content).toHaveLength(2);
+  });
+
   it('image mixed with surrounding text in same paragraph', () => {
     const doc = docFromJson({
       type: 'doc',
@@ -460,6 +619,36 @@ const arbitraryOrderedList: fc.Arbitrary<JsonNode> = fc
   .array(arbitraryListItem, { minLength: 1, maxLength: 3 })
   .map((items) => ({ type: 'orderedList', content: items }));
 
+// Tables: the serde contract fixes row 1 as tableHeader cells and the
+// rest as tableCell (GFM pipe tables always have a header row), and each
+// cell holds exactly one paragraph. Generate only that canonical shape.
+const arbitraryTable: fc.Arbitrary<JsonNode> = fc
+  .tuple(
+    fc.integer({ min: 1, max: 3 }), // columns
+    fc.integer({ min: 1, max: 3 }), // body rows
+    fc.array(arbitraryText, { minLength: 12, maxLength: 12 }),
+  )
+  .map(([cols, bodyRows, texts]) => {
+    let t = 0;
+    const nextText = (): string => texts[t++ % texts.length] ?? 'x';
+    const row = (cellType: string): JsonNode => ({
+      type: 'tableRow',
+      content: Array.from({ length: cols }, () => ({
+        type: cellType,
+        content: [
+          { type: 'paragraph', content: [{ type: 'text', text: nextText() }] },
+        ],
+      })),
+    });
+    return {
+      type: 'table',
+      content: [
+        row('tableHeader'),
+        ...Array.from({ length: bodyRows }, () => row('tableCell')),
+      ],
+    };
+  });
+
 const arbitraryBlock = fc.oneof(
   { weight: 4, arbitrary: arbitraryParagraph },
   { weight: 2, arbitrary: arbitraryHeading },
@@ -467,6 +656,7 @@ const arbitraryBlock = fc.oneof(
   { weight: 1, arbitrary: arbitraryBulletList },
   { weight: 1, arbitrary: arbitraryOrderedList },
   { weight: 1, arbitrary: arbitraryHorizontalRule },
+  { weight: 1, arbitrary: arbitraryTable },
 );
 
 /**

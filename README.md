@@ -26,6 +26,7 @@ Most notes-and-todos products require you to send your content to someone else's
 - **Full-text search** across titles and bodies (SQLite FTS5), plus a **⌘F find-in-note** bar that highlights matches and steps through them inside the editor
 - **Local attachments** served via a custom `attachment://` protocol, pasted or dragged in
 - **Wiki links** — type `[[Note Title]]` to create clickable inter-note links; clicking navigates to the target note or creates it on the fly
+- **Tables** — insert a table from the toolbar, edit rows/columns in place; stored as standard GFM pipe tables so they survive export and open cleanly in any Markdown editor
 - **Project membership** — file a note under a project (the same projects that group tasks), so a project gathers both its notes and its tasks in one place
 - **Note ↔ task links** — link a note to related tasks (and vice versa) and jump between them in either direction
 - **Drag-and-drop import** — drop `.md`, `.markdown`, `.html`, or `.htm` files directly into the sidebar or the empty state; HTML is converted to Markdown automatically via Turndown

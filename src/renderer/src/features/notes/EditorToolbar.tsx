@@ -117,8 +117,11 @@ export function EditorToolbar({ editor, noteId }: EditorToolbarProps): JSX.Eleme
       orderedList: ctx.editor?.isActive('orderedList') ?? false,
       blockquote: ctx.editor?.isActive('blockquote') ?? false,
       codeBlock: ctx.editor?.isActive('codeBlock') ?? false,
+      table: ctx.editor?.isActive('table') ?? false,
     }),
   });
+
+  const inTable = state?.table ?? false;
 
   return (
     <div
@@ -299,6 +302,89 @@ export function EditorToolbar({ editor, noteId }: EditorToolbarProps): JSX.Eleme
           <rect x="1" y="7" width="14" height="2" rx="1" />
         </svg>
       </ToolbarButton>
+
+      <Divider />
+
+      {/* Tables — insert a 3×3 table with a header row. Row/column editing
+          controls appear only while the cursor is inside a table. */}
+      <ToolbarButton
+        label="Insert table"
+        active={inTable}
+        disabled={disabled || inTable}
+        onClick={() =>
+          editor
+            ?.chain()
+            .focus()
+            .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+            .run()
+        }
+      >
+        <svg
+          viewBox="0 0 16 16"
+          width="14"
+          height="14"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          aria-hidden="true"
+        >
+          <rect x="1.5" y="2.5" width="13" height="11" rx="1" />
+          <line x1="1.5" y1="6.5" x2="14.5" y2="6.5" />
+          <line x1="6" y1="2.5" x2="6" y2="13.5" />
+          <line x1="10.5" y1="2.5" x2="10.5" y2="13.5" />
+        </svg>
+      </ToolbarButton>
+      {inTable && (
+        <>
+          <ToolbarButton
+            label="Add row below"
+            disabled={disabled}
+            onClick={() => editor?.chain().focus().addRowAfter().run()}
+          >
+            <span className="font-mono text-[11px] leading-none">+↓</span>
+          </ToolbarButton>
+          <ToolbarButton
+            label="Add column right"
+            disabled={disabled}
+            onClick={() => editor?.chain().focus().addColumnAfter().run()}
+          >
+            <span className="font-mono text-[11px] leading-none">+→</span>
+          </ToolbarButton>
+          <ToolbarButton
+            label="Delete row"
+            disabled={disabled}
+            onClick={() => editor?.chain().focus().deleteRow().run()}
+          >
+            <span className="font-mono text-[11px] leading-none">−↔</span>
+          </ToolbarButton>
+          <ToolbarButton
+            label="Delete column"
+            disabled={disabled}
+            onClick={() => editor?.chain().focus().deleteColumn().run()}
+          >
+            <span className="font-mono text-[11px] leading-none">−↕</span>
+          </ToolbarButton>
+          <ToolbarButton
+            label="Delete table"
+            disabled={disabled}
+            onClick={() => editor?.chain().focus().deleteTable().run()}
+          >
+            <svg
+              viewBox="0 0 16 16"
+              width="14"
+              height="14"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              aria-hidden="true"
+            >
+              <rect x="1.5" y="2.5" width="13" height="11" rx="1" />
+              <line x1="5" y1="6" x2="11" y2="10" />
+              <line x1="11" y1="6" x2="5" y2="10" />
+            </svg>
+          </ToolbarButton>
+        </>
+      )}
 
       <Divider />
 

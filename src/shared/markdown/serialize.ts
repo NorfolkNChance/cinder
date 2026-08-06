@@ -199,6 +199,57 @@ function renderList(
   return out.replace(/\n$/, '');
 }
 
+/**
+ * Render a table cell's content to a single line of inline markdown.
+ *
+ * GFM pipe-table cells are single-line and pipe-delimited, so:
+ *   - `|` is escaped as `\|` (GFM strips the escape at row-split time,
+ *     before inline parsing — this works even around code spans);
+ *   - any newline the content produces (hard breaks, multiple paragraphs)
+ *     is collapsed to a space. Multi-block cells are therefore lossy;
+ *     the editor UI keeps cells to a single paragraph.
+ */
+function renderTableCell(cell: Node): string {
+  let out = '';
+  cell.forEach((child, _offset, idx) => {
+    if (idx > 0) out += ' ';
+    out += renderInline(child);
+  });
+  return out.replace(/\n/g, ' ').replace(/\|/g, '\\|').trim();
+}
+
+/**
+ * Emit a GFM pipe table. The first row is rendered as the header row
+ * (GFM requires one); remaining rows are the body. Merged cells have no
+ * pipe-table representation — a cell spanning N columns is emitted once
+ * followed by N−1 empty cells so column counts stay consistent.
+ */
+function renderTable(node: Node): string {
+  const rows: string[][] = [];
+  node.forEach((row) => {
+    const cells: string[] = [];
+    row.forEach((cell) => {
+      cells.push(renderTableCell(cell));
+      const colspan = (cell.attrs['colspan'] as number | undefined) ?? 1;
+      for (let k = 1; k < colspan; k += 1) cells.push('');
+    });
+    rows.push(cells);
+  });
+  if (rows.length === 0) return '';
+
+  const columns = rows.reduce((max, r) => Math.max(max, r.length), 1);
+  const line = (cells: string[]): string => {
+    const padded = [...cells];
+    while (padded.length < columns) padded.push('');
+    return `| ${padded.join(' | ')} |`;
+  };
+
+  const header = rows[0] ?? [];
+  const out = [line(header), `|${' --- |'.repeat(columns)}`];
+  for (const row of rows.slice(1)) out.push(line(row));
+  return out.join('\n');
+}
+
 function renderBlock(node: Node, state: SerializeState): string {
   switch (node.type.name) {
     case 'paragraph':
@@ -241,6 +292,9 @@ function renderBlock(node: Node, state: SerializeState): string {
 
     case 'horizontalRule':
       return '---';
+
+    case 'table':
+      return renderTable(node);
 
     default:
       // Unknown block — emit nothing. Round-trip tests will catch this

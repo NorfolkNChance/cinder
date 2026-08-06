@@ -184,7 +184,7 @@ export const HELP_SECTIONS: HelpSection[] = [
     id: 'notes',
     title: 'Notes',
     icon: '📝',
-    keywords: ['markdown', 'editor', 'tiptap', 'prosemirror', 'write', 'new note', 'search', 'attach', 'image', 'import', 'spellcheck', 'spell check', 'spelling', 'wiki link', 'wiki links', 'internal link', 'wikilink', '\[\[', 'inter-note'],
+    keywords: ['markdown', 'editor', 'tiptap', 'prosemirror', 'write', 'new note', 'search', 'attach', 'image', 'import', 'spellcheck', 'spell check', 'spelling', 'wiki link', 'wiki links', 'internal link', 'wikilink', '\[\[', 'inter-note', 'table', 'tables', 'row', 'column', 'grid'],
     render: () => (
       <div>
         <H2>Notes</H2>
@@ -221,6 +221,22 @@ export const HELP_SECTIONS: HelpSection[] = [
             { keys: ['--- + Enter'], description: 'Horizontal rule' },
           ]}
         />
+
+        <H3>Tables</H3>
+        <P>
+          Click the table icon in the editor toolbar to insert a 3×3 table with
+          a header row. While the cursor is inside a table, extra toolbar
+          buttons appear for adding or deleting rows and columns and for
+          removing the whole table. Use <Kbd>Tab</Kbd> /{' '}
+          <Kbd>⇧Tab</Kbd> to move between cells.
+        </P>
+        <P>
+          Tables are stored as standard GitHub-flavored Markdown pipe tables,
+          so they survive export and work in any other Markdown editor. You
+          can also paste or type a pipe table directly into a note. The first
+          row is always the header row; merged cells aren't supported (pipe
+          tables can't represent them).
+        </P>
 
         <H3>Search</H3>
         <P>

@@ -290,6 +290,16 @@ function renderBlocks(
         i += 1;
         break;
 
+      case 'table_open': {
+        const closeIdx = findClose(tokens, i, 'table_close');
+        const rows = renderTableRows(tokens.slice(i + 1, closeIdx), schema);
+        if (rows.length > 0) {
+          blocks.push({ type: 'table', content: rows });
+        }
+        i = closeIdx + 1;
+        break;
+      }
+
       default:
         // Unknown block — skip token.
         i += 1;
@@ -318,6 +328,74 @@ function findClose(
   }
   // Should never happen for well-formed markdown-it output.
   return tokens.length - 1;
+}
+
+/**
+ * Convert the tokens between `table_open`/`table_close` into tableRow
+ * nodes. markdown-it wraps the first row in `thead` with `th` cells and
+ * the rest in `tbody` with `td` cells; we map th → tableHeader and
+ * td → tableCell and ignore the thead/tbody wrappers (the ProseMirror
+ * table model has no row-group nodes). Cell content is a single
+ * paragraph of inline content. Column alignment (style attrs) has no
+ * schema representation and is dropped.
+ */
+function renderTableRows(
+  tokens: readonly Token[],
+  schema: Schema,
+): BlockNode[] {
+  const rows: BlockNode[] = [];
+  let currentRow: BlockNode[] | null = null;
+  let i = 0;
+
+  while (i < tokens.length) {
+    const tok = tokens[i] as Token;
+    switch (tok.type) {
+      case 'tr_open':
+        currentRow = [];
+        i += 1;
+        break;
+
+      case 'tr_close':
+        // tableRow content is (tableCell | tableHeader)+ — drop a row
+        // with no cells rather than emit an invalid node.
+        if (currentRow !== null && currentRow.length > 0) {
+          rows.push({ type: 'tableRow', content: currentRow });
+        }
+        currentRow = null;
+        i += 1;
+        break;
+
+      case 'th_open':
+      case 'td_open': {
+        const closing = tok.type === 'th_open' ? 'th_close' : 'td_close';
+        const closeIdx = findClose(tokens, i, closing);
+        const inline = tokens[i + 1] as Token | undefined;
+        const content =
+          inline?.type === 'inline'
+            ? renderInline((inline.children ?? []) as Token[], schema)
+            : [];
+        const cell: BlockNode = {
+          type: tok.type === 'th_open' ? 'tableHeader' : 'tableCell',
+          content: [
+            {
+              type: 'paragraph',
+              ...(content.length > 0 ? { content } : {}),
+            },
+          ],
+        };
+        currentRow?.push(cell);
+        i = closeIdx + 1;
+        break;
+      }
+
+      default:
+        // thead/tbody wrappers and anything unexpected — skip.
+        i += 1;
+        break;
+    }
+  }
+
+  return rows;
 }
 
 function renderListItems(
