@@ -5,6 +5,7 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
+  realpathSync,
   rmSync,
 } from 'fs';
 import { basename, join } from 'path';
@@ -216,7 +217,18 @@ async function runRestoreFlow(opts: RestoreOptions): Promise<RestoreResult> {
   const backupPath = filePaths[0];
 
   const dbPath = join(userData, 'cinder.db');
-  if (backupPath === dbPath) {
+  // Canonicalise before comparing — a symlinked pick of the live DB must be
+  // caught too, or the swap below would copy the file onto itself after
+  // deleting its WAL (same realpathSync discipline as ADR-0004).
+  const canonicalBackup = (() => {
+    try {
+      return realpathSync(backupPath);
+    } catch {
+      return backupPath;
+    }
+  })();
+  const canonicalDb = existsSync(dbPath) ? realpathSync(dbPath) : dbPath;
+  if (canonicalBackup === canonicalDb) {
     await dialog.showMessageBox({
       type: 'error',
       title: 'Restore from Backup',
