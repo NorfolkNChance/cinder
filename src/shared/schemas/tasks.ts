@@ -135,6 +135,26 @@ export const TaskListInput = z.object({
 });
 export type TaskListInput = z.infer<typeof TaskListInput>;
 
+// ── Trash ───────────────────────────────────────────────────────────────────
+
+/** List soft-deleted tasks for the Trash view, newest deletion first. */
+export const TaskListDeletedInput = z.object({
+  limit: z.number().int().min(1).max(1000).optional(),
+});
+export type TaskListDeletedInput = z.infer<typeof TaskListDeletedInput>;
+
+/** Clear `deleted_at` — the task reappears in its original scope. */
+export const TaskRestoreInput = z.object({ id: Uuid });
+export type TaskRestoreInput = z.infer<typeof TaskRestoreInput>;
+
+/**
+ * Permanently delete a task row. FK cascades remove its subtasks, label
+ * links, and note links. Irreversible — only reachable from the Trash
+ * view and the purge job.
+ */
+export const TaskHardDeleteInput = z.object({ id: Uuid });
+export type TaskHardDeleteInput = z.infer<typeof TaskHardDeleteInput>;
+
 export const TaskUpdateInput = z.object({
   id: Uuid,
   patch: z

@@ -119,6 +119,32 @@ export const NoteDeleteInput = z.object({
 });
 export type NoteDeleteInput = z.infer<typeof NoteDeleteInput>;
 
+// ── Trash ───────────────────────────────────────────────────────────────────
+
+/**
+ * List soft-deleted notes of every kind (regular, daily, HTML, drawings)
+ * for the Trash view, newest deletion first.
+ */
+export const NoteListDeletedInput = z.object({
+  limit: z.number().int().min(1).max(1000).optional(),
+});
+export type NoteListDeletedInput = z.infer<typeof NoteListDeletedInput>;
+
+/** Clear `deleted_at` — the note reappears in its original view. */
+export const NoteRestoreInput = z.object({
+  id: NoteId,
+});
+export type NoteRestoreInput = z.infer<typeof NoteRestoreInput>;
+
+/**
+ * Permanently delete a note row and its attachment directory.
+ * Irreversible — only reachable from the Trash view and the purge job.
+ */
+export const NoteHardDeleteInput = z.object({
+  id: NoteId,
+});
+export type NoteHardDeleteInput = z.infer<typeof NoteHardDeleteInput>;
+
 export const NoteFindByTitleInput = z.object({
   title: z.string().max(500),
 });

@@ -5,7 +5,10 @@ import {
   TaskCreateInput,
   TaskDeleteInput,
   TaskGetInput,
+  TaskHardDeleteInput,
+  TaskListDeletedInput,
   TaskListInput,
+  TaskRestoreInput,
   TaskSearchInput,
   TaskUpdateInput,
 } from '../../shared/schemas/tasks';
@@ -14,7 +17,10 @@ import {
   TASKS_CREATE,
   TASKS_DELETE,
   TASKS_GET,
+  TASKS_HARD_DELETE,
   TASKS_LIST,
+  TASKS_LIST_DELETED,
+  TASKS_RESTORE,
   TASKS_SEARCH,
   TASKS_UPDATE,
 } from '../../shared/ipc/channels';
@@ -56,5 +62,22 @@ export function registerTasksHandlers(): void {
     assertMainFrame(event);
     const { id } = TaskDeleteInput.parse(raw);
     await tasksService.delete(id);
+  });
+
+  ipcMain.handle(TASKS_LIST_DELETED, async (event, raw) => {
+    assertMainFrame(event);
+    return tasksService.listDeleted(TaskListDeletedInput.parse(raw));
+  });
+
+  ipcMain.handle(TASKS_RESTORE, async (event, raw) => {
+    assertMainFrame(event);
+    const { id } = TaskRestoreInput.parse(raw);
+    return tasksService.restore(id);
+  });
+
+  ipcMain.handle(TASKS_HARD_DELETE, async (event, raw) => {
+    assertMainFrame(event);
+    const { id } = TaskHardDeleteInput.parse(raw);
+    await tasksService.hardDelete(id);
   });
 }

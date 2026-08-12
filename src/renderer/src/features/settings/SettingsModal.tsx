@@ -75,6 +75,7 @@ export function SettingsModal(): JSX.Element | null {
           <SidebarItem label="Appearance" icon="🎨" />
           <SidebarItem label="Notifications" icon="🔔" />
           <SidebarItem label="Backup" icon="💾" />
+          <SidebarItem label="Trash" icon="🗑" />
           <SidebarItem label="Daily Notes" icon="📅" />
           <SidebarItem label="Connectors" icon="🔌" />
           <SidebarItem label="Matrix" icon="🔲" />
@@ -108,6 +109,8 @@ export function SettingsModal(): JSX.Element | null {
                 <NotificationsSection settings={settings} set={setWithSync} />
                 <div className="my-6 border-t border-gray-200 dark:border-gray-800" />
                 <BackupSection settings={settings} set={setWithSync} />
+                <div className="my-6 border-t border-gray-200 dark:border-gray-800" />
+                <TrashSection settings={settings} set={setWithSync} />
                 <div className="my-6 border-t border-gray-200 dark:border-gray-800" />
                 <DailyNotesSection settings={settings} set={setWithSync} />
                 <div className="my-6 border-t border-gray-200 dark:border-gray-800" />
@@ -347,6 +350,79 @@ function BackupSection({
           Export encryption key…
         </button>
       </div>
+    </section>
+  );
+}
+
+// ── Trash section ─────────────────────────────────────────────────────────────
+
+function TrashSection({
+  settings,
+  set,
+}: {
+  settings: AppSettings;
+  set: SetFn;
+}): JSX.Element {
+  const autoPurge = settings['trash.autoPurgeEnabled'];
+  const retentionDays = settings['trash.retentionDays'];
+  const openTrash = useUI((s) => s.openTrash);
+  const closeSettings = useUI((s) => s.closeSettings);
+
+  return (
+    <section>
+      <SectionHeading icon="🗑" title="Trash" />
+      <p className="mb-4 text-[12px] text-gray-500 dark:text-gray-500">
+        Deleted notes and tasks move to the Trash, where they can be restored.
+      </p>
+
+      <Field
+        label="Auto-empty Trash"
+        description="Permanently remove trashed items after the retention period below. Turn off to keep items until you empty the Trash yourself."
+      >
+        <button
+          role="switch"
+          aria-checked={autoPurge}
+          onClick={() => set('trash.autoPurgeEnabled', !autoPurge)}
+          className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900 ${
+            autoPurge ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-700'
+          }`}
+        >
+          <span
+            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+              autoPurge ? 'translate-x-4' : 'translate-x-0'
+            }`}
+          />
+        </button>
+      </Field>
+
+      <Field
+        label="Keep deleted items for"
+        description="How long items stay in the Trash before being permanently removed."
+      >
+        <select
+          value={retentionDays}
+          onChange={(e) => set('trash.retentionDays', Number(e.target.value))}
+          disabled={!autoPurge}
+          className="rounded border border-gray-300 bg-gray-200 px-2 py-1 text-sm text-gray-800 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+          aria-label="Trash retention period"
+        >
+          <option value={7}>7 days</option>
+          <option value={14}>14 days</option>
+          <option value={30}>30 days (default)</option>
+          <option value={90}>90 days</option>
+          <option value={365}>1 year</option>
+        </select>
+      </Field>
+
+      <button
+        onClick={() => {
+          closeSettings();
+          openTrash();
+        }}
+        className="mt-1 rounded border border-gray-300 px-3 py-1.5 text-xs text-gray-600 transition-colors hover:border-gray-400 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-gray-700 dark:text-gray-400 dark:hover:border-gray-600 dark:hover:text-gray-200"
+      >
+        Open Trash…
+      </button>
     </section>
   );
 }

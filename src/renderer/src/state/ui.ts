@@ -109,6 +109,11 @@ interface UIState {
   openVaultImport: () => void;
   closeVaultImport: () => void;
 
+  /** Whether the Trash modal is open. */
+  trashOpen: boolean;
+  openTrash: () => void;
+  closeTrash: () => void;
+
   /**
    * Ephemeral toast notification (auto-dismissed).
    * null means nothing is showing.
@@ -171,6 +176,10 @@ export const useUI = create<UIState>((set) => ({
   vaultImportOpen: false,
   openVaultImport: () => set({ vaultImportOpen: true }),
   closeVaultImport: () => set({ vaultImportOpen: false }),
+
+  trashOpen: false,
+  openTrash: () => set({ trashOpen: true }),
+  closeTrash: () => set({ trashOpen: false }),
 
   toast: null,
   showToast: (message, kind) => {

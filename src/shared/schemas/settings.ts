@@ -51,6 +51,17 @@ const BackupAutoOnQuit = z.boolean();
 /** Number of auto-backup files to keep before rotating old ones out (1–30). */
 const BackupKeepCount = z.number().int().min(1).max(30);
 
+// ── Trash ────────────────────────────────────────────────────────────────────
+
+/**
+ * Whether trashed items are automatically purged (hard-deleted) after the
+ * retention window. When false, trash is kept until manually emptied.
+ */
+const TrashAutoPurgeEnabled = z.boolean();
+
+/** Days a deleted item stays in Trash before the purge job removes it. */
+const TrashRetentionDays = z.number().int().min(1).max(365);
+
 // ── Editor ───────────────────────────────────────────────────────────────────
 
 /** Whether the macOS native spellchecker is active in the note editor. */
@@ -94,6 +105,8 @@ export const AppSettingsSchema = z.object({
   'notifications.enabled': NotificationsEnabled,
   'backup.autoOnQuit': BackupAutoOnQuit,
   'backup.keepCount': BackupKeepCount,
+  'trash.autoPurgeEnabled': TrashAutoPurgeEnabled,
+  'trash.retentionDays': TrashRetentionDays,
   'connectors.mcp.enabled': McpEnabled,
   'connectors.mcp.allowWrites': McpAllowWrites,
   'connectors.mcp.port': McpPort,
@@ -113,6 +126,10 @@ export const DEFAULT_SETTINGS: AppSettings = {
   'notifications.enabled': true,
   'backup.autoOnQuit': true,
   'backup.keepCount': 7,
+  // Trash: purge deleted items after 30 days by default. Users who never
+  // want data auto-deleted can switch the purge off entirely.
+  'trash.autoPurgeEnabled': true,
+  'trash.retentionDays': 30,
   // Connector is OFF by default — nothing listens until the user opts in.
   'connectors.mcp.enabled': false,
   // Writes are OFF by default — Claude can read but not modify until enabled.

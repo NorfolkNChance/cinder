@@ -15,6 +15,7 @@ import { GlobalSearch } from './features/globalSearch/GlobalSearch';
 import { HelpModal } from './features/help/HelpModal';
 import { VaultImportModal } from './features/vaultImport/VaultImportModal';
 import { SettingsModal } from './features/settings/SettingsModal';
+import { TrashModal } from './features/trash/TrashModal';
 import { UpdateBanner } from './features/update/UpdateBanner';
 import { Toast } from './components/Toast';
 import { useUI, type Mode } from './state/ui';
@@ -173,6 +174,7 @@ export default function App(): JSX.Element {
       <HelpModal />
       <SettingsModal />
       <VaultImportModal />
+      <TrashModal />
       <UpdateBanner />
       <Toast />
     </div>

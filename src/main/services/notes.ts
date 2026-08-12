@@ -2,12 +2,14 @@ import { v7 as uuidv7 } from 'uuid';
 import { and, desc, eq, isNotNull, isNull, ne, type SQL } from 'drizzle-orm';
 import { getDb } from '../db/index';
 import { getDrizzle } from '../db/drizzle';
-import { notes } from '../db/schema';
+import { folders, notes } from '../db/schema';
 import { settingsService } from './settings';
+import { deleteAttachmentsDir } from './attachments';
 import type {
   Note,
   NoteCreateInput,
   NoteGetOrCreateDailyInput,
+  NoteListDeletedInput,
   NoteListInput,
   NoteSearchInput,
   NoteUpdateInput,
@@ -207,8 +209,93 @@ export const notesService = {
 
   async delete(id: string): Promise<void> {
     const db = getDrizzle();
-    // Soft-delete: stamp deleted_at; hard delete runs separately on a schedule.
+    // Soft-delete: stamp deleted_at. The note moves to Trash, where it can
+    // be restored or hard-deleted; the purge job removes it after the
+    // retention window (see services/purge.ts).
     await db.update(notes).set({ deletedAt: nowIso() }).where(eq(notes.id, id));
+  },
+
+  /**
+   * All soft-deleted notes — every kind (regular, daily, HTML, drawings) —
+   * for the Trash view, most recently deleted first.
+   */
+  async listDeleted(input: NoteListDeletedInput): Promise<readonly Note[]> {
+    const db = getDrizzle();
+    const rows = await db
+      .select()
+      .from(notes)
+      .where(isNotNull(notes.deletedAt))
+      .orderBy(desc(notes.deletedAt))
+      .limit(input.limit ?? 500);
+    return rows as Note[];
+  },
+
+  /**
+   * Un-delete a trashed note. Two integrity repairs happen on the way out:
+   *
+   *   - `folder_id` is nulled if the folder no longer exists. Folder delete
+   *     only re-files *live* notes (folders.ts), so a trashed note can hold
+   *     a dangling folder reference — the FK is service-enforced, not
+   *     DB-enforced (see CLAUDE.md gotchas).
+   *   - `daily_date` is cleared if another live note now owns that date
+   *     (the user deleted a daily note, then re-created it by visiting the
+   *     date). The restored note comes back as a regular note instead of
+   *     producing two daily notes for one day.
+   */
+  async restore(id: string): Promise<Note | null> {
+    const db = getDrizzle();
+    const note = await getById(id);
+    if (!note || note.deletedAt === null) return note;
+
+    let folderId = note.folderId;
+    if (folderId !== null) {
+      const folderRows = await db
+        .select({ id: folders.id })
+        .from(folders)
+        .where(eq(folders.id, folderId))
+        .limit(1);
+      if (!folderRows[0]) folderId = null;
+    }
+
+    let dailyDate = note.dailyDate;
+    if (dailyDate !== null) {
+      const clash = await db
+        .select({ id: notes.id })
+        .from(notes)
+        .where(
+          and(
+            eq(notes.dailyDate, dailyDate),
+            isNull(notes.deletedAt),
+            ne(notes.id, id),
+          ),
+        )
+        .limit(1);
+      if (clash[0]) dailyDate = null;
+    }
+
+    await db
+      .update(notes)
+      .set({ deletedAt: null, updatedAt: nowIso(), folderId, dailyDate })
+      .where(eq(notes.id, id));
+    return getById(id);
+  },
+
+  /**
+   * Permanently delete a note. The row delete fires the FTS AFTER DELETE
+   * trigger (index cleanup) and the note_task_links CASCADE; tasks that
+   * were captured from this note keep running with source_note_id nulled
+   * by the FK. The attachment directory is removed afterwards — if that
+   * fails the orphaned files are unreferenced and harmless, so the DB
+   * delete is not rolled back.
+   */
+  async hardDelete(id: string): Promise<void> {
+    const db = getDrizzle();
+    await db.delete(notes).where(eq(notes.id, id));
+    try {
+      deleteAttachmentsDir(id);
+    } catch (err) {
+      console.error(`[cinder] attachment cleanup failed for note ${id}:`, err);
+    }
   },
 
   /**

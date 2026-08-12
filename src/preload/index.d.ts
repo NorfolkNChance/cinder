@@ -5,7 +5,10 @@ import type {
   NoteFindByTitleInput,
   NoteGetInput,
   NoteGetOrCreateDailyInput,
+  NoteHardDeleteInput,
+  NoteListDeletedInput,
   NoteListInput,
+  NoteRestoreInput,
   NoteSearchInput,
   NoteUpdateInput,
 } from '../shared/schemas/notes';
@@ -35,7 +38,10 @@ import type {
   TaskCreateInput,
   TaskDeleteInput,
   TaskGetInput,
+  TaskHardDeleteInput,
+  TaskListDeletedInput,
   TaskListInput,
+  TaskRestoreInput,
   TaskSearchInput,
   TaskUpdateInput,
   TaskWithLabels,
@@ -122,6 +128,9 @@ declare global {
         search: (input: NoteSearchInput) => Promise<readonly Note[]>;
         getOrCreateDaily: (input: NoteGetOrCreateDailyInput) => Promise<Note>;
         findByTitle: (input: NoteFindByTitleInput) => Promise<Note | null>;
+        listDeleted: (input: NoteListDeletedInput) => Promise<readonly Note[]>;
+        restore: (input: NoteRestoreInput) => Promise<Note | null>;
+        hardDelete: (input: NoteHardDeleteInput) => Promise<void>;
       };
       attachments: {
         save: (input: AttachmentSaveInput) => Promise<AttachmentSaveResult>;
@@ -149,6 +158,9 @@ declare global {
         update: (input: TaskUpdateInput) => Promise<Task | null>;
         complete: (input: TaskCompleteInput) => Promise<Task | null>;
         delete: (input: TaskDeleteInput) => Promise<void>;
+        listDeleted: (input: TaskListDeletedInput) => Promise<readonly Task[]>;
+        restore: (input: TaskRestoreInput) => Promise<Task | null>;
+        hardDelete: (input: TaskHardDeleteInput) => Promise<void>;
       };
       labels: {
         create: (input: LabelCreateInput) => Promise<Label>;

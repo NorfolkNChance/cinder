@@ -1,6 +1,6 @@
 import { v7 as uuidv7 } from 'uuid';
 import { app } from 'electron';
-import { mkdirSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, rmSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { resolveAttachmentPath } from '../security/attachment-path';
 
@@ -96,4 +96,28 @@ export function saveAttachment(input: SaveAttachmentInput): SavedAttachment {
     url: `attachment://${input.noteId}/${filename}`,
     filename,
   };
+}
+
+/**
+ * Remove a note's entire attachment directory. Called when a note is
+ * hard-deleted (from the Trash view or the purge job) — this is the
+ * "garbage collection on note delete" the filename strategy above was
+ * designed for.
+ *
+ * The noteId is re-validated as a UUID before it is joined into an
+ * `rm -rf` path: every caller receives it through a Zod NoteId schema
+ * already, but a recursive delete warrants its own guard rather than an
+ * assumption about upstream validation.
+ */
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function deleteAttachmentsDir(noteId: string): void {
+  if (!UUID_RE.test(noteId)) {
+    throw new Error(`deleteAttachmentsDir: invalid note id ${noteId}`);
+  }
+  const dir = join(app.getPath('userData'), 'attachments', noteId);
+  if (existsSync(dir)) {
+    rmSync(dir, { recursive: true, force: true });
+  }
 }

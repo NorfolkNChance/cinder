@@ -407,6 +407,18 @@ export function TasksSidebar(): JSX.Element {
           </ul>
         )}
       </div>
+
+      {/* Trash access at the bottom, mirroring the Notes sidebar footer. */}
+      <div className="border-t border-gray-200/50 px-4 py-2 text-right dark:border-gray-800/50">
+        <button
+          onClick={useUI.getState().openTrash}
+          title="Open Trash"
+          aria-label="Open Trash"
+          className="text-[11px] text-gray-400 transition-colors hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-400 dark:text-gray-700 dark:hover:text-gray-400"
+        >
+          🗑 Trash
+        </button>
+      </div>
     </>
   );
 }

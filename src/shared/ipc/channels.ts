@@ -27,6 +27,12 @@ export const NOTES_SEARCH = 'notes:search' as const;
 export const NOTES_GET_OR_CREATE_DAILY = 'notes:getOrCreateDaily' as const;
 /** Find a regular (non-daily, non-deleted) note by exact title match. */
 export const NOTES_FIND_BY_TITLE = 'notes:findByTitle' as const;
+/** List soft-deleted notes of every kind for the Trash view. */
+export const NOTES_LIST_DELETED = 'notes:listDeleted' as const;
+/** Un-delete a trashed note (clears deleted_at). */
+export const NOTES_RESTORE = 'notes:restore' as const;
+/** Permanently delete a trashed note and its attachments. Irreversible. */
+export const NOTES_HARD_DELETE = 'notes:hardDelete' as const;
 
 // ── Note ↔ Task links ─────────────────────────────────────────────────────────
 export const LINKS_CREATE = 'links:create' as const;
@@ -63,6 +69,12 @@ export const TASKS_COMPLETE = 'tasks:complete' as const;
 export const TASKS_DELETE = 'tasks:delete' as const;
 /** Free-text substring search over task title + description. */
 export const TASKS_SEARCH = 'tasks:search' as const;
+/** List soft-deleted tasks for the Trash view. */
+export const TASKS_LIST_DELETED = 'tasks:listDeleted' as const;
+/** Un-delete a trashed task (clears deleted_at). */
+export const TASKS_RESTORE = 'tasks:restore' as const;
+/** Permanently delete a trashed task (cascades subtasks/links). Irreversible. */
+export const TASKS_HARD_DELETE = 'tasks:hardDelete' as const;
 
 // ── Labels ───────────────────────────────────────────────────────────────────
 export const LABELS_CREATE = 'labels:create' as const;

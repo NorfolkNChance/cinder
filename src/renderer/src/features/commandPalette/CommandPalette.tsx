@@ -89,6 +89,7 @@ export function CommandPalette(): JSX.Element | null {
   const setSelectedNoteId = useUI((s) => s.setSelectedNoteId);
   const openHelp = useUI((s) => s.openHelp);
   const openSettings = useUI((s) => s.openSettings);
+  const openTrash = useUI((s) => s.openTrash);
   const sidebarCollapsed = useUI((s) => s.sidebarCollapsed);
   const toggleSidebar = useUI((s) => s.toggleSidebar);
   const selectedNoteId = useUI((s) => s.selectedNoteId);
@@ -292,6 +293,16 @@ export function CommandPalette(): JSX.Element | null {
       },
     });
     cmds.push({
+      id: 'action:open-trash',
+      group: 'Actions',
+      label: 'Open Trash',
+      icon: '🗑',
+      execute: () => {
+        close();
+        openTrash();
+      },
+    });
+    cmds.push({
       id: 'action:check-updates',
       group: 'Actions',
       label: 'Check for updates',
@@ -381,7 +392,7 @@ export function CommandPalette(): JSX.Element | null {
   }, [
     projects, labels, savedFilters,
     setMode, setTaskScope, setSelectedNoteId,
-    openHelp, openSettings, close,
+    openHelp, openSettings, openTrash, close,
     sidebarCollapsed, toggleSidebar,
     selectedNoteId,
     exportNote, exportAllNotes, exportTasks, exportBackup,

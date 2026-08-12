@@ -342,12 +342,20 @@ export function NoteList(): JSX.Element {
         )}
       </div>
 
-      {/* Drop hint at bottom */}
-      <div className="border-t border-gray-200/50 px-4 py-2 text-center dark:border-gray-800/50">
+      {/* Drop hint + Trash at bottom */}
+      <div className="flex items-center justify-between border-t border-gray-200/50 px-4 py-2 dark:border-gray-800/50">
         <p className="text-[11px] text-gray-400 dark:text-gray-700">
           Drag <span className="text-gray-500 dark:text-gray-600">.md</span> or{' '}
           <span className="text-gray-500 dark:text-gray-600">.html</span> files to import
         </p>
+        <button
+          onClick={useUI.getState().openTrash}
+          title="Open Trash"
+          aria-label="Open Trash"
+          className="text-[11px] text-gray-400 transition-colors hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-400 dark:text-gray-700 dark:hover:text-gray-400"
+        >
+          🗑 Trash
+        </button>
       </div>
     </div>
   );

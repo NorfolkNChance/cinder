@@ -27,6 +27,7 @@ import { syncServerToSetting as syncMcpServer, stopServer as stopMcpServer } fro
 import { initTray, cleanupTray } from './tray';
 import { initUpdater } from './services/updater';
 import { initNotifier, cleanupNotifier } from './services/notifier';
+import { initPurge, cleanupPurge } from './services/purge';
 import {
   registerAttachmentProtocol,
   registerAttachmentSchemePrivileges,
@@ -261,6 +262,7 @@ app.whenReady().then(async () => {
   initTray();
   initUpdater(mainWindowRef);
   initNotifier(() => mainWindowRef);
+  initPurge();
 
   // Start the local MCP connector server if the user has enabled it. Failure
   // here must never block app startup — the connector is an optional feature.
@@ -300,6 +302,7 @@ app.on('will-quit', (event) => {
       console.error('[cinder] Auto-backup on quit failed:', err);
     } finally {
       cleanupNotifier();
+      cleanupPurge();
       cleanupTray();
       await stopMcpServer().catch(() => undefined);
       app.quit();

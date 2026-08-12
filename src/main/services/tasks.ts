@@ -1,5 +1,5 @@
 import { v7 as uuidv7 } from 'uuid';
-import { and, asc, desc, eq, exists, gte, isNull, lt, sql, type SQL } from 'drizzle-orm';
+import { and, asc, desc, eq, exists, gte, isNotNull, isNull, lt, sql, type SQL } from 'drizzle-orm';
 import { getDb } from '../db/index';
 import { getDrizzle } from '../db/drizzle';
 import { tasks, taskLabels } from '../db/schema';
@@ -10,6 +10,7 @@ import type {
   Task,
   TaskCompleteInput,
   TaskCreateInput,
+  TaskListDeletedInput,
   TaskListInput,
   TaskSearchInput,
   TaskUpdateInput,
@@ -287,13 +288,52 @@ export const tasksService = {
   async delete(id: string): Promise<void> {
     // Soft delete via deleted_at. The FK cascade on parent_task_id only
     // fires on hard delete, so subtasks survive a soft-deleted parent
-    // (they'll be hard-deleted together when the grace period elapses).
+    // (they're removed together if the parent is hard-deleted from Trash
+    // or by the purge job).
     const db = getDrizzle();
     const now = nowIso();
     await db
       .update(tasks)
       .set({ deletedAt: now, updatedAt: now })
       .where(eq(tasks.id, id));
+  },
+
+  /** All soft-deleted tasks for the Trash view, newest deletion first. */
+  async listDeleted(input: TaskListDeletedInput): Promise<readonly Task[]> {
+    const db = getDrizzle();
+    const rows = await db
+      .select()
+      .from(tasks)
+      .where(isNotNull(tasks.deletedAt))
+      .orderBy(desc(tasks.deletedAt))
+      .limit(input.limit ?? 500);
+    return rows as Task[];
+  },
+
+  /**
+   * Un-delete a trashed task. project_id/section_id need no repair here:
+   * both FKs are DB-enforced with ON DELETE SET NULL, which fires on
+   * soft-deleted rows too. Triage state is preserved as-is.
+   */
+  async restore(id: string): Promise<Task | null> {
+    const db = getDrizzle();
+    const task = await getById(id);
+    if (!task || task.deletedAt === null) return task;
+    await db
+      .update(tasks)
+      .set({ deletedAt: null, updatedAt: nowIso() })
+      .where(eq(tasks.id, id));
+    return getById(id);
+  },
+
+  /**
+   * Permanently delete a task row. FK cascades remove subtasks (including
+   * ones that were never soft-deleted — documented behaviour of the
+   * soft-delete design above), label links, and note links.
+   */
+  async hardDelete(id: string): Promise<void> {
+    const db = getDrizzle();
+    await db.delete(tasks).where(eq(tasks.id, id));
   },
 } as const;
 

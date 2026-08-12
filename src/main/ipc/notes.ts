@@ -6,7 +6,10 @@ import {
   NoteFindByTitleInput,
   NoteGetInput,
   NoteGetOrCreateDailyInput,
+  NoteHardDeleteInput,
+  NoteListDeletedInput,
   NoteListInput,
+  NoteRestoreInput,
   NoteSearchInput,
   NoteUpdateInput,
 } from '../../shared/schemas/notes';
@@ -16,7 +19,10 @@ import {
   NOTES_FIND_BY_TITLE,
   NOTES_GET,
   NOTES_GET_OR_CREATE_DAILY,
+  NOTES_HARD_DELETE,
   NOTES_LIST,
+  NOTES_LIST_DELETED,
+  NOTES_RESTORE,
   NOTES_SEARCH,
   NOTES_UPDATE,
 } from '../../shared/ipc/channels';
@@ -81,5 +87,23 @@ export function registerNotesHandlers(): void {
     assertMainFrame(event);
     const input = NoteFindByTitleInput.parse(raw);
     return notesService.findByTitle(input.title);
+  });
+
+  ipcMain.handle(NOTES_LIST_DELETED, async (event, raw) => {
+    assertMainFrame(event);
+    const input = NoteListDeletedInput.parse(raw);
+    return notesService.listDeleted(input);
+  });
+
+  ipcMain.handle(NOTES_RESTORE, async (event, raw) => {
+    assertMainFrame(event);
+    const input = NoteRestoreInput.parse(raw);
+    return notesService.restore(input.id);
+  });
+
+  ipcMain.handle(NOTES_HARD_DELETE, async (event, raw) => {
+    assertMainFrame(event);
+    const input = NoteHardDeleteInput.parse(raw);
+    await notesService.hardDelete(input.id);
   });
 }

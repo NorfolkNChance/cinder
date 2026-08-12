@@ -644,6 +644,53 @@ Weekly review every monday p2
     ),
   },
 
+  // ── Trash ────────────────────────────────────────────────────────────────
+  {
+    id: 'trash',
+    title: 'Trash',
+    icon: '🗑',
+    keywords: ['trash', 'delete', 'deleted', 'restore', 'undelete', 'recover', 'purge', 'bin'],
+    render: () => (
+      <div>
+        <H2>Trash</H2>
+        <P>
+          Deleting a note or task moves it to the Trash instead of removing it
+          immediately. Open the Trash from the 🗑 button at the bottom of the
+          Notes or Tasks sidebar, or via <Kbd>⌘K</Kbd> → "Open Trash".
+        </P>
+
+        <H3>Restoring items</H3>
+        <P>
+          Click <strong>Restore</strong> next to any item to bring it back.
+          Notes return to their folder (or Unfiled if the folder was deleted
+          in the meantime); tasks return to their project or Inbox. A restored
+          daily note whose date has since been re-created comes back as a
+          regular note so each day keeps exactly one daily note.
+        </P>
+
+        <H3>Deleting permanently</H3>
+        <P>
+          <strong>Delete forever</strong> removes a single item permanently —
+          including a note's attachments. <strong>Empty Trash</strong> clears
+          everything. Both ask you to click a second time to confirm; there is
+          no undo after that.
+        </P>
+
+        <H3>Automatic purge</H3>
+        <P>
+          By default, items left in the Trash are permanently removed after
+          30 days. Adjust the retention period — or switch automatic purging
+          off entirely — in Settings → Trash.
+        </P>
+
+        <Callout>
+          Deleting a task permanently also removes its subtasks, even ones
+          that were not separately deleted.
+        </Callout>
+      </div>
+    ),
+  },
+
   // ── Keyboard Shortcuts ───────────────────────────────────────────────────
   {
     id: 'shortcuts',

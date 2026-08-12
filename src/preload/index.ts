@@ -13,7 +13,10 @@ import {
   NOTES_FIND_BY_TITLE,
   NOTES_GET,
   NOTES_GET_OR_CREATE_DAILY,
+  NOTES_HARD_DELETE,
   NOTES_LIST,
+  NOTES_LIST_DELETED,
+  NOTES_RESTORE,
   NOTES_SEARCH,
   NOTES_UPDATE,
   PROJECTS_ARCHIVE,
@@ -31,7 +34,10 @@ import {
   TASKS_CREATE,
   TASKS_DELETE,
   TASKS_GET,
+  TASKS_HARD_DELETE,
   TASKS_LIST,
+  TASKS_LIST_DELETED,
+  TASKS_RESTORE,
   TASKS_SEARCH,
   TASKS_UPDATE,
   LABELS_CREATE,
@@ -79,7 +85,10 @@ import type {
   NoteFindByTitleInput,
   NoteGetInput,
   NoteGetOrCreateDailyInput,
+  NoteHardDeleteInput,
+  NoteListDeletedInput,
   NoteListInput,
+  NoteRestoreInput,
   NoteSearchInput,
   NoteUpdateInput,
 } from '../shared/schemas/notes';
@@ -109,7 +118,10 @@ import type {
   TaskCreateInput,
   TaskDeleteInput,
   TaskGetInput,
+  TaskHardDeleteInput,
+  TaskListDeletedInput,
   TaskListInput,
+  TaskRestoreInput,
   TaskSearchInput,
   TaskUpdateInput,
   TaskWithLabels,
@@ -202,6 +214,12 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke(NOTES_GET_OR_CREATE_DAILY, input),
     findByTitle: (input: NoteFindByTitleInput): Promise<Note | null> =>
       ipcRenderer.invoke(NOTES_FIND_BY_TITLE, input),
+    listDeleted: (input: NoteListDeletedInput): Promise<readonly Note[]> =>
+      ipcRenderer.invoke(NOTES_LIST_DELETED, input),
+    restore: (input: NoteRestoreInput): Promise<Note | null> =>
+      ipcRenderer.invoke(NOTES_RESTORE, input),
+    hardDelete: (input: NoteHardDeleteInput): Promise<void> =>
+      ipcRenderer.invoke(NOTES_HARD_DELETE, input),
   },
   attachments: {
     save: (input: AttachmentSaveInput): Promise<AttachmentSaveResult> =>
@@ -248,6 +266,12 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke(TASKS_COMPLETE, input),
     delete: (input: TaskDeleteInput): Promise<void> =>
       ipcRenderer.invoke(TASKS_DELETE, input),
+    listDeleted: (input: TaskListDeletedInput): Promise<readonly Task[]> =>
+      ipcRenderer.invoke(TASKS_LIST_DELETED, input),
+    restore: (input: TaskRestoreInput): Promise<Task | null> =>
+      ipcRenderer.invoke(TASKS_RESTORE, input),
+    hardDelete: (input: TaskHardDeleteInput): Promise<void> =>
+      ipcRenderer.invoke(TASKS_HARD_DELETE, input),
   },
   labels: {
     create: (input: LabelCreateInput): Promise<Label> =>

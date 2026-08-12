@@ -62,6 +62,7 @@ Full architectural spec: [`../ARCHITECTURE.md`](../ARCHITECTURE.md) — read it 
 | + | Collapsible sidebar — the left nav panel toggles via ⌘\\, the toolbar ⇤/⇥ button, or a "Hide/Show sidebar" command-palette entry, reclaiming the full working width (distraction-free writing, hiding the document list when screen-sharing). Ephemeral `sidebarCollapsed` Zustand state (`state/ui.ts`), conditional `<aside>` render in `App.tsx`; no migration, no persistence |
 | + | Autosave hardening + dependency refresh — pending saves flush on window close/quit (`useFlushBeforeUnload`), note mutation failures surface as error toasts, ⌘N files new notes into the viewed folder; toolchain bumped to Electron 43 (Node 24.18), React 19.2, TypeScript 6.0 (baseUrl removed from tsconfigs — deprecated), ESLint 10, @types/node 24 (matches Electron's bundled Node — do NOT track latest Node major). Tailwind 4 deliberately deferred (major CSS-config migration, no benefit) |
 | + | Markdown tables — `@tiptap/extension-table` (pinned exact to match the other `@tiptap/*` versions) in the shared schema; serde emits/parses GFM pipe tables (first row = header, no merged cells, `resizable: false`); toolbar insert + contextual row/column buttons; DOCX export does not yet map table tokens. See ADR-0014 |
+| + | Trash + scheduled purge — soft-deleted notes/tasks surface in a Trash modal (🗑 in both sidebars, ⌘K → "Open Trash") with Restore / Delete forever / Empty Trash; `notes:listDeleted\|restore\|hardDelete` + `tasks:...` IPC; note hardDelete removes the attachment dir; purge job (`services/purge.ts`) hard-deletes items older than `trash.retentionDays` (default 30, opt-out via `trash.autoPurgeEnabled`), 60 s after boot then every 12 h. See ADR-0015 |
 
 ---
 
@@ -602,6 +603,10 @@ These have burned us before. Check here before debugging similar symptoms.
 
 **`folders` FK is enforced in the service layer, not the schema**
 - The `notes.folder_id` column predates the `folders` table (added in 0000, table added in 0011). SQLite cannot add a FK constraint to an existing column, so referential integrity for `notes.folder_id → folders.id` lives in `foldersService`. Deleting a folder moves its notes to Unfiled (`folder_id = null`) and is blocked if sub-folders exist. Don't assume the DB enforces the FK.
+
+**Hard deletes must go through the service layer, never raw SQL**
+- `notesService.hardDelete()` deletes the row **and** the note's attachment directory (`userData/attachments/<noteId>/`); the FTS index is cleaned by the `notes_fts_ad` trigger and links by FK CASCADE. A raw `DELETE FROM notes` leaks attachment files on disk. The purge job (`services/purge.ts`) deliberately loops through the service methods instead of issuing a bulk `DELETE … WHERE` for exactly this reason. `tasksService.hardDelete()` cascades to subtasks — including subtasks that were never soft-deleted (documented behaviour; see ADR-0015).
+- `notesService.restore()` repairs integrity on the way out of Trash: dangling `folder_id` → null (folder delete only re-files live notes), and a daily note whose date was re-created while trashed comes back as a regular note. Don't "simplify" restore to a bare `SET deleted_at = NULL`.
 
 **HTML notes store raw HTML in `body` with `bodyType = 'html'`**
 - Imported `.html` files are NOT converted to Markdown (that changed in v1.1.8). `body` holds raw HTML, rendered via a fully sandboxed `<iframe srcDoc>` (`sandbox=""` — null origin, no scripts, no storage access) and edited as source. `NoteEditor` branches on `note.bodyType`. `attachment://` images still load because the Electron protocol handler runs in the main process and does not enforce frame origin.

@@ -106,6 +106,11 @@ Most notes-and-todos products require you to send your content to someone else's
 - Full database backup as a `.db` snapshot
 - All operations use native macOS Save/Open dialogs — the app never touches arbitrary file paths
 
+### Trash
+- Deleted notes and tasks move to the **Trash** instead of vanishing — open it from the 🗑 button in either sidebar or via ⌘K → "Open Trash"
+- **Restore** any item (notes return to their folder, tasks to their project); **Delete forever** and **Empty Trash** remove items permanently, including note attachments
+- **Automatic purge** permanently clears trashed items after a configurable retention period (30 days by default; adjustable or fully disabled in Settings → Trash)
+
 ### Triage queue
 - **"+ Todo"** button in Notes, Daily, Tasks, and Matrix headers captures a task without breaking your flow — the task is held in a Triage queue rather than going straight to Inbox
 - **⌘⇧Space** global shortcut opens a lightweight capture popup from the macOS menu-bar tray icon, even when Cinder is in the background
