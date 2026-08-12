@@ -142,6 +142,13 @@ export const EXPORT_BACKUP = 'export:backup' as const;
 /** Export the database encryption key to a user-chosen text file. */
 export const EXPORT_KEY_BACKUP = 'export:keyBackup' as const;
 
+// ── Restore ──────────────────────────────────────────────────────────────────
+/**
+ * Interactive restore-from-backup flow (all dialogs are native, in main).
+ * On success the app relaunches — the invoke promise may never resolve.
+ */
+export const RESTORE_FROM_BACKUP = 'restore:fromBackup' as const;
+
 // ── Vault import ──────────────────────────────────────────────────────────────
 /** Show a folder picker and return the chosen path, or null if cancelled. */
 export const VAULT_PICK_FOLDER = 'vault:pickFolder' as const;

@@ -18,6 +18,8 @@ import { registerLabelsHandlers } from './ipc/labels';
 import { registerLinksHandlers } from './ipc/links';
 import { registerSavedFiltersHandlers } from './ipc/savedFilters';
 import { registerExportHandlers } from './ipc/export';
+import { registerRestoreHandlers } from './ipc/restore';
+import { restoreFromBackup } from './services/restore';
 import { registerSettingsHandlers } from './ipc/settings';
 import { registerUpdateHandlers } from './ipc/update';
 import { registerCaptureHandlers } from './ipc/capture';
@@ -211,30 +213,68 @@ app.whenReady().then(async () => {
   // Initialise the encrypted database, apply any pending schema migrations,
   // and wire the Drizzle query layer. All three must complete before IPC
   // handlers start fielding requests that touch the DB.
-  await initDb();
-  await runMigrations();
+  //
+  // If the database cannot be opened at all (wrong key after a key import,
+  // corrupt file header, failed migration), offer the restore-from-backup
+  // flow instead of dying silently — this is the recovery path the backups
+  // exist for.
+  try {
+    await initDb();
+    await runMigrations();
+  } catch (err) {
+    console.error('[cinder] database initialisation failed:', err);
+    for (;;) {
+      const { response } = await dialog.showMessageBox({
+        type: 'error',
+        title: 'Cinder — Cannot Open Database',
+        message: 'Your database could not be opened.',
+        detail:
+          `${err instanceof Error ? err.message : String(err)}\n\n` +
+          'You can restore a backup now (auto-backups are in\n' +
+          `${app.getPath('userData')}/backups/), or quit and investigate.`,
+        buttons: ['Quit', 'Restore from backup…'],
+        defaultId: 1,
+        cancelId: 0,
+      });
+      if (response !== 1) {
+        app.exit(1);
+        return;
+      }
+      const result = await restoreFromBackup({ liveDbAvailable: false });
+      if (result.success) return; // relaunching onto the restored DB
+      // Cancelled or failed — re-offer the choice rather than crashing on.
+    }
+  }
 
   // Integrity check — runs after migrations so the schema is always current.
   // A fresh database always passes; a corrupt one surfaces here before the
   // user starts writing more data into it.
   const dbOk = await runIntegrityCheck();
   if (!dbOk) {
-    const { response } = await dialog.showMessageBox({
-      type: 'error',
-      title: 'Database Problem Detected',
-      message: 'Cinder found a problem in your database.',
-      detail:
-        'Some data may be corrupted. Continuing may make things worse.\n\n' +
-        'Auto-backups (if enabled) are stored at:\n' +
-        `${app.getPath('userData')}/backups/\n\n` +
-        'Restore from a backup, then relaunch. If you have no backup, ' +
-        'you can continue but data loss is possible.',
-      buttons: ['Quit (recommended)', 'Continue anyway'],
-      defaultId: 0,
-      cancelId: 1,
-    });
-    if (response === 0) {
-      app.exit(1);
+    for (;;) {
+      const { response } = await dialog.showMessageBox({
+        type: 'error',
+        title: 'Database Problem Detected',
+        message: 'Cinder found a problem in your database.',
+        detail:
+          'Some data may be corrupted. Continuing may make things worse.\n\n' +
+          'The safest fix is restoring a backup (your current data is kept ' +
+          'as a safety copy first). Auto-backups are stored at:\n' +
+          `${app.getPath('userData')}/backups/`,
+        buttons: ['Quit (recommended)', 'Restore from backup…', 'Continue anyway'],
+        defaultId: 0,
+        cancelId: 0,
+      });
+      if (response === 0) {
+        app.exit(1);
+        return;
+      }
+      if (response === 2) break; // continue anyway, eyes open
+      // liveDbAvailable: false — the pre-restore snapshot must be a raw
+      // file copy here; VACUUM INTO from a corrupt source can fail or
+      // launder the corruption into the "safety" copy.
+      const result = await restoreFromBackup({ liveDbAvailable: false });
+      if (result.success) return; // relaunching onto the restored DB
     }
   }
 
@@ -252,6 +292,7 @@ app.whenReady().then(async () => {
   registerLinksHandlers();
   registerSavedFiltersHandlers();
   registerExportHandlers();
+  registerRestoreHandlers();
   registerSettingsHandlers();
   registerUpdateHandlers();
   registerCaptureHandlers();

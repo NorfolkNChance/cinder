@@ -604,7 +604,7 @@ Weekly review every monday p2
     id: 'export',
     title: 'Export & Backup',
     icon: '💾',
-    keywords: ['export', 'backup', 'csv', 'markdown', 'download', 'save', 'file', 'docx', 'word', 'pdf'],
+    keywords: ['export', 'backup', 'csv', 'markdown', 'download', 'save', 'file', 'docx', 'word', 'pdf', 'restore', 'recover', 'key', 'keychain', 'encryption'],
     render: () => (
       <div>
         <H2>Export &amp; Backup</H2>
@@ -619,7 +619,7 @@ Weekly review every monday p2
             ['Export note', 'Save the currently open note as Markdown (.md), Word (.docx), or PDF — pick the format from the pills next to "This note". Images (including live drawing embeds) are inlined so the file is portable outside Cinder.'],
             ['Export all notes', 'Save every note into a folder you choose, in the format you pick (.md, .docx, or .pdf). Filenames are collision-safe. Attachment images are inlined; live drawing embeds are inlined only by single-note export.'],
             ['Export tasks', 'Save all active tasks as a .csv file with project, labels, priority, recurrence, and date columns.'],
-            ['Backup database', 'Copy the encrypted .db file to a location you choose. Restoring: replace the database file in the app data folder.'],
+            ['Backup database', 'Save a consistent encrypted snapshot of the database to a location you choose. Restore it any time with "Restore from backup…" in Settings → Backup.'],
           ].map(([name, desc]) => (
             <div key={name} className="flex items-start gap-3 border-b border-gray-200/50 px-3 py-2 dark:border-gray-800/50 last:border-b-0">
               <span className="w-36 shrink-0 font-medium text-gray-700 dark:text-gray-300">{name}</span>
@@ -634,11 +634,29 @@ Weekly review every monday p2
           search for "export".
         </P>
 
+        <H3>Restoring a backup</H3>
+        <P>
+          Settings → Backup → <strong>Restore from backup…</strong> walks you
+          through choosing a backup file (auto-backups are offered first),
+          verifies it is healthy, saves a safety copy of your current data,
+          and relaunches Cinder with the restored database. Nothing is
+          replaced until the backup has been fully validated.
+        </P>
+        <P>
+          Restoring on a <strong>different Mac</strong> (or after losing the
+          Keychain entry) additionally asks for your exported key file — so
+          keep both a backup <em>and</em> the exported key somewhere safe.
+          If Cinder ever fails to start because the key or database is
+          damaged, the startup dialog offers the same import and restore
+          options.
+        </P>
+
         <Callout>
           The database backup is the encrypted SQLite file. The encryption key
           lives in your macOS Keychain and is <strong className="text-blue-300">not</strong>{' '}
-          included in the backup — keep a note of your device or ensure iCloud
-          Keychain is syncing if you plan to restore on a new machine.
+          included in the backup — export it via "Export encryption key…" and
+          store it separately (a password manager is ideal). A backup file
+          plus its key file is everything needed to restore on any Mac.
         </Callout>
       </div>
     ),

@@ -78,6 +78,10 @@ import type {
   ExportResult,
 } from '../shared/schemas/export';
 import type {
+  RestoreFromBackupInput,
+  RestoreResult,
+} from '../shared/schemas/restore';
+import type {
   AppSettings,
   SettingsSetInput,
 } from '../shared/schemas/settings';
@@ -197,6 +201,9 @@ declare global {
         tasks: (input: ExportTasksInput) => Promise<ExportResult>;
         backup: (input: ExportBackupInput) => Promise<ExportResult>;
         keyBackup: (input: ExportKeyBackupInput) => Promise<ExportResult>;
+      };
+      restore: {
+        fromBackup: (input: RestoreFromBackupInput) => Promise<RestoreResult>;
       };
       settings: {
         getAll: () => Promise<AppSettings>;

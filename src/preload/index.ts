@@ -60,6 +60,7 @@ import {
   EXPORT_TASKS,
   EXPORT_BACKUP,
   EXPORT_KEY_BACKUP,
+  RESTORE_FROM_BACKUP,
   SETTINGS_GET_ALL,
   SETTINGS_SET,
   UPDATE_CHECK,
@@ -157,6 +158,10 @@ import type {
   ExportKeyBackupInput,
   ExportResult,
 } from '../shared/schemas/export';
+import type {
+  RestoreFromBackupInput,
+  RestoreResult,
+} from '../shared/schemas/restore';
 import type {
   AppSettings,
   SettingsSetInput,
@@ -320,6 +325,15 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke(EXPORT_BACKUP, input),
     keyBackup: (input: ExportKeyBackupInput): Promise<ExportResult> =>
       ipcRenderer.invoke(EXPORT_KEY_BACKUP, input),
+  },
+  restore: {
+    /**
+     * Start the interactive restore-from-backup flow. Everything happens in
+     * native main-process dialogs; on success the app relaunches, so this
+     * promise may never resolve.
+     */
+    fromBackup: (input: RestoreFromBackupInput): Promise<RestoreResult> =>
+      ipcRenderer.invoke(RESTORE_FROM_BACKUP, input),
   },
   settings: {
     getAll: (): Promise<AppSettings> =>

@@ -157,8 +157,10 @@ function csvRow(cells: (string | number | null | undefined)[]): string {
  * Single-quotes in the path are doubled to prevent SQL injection; this is
  * the standard SQLite escaping for string literals (not a parameterised
  * query — VACUUM INTO does not support bind parameters for the path).
+ *
+ * Exported for the restore flow's pre-restore safety snapshot.
  */
-function vacuumInto(destPath: string): Promise<void> {
+export function vacuumInto(destPath: string): Promise<void> {
   const escaped = destPath.replace(/'/g, "''");
   return new Promise((resolve, reject) => {
     getDb().run(`VACUUM INTO '${escaped}'`, (err: Error | null) => {

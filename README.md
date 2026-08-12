@@ -104,7 +104,9 @@ Most notes-and-todos products require you to send your content to someone else's
 - Export all notes to a folder in any of those formats (collision-safe filenames)
 - Export all tasks as `.csv` (includes project, labels, priority, recurrence, dates)
 - Full database backup as a `.db` snapshot
-- All operations use native macOS Save/Open dialogs — the app never touches arbitrary file paths
+- **Restore from backup** — pick a backup (auto-backups offered first), Cinder validates it, saves a safety copy of the current data, swaps it in, and relaunches; restoring on a different Mac asks for your exported encryption-key file and adopts it as the new device key
+- **Startup recovery** — if the database or its Keychain key is ever unreadable at launch, the startup dialog offers key-file import and restore-from-backup instead of a dead end
+- All operations use native macOS Save/Open dialogs — the app never touches arbitrary file paths, and the encryption key never enters the UI
 
 ### Trash
 - Deleted notes and tasks move to the **Trash** instead of vanishing — open it from the 🗑 button in either sidebar or via ⌘K → "Open Trash"

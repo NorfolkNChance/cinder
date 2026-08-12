@@ -336,7 +336,7 @@ function BackupSection({
         </div>
       </Field>
 
-      <div className="mt-1 flex items-center gap-3">
+      <div className="mt-1 flex flex-wrap items-center gap-3">
         <button
           onClick={() => void window.api.export.backup({})}
           className="rounded border border-gray-300 px-3 py-1.5 text-xs text-gray-600 transition-colors hover:border-gray-400 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-gray-700 dark:text-gray-400 dark:hover:border-gray-600 dark:hover:text-gray-200"
@@ -349,7 +349,18 @@ function BackupSection({
         >
           Export encryption key…
         </button>
+        <button
+          onClick={() => void window.api.restore.fromBackup({})}
+          className="rounded border border-gray-300 px-3 py-1.5 text-xs text-gray-600 transition-colors hover:border-gray-400 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-gray-700 dark:text-gray-400 dark:hover:border-gray-600 dark:hover:text-gray-200"
+        >
+          Restore from backup…
+        </button>
       </div>
+      <p className="mt-2 text-[11px] text-gray-500 dark:text-gray-600">
+        Restoring replaces your current data with a backup (after saving a
+        safety copy) and relaunches Cinder. Restoring a backup from another
+        Mac will ask for your exported encryption key file.
+      </p>
     </section>
   );
 }

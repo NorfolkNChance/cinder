@@ -106,6 +106,30 @@ async function applyMigration(migration: Migration): Promise<void> {
 }
 
 /**
+ * The migration names this build knows about (e.g. '0000_init').
+ * Used by the restore-from-backup flow to detect a backup written by a
+ * NEWER app version: if the backup's `_migrations` table records a name
+ * missing from this list, restoring it would hand the current code a
+ * schema it doesn't understand.
+ */
+export function knownMigrationNames(): readonly string[] {
+  return loadMigrations().map((m) => m.name);
+}
+
+/**
+ * Names present in a backup's `_migrations` table but unknown to this
+ * build. Pure set-difference — non-empty means the backup is from a newer
+ * Cinder and must not be restored by this version.
+ */
+export function findUnknownMigrations(
+  backupNames: readonly string[],
+  known: readonly string[],
+): readonly string[] {
+  const knownSet = new Set(known);
+  return backupNames.filter((name) => !knownSet.has(name));
+}
+
+/**
  * Apply any migrations that have not yet been recorded in `_migrations`.
  * Must be called after `initDb()` has resolved.
  *

@@ -39,3 +39,4 @@ Status: Proposed | Accepted | Deprecated | Superseded by [NNNN](NNNN-...)
 | [0013](0013-docx-and-pdf-note-export.md) | Export notes to DOCX and PDF | Accepted |
 | [0014](0014-gfm-pipe-tables-in-markdown-serde.md) | Represent editor tables as GFM pipe tables in the markdown serde | Accepted |
 | [0015](0015-trash-with-scheduled-purge.md) | Add a Trash view with restore, hard delete, and a scheduled purge | Accepted |
+| [0016](0016-restore-from-backup-with-key-import.md) | Restore from backup with key-file import, entirely in the main process | Accepted |
