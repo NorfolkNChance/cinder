@@ -44,6 +44,9 @@ test('Insert a drawing into a note as an attachment image, no eval', async () =>
     await page.waitForFunction(() => Boolean((window as Window & { api?: unknown }).api), null, { timeout: 30_000 });
     await page.waitForFunction(() => (document.getElementById('root')?.childElementCount ?? 0) > 0, null, { timeout: 30_000 });
 
+    // The app lands on Summary (full-width, no sidebar) — switch to Notes first.
+    await page.getByRole('button', { name: 'Notes', exact: true }).click();
+
     // Create a note (opens it in the editor; selection persists across modes).
     await page.getByRole('button', { name: '+ New', exact: true }).click();
     await page.waitForSelector('#tiptap-editor-content');

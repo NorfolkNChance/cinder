@@ -140,14 +140,17 @@ export const HELP_SECTIONS: HelpSection[] = [
           leaves your device.
         </P>
 
-        <H3>Four modes</H3>
+        <H3>Six modes</H3>
         <P>
           Switch between{' '}
+          <strong className="text-gray-800 dark:text-gray-200">Summary</strong>,{' '}
           <strong className="text-gray-800 dark:text-gray-200">Notes</strong>,{' '}
           <strong className="text-gray-800 dark:text-gray-200">Tasks</strong>,{' '}
-          <strong className="text-gray-800 dark:text-gray-200">Matrix</strong>, and{' '}
-          <strong className="text-gray-800 dark:text-gray-200">Daily</strong> using the buttons at
-          the top. <Kbd>⌘K</Kbd> opens the command palette from anywhere.
+          <strong className="text-gray-800 dark:text-gray-200">Matrix</strong>,{' '}
+          <strong className="text-gray-800 dark:text-gray-200">Daily</strong>, and{' '}
+          <strong className="text-gray-800 dark:text-gray-200">Draw</strong> using the buttons at
+          the top. The app opens in Summary — a daily overview of what needs your
+          attention. <Kbd>⌘K</Kbd> opens the command palette from anywhere.
         </P>
         <P>
           Press <Kbd>⌘\</Kbd> (or the <span aria-hidden="true">⇤</span> button at the
@@ -175,6 +178,68 @@ export const HELP_SECTIONS: HelpSection[] = [
             Switch to Daily and click <strong className="text-gray-800 dark:text-gray-200">Today →</strong> to open today&apos;s journal entry.
           </li>
         </ol>
+      </div>
+    ),
+  },
+
+  // ── Summary ──────────────────────────────────────────────────────────────
+  {
+    id: 'summary',
+    title: 'Summary',
+    icon: '☀️',
+    keywords: ['dashboard', 'overview', 'today', 'overdue', 'catch up', 'landing', 'home', 'do first', 'since last session', 'snooze', 'daily summary'],
+    render: () => (
+      <div>
+        <H2>Summary</H2>
+        <P>
+          Summary is the landing page — a daily overview that answers three
+          questions the moment you open the app: what needs attention, what to
+          do first, and what happened while you were away.
+        </P>
+
+        <H3>Cards</H3>
+        <ul className="mb-3 ml-4 list-disc space-y-1.5 text-sm text-gray-600 dark:text-gray-400">
+          <li>
+            <strong className="text-gray-800 dark:text-gray-200">Do first</strong> — up to five
+            urgent-and-important tasks, classified with your Matrix thresholds
+            and ordered by priority.
+          </li>
+          <li>
+            <strong className="text-gray-800 dark:text-gray-200">Overdue</strong> — grouped by
+            how stale they are (yesterday, this week, older).{' '}
+            <strong className="text-gray-800 dark:text-gray-200">Move all to today</strong>{' '}
+            reschedules every overdue task in one click.
+          </li>
+          <li>
+            <strong className="text-gray-800 dark:text-gray-200">Due today</strong> — with a
+            collapsed count of what&apos;s due tomorrow.
+          </li>
+          <li>
+            <strong className="text-gray-800 dark:text-gray-200">Triage</strong> — captured
+            tasks waiting to be acknowledged, editable inline.
+          </li>
+          <li>
+            <strong className="text-gray-800 dark:text-gray-200">Since last session</strong> —
+            tasks completed, tasks created (including any captured by Claude via
+            the MCP connector), and notes edited since you last quit the app.
+          </li>
+        </ul>
+
+        <H3>Quick actions</H3>
+        <P>
+          Every task row has inline actions: the circle completes the task,{' '}
+          <strong className="text-gray-800 dark:text-gray-200">Tomorrow →</strong> (shown on
+          hover) snoozes it a day, and clicking the title jumps to the task in
+          Tasks mode. <strong className="text-gray-800 dark:text-gray-200">📅 Today&apos;s
+          note →</strong> in the header opens today&apos;s daily note.
+        </P>
+
+        <Callout>
+          Prefer to land in Notes? Turn off{' '}
+          <strong className="text-gray-800 dark:text-gray-200">Open Summary on launch</strong> in
+          Settings → Summary. Cards only appear when they have something to show
+          — a clear day is just a green &ldquo;all clear&rdquo;.
+        </Callout>
       </div>
     ),
   },

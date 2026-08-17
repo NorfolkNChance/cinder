@@ -63,6 +63,7 @@ Full architectural spec: [`../ARCHITECTURE.md`](../ARCHITECTURE.md) — read it 
 | + | Autosave hardening + dependency refresh — pending saves flush on window close/quit (`useFlushBeforeUnload`), note mutation failures surface as error toasts, ⌘N files new notes into the viewed folder; toolchain bumped to Electron 43 (Node 24.18), React 19.2, TypeScript 6.0 (baseUrl removed from tsconfigs — deprecated), ESLint 10, @types/node 24 (matches Electron's bundled Node — do NOT track latest Node major). Tailwind 4 deliberately deferred (major CSS-config migration, no benefit) |
 | + | Markdown tables — `@tiptap/extension-table` (pinned exact to match the other `@tiptap/*` versions) in the shared schema; serde emits/parses GFM pipe tables (first row = header, no merged cells, `resizable: false`); toolbar insert + contextual row/column buttons; DOCX export does not yet map table tokens. See ADR-0014 |
 | + | Trash + scheduled purge — soft-deleted notes/tasks surface in a Trash modal (🗑 in both sidebars, ⌘K → "Open Trash") with Restore / Delete forever / Empty Trash; `notes:listDeleted\|restore\|hardDelete` + `tasks:...` IPC; note hardDelete removes the attachment dir; purge job (`services/purge.ts`) hard-deletes items older than `trash.retentionDays` (default 30, opt-out via `trash.autoPurgeEnabled`), 60 s after boot then every 12 h. See ADR-0015 |
+| + | Summary mode — sixth mode and default landing page: full-width daily dashboard (Do first via `classifyTask`, Overdue grouped by staleness + "Move all to today", Due today + tomorrow preview, inline Triage, "Since last session" via `summary.lastSessionEndedAt` stamped in `will-quit`); composed from existing list IPC (`completedAfter`/`createdAfter`/`updatedAfter` filters), no new IPC domain. See ADR-0017 |
 | + | Restore from backup + key import — main-process-only interactive flow (`services/restore.ts`, `restore:fromBackup` IPC): pick backup → decrypt with device key or exported key file → integrity + migration-compat validation → confirm with counts → pre-restore safety snapshot → swap + adopt key → relaunch. Reachable from Settings → Backup and from both boot-failure dialogs (unopenable DB, failed integrity check); Keychain-decrypt failure at boot offers "Import key file…". See ADR-0016 |
 
 ---
@@ -377,6 +378,42 @@ Daily Notes is a fourth mode (alongside Notes, Tasks, Matrix) where every calend
 
 **`selectedDailyDate` vs `selectedNoteId`:**
 Both are tracked in Zustand. `selectedDailyDate` drives which date is highlighted in the sidebar tree. `selectedNoteId` is the note actually open in the editor — set to the result of `getOrCreateDaily` when a date is clicked. Switching away from Daily mode and back restores both (neither is cleared on mode switch).
+
+---
+
+## Summary mode (ADR-0017)
+
+Summary is the sixth mode and the **default landing page** (`summary.openOnLaunch`,
+default true — the Zustand store boots with `mode: 'summary'` and
+`SettingsInitializer` switches to `'notes'` if the user opted out). It renders
+**full-width with no sidebar** (`App.tsx` skips the `<aside>` for this mode).
+Due-task notification clicks land here too, falling back to Tasks › Today when
+opted out.
+
+**It is an aggregation view, not a data domain — there is no `summary:*` IPC.**
+Cards compose existing hooks so the `tasks.all`/`notes.all` invalidation prefixes
+refresh everything for free:
+
+- Overdue + Due today share the Tasks › Today cache (`useTasksList({kind:'today'})`),
+  split in the renderer by `splitTodayScope`.
+- Do first = `useAllTasksList` + shared `classifyTask` (`pickDoFirst`, cap 5).
+- Since last session = new **filter-only** list fields: `TaskListInput.completedAfter`
+  / `.createdAfter`, `NoteListInput.updatedAfter` (gte over UTC ISO strings; no new
+  columns, so `listByFilter`'s raw-SQL column list is untouched). **`completedAfter`
+  implies completed results** — the service skips the active-tasks default when set.
+- The baseline is `summary.lastSessionEndedAt`, stamped in `will-quit` (own
+  try/catch, before the auto-backup). During a session it always holds the
+  *previous* session's end; empty string (first run) falls back to start-of-today.
+  Crash / `app.exit()` paths skip the stamp — the window then spans two sessions,
+  which is deliberate (superset, never a loss).
+
+**Key files:** `src/renderer/src/features/summary/` — `SummaryPane.tsx` (cards),
+`SummaryTaskRow.tsx` (complete/snooze/navigate row), `selectors.ts` (pure grouping
+logic, unit-tested), `queries.ts` (tomorrow + since-last-session hooks; keys live
+under the existing `tasks.all`/`notes.all` prefixes — keep it that way).
+
+The full option catalog and later phases (upcoming week, stale tasks, MIT picker,
+checkbox carry-over) live in `docs/specs/daily-summary.md`.
 
 ---
 

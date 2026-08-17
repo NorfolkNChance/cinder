@@ -7,6 +7,7 @@ import { initDb, runIntegrityCheck } from './db/index';
 import { runMigrations } from './db/migrate';
 import { initDrizzle } from './db/drizzle';
 import { runAutoBackup } from './services/export';
+import { settingsService } from './services/settings';
 import { registerAppHandlers } from './ipc/app';
 import { registerNotesHandlers } from './ipc/notes';
 import { registerAttachmentsHandlers } from './ipc/attachments';
@@ -335,6 +336,18 @@ app.on('will-quit', (event) => {
   _quitting = true;
 
   void (async () => {
+    // Stamp the session end for the Summary "since last session" card. Read
+    // at next launch, before this key is overwritten again at that session's
+    // quit. A failure here must never block quitting or the backup.
+    try {
+      await settingsService.set(
+        'summary.lastSessionEndedAt',
+        new Date().toISOString(),
+      );
+    } catch (err) {
+      console.error('[cinder] Failed to stamp session end:', err);
+    }
+
     try {
       await runAutoBackup();
     } catch (err) {

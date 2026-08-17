@@ -20,6 +20,11 @@ Most notes-and-todos products require you to send your content to someone else's
 
 ## What works today
 
+### Summary
+- **Daily overview landing page** — the app opens on a full-width dashboard showing what needs attention: a **Do first** short-list (urgent + important, using your Matrix thresholds), **Overdue** tasks grouped by staleness with a one-click **Move all to today**, **Due today** with a collapsed tomorrow preview, and the **Triage** queue editable inline
+- **Since last session** — tasks completed, tasks created (including any captured by Claude via the MCP connector), and notes edited since you last quit the app
+- **Inline quick actions** — complete, snooze to tomorrow, or jump to any task; open today's daily note from the header; turn the landing page off in Settings → Summary
+
 ### Notes
 - **WYSIWYG Markdown editor** via TipTap (ProseMirror) with full keyboard support
 - **Autosave** with a 500 ms debounce and explicit ⌘S flush

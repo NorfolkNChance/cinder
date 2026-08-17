@@ -10,6 +10,7 @@ import { DailySidebar } from './features/dailyNotes/DailySidebar';
 import { DailyMainPane } from './features/dailyNotes/DailyMainPane';
 import { DrawSidebar } from './features/draw/DrawSidebar';
 import { DrawMainPane } from './features/draw/DrawMainPane';
+import { SummaryPane } from './features/summary/SummaryPane';
 import { CommandPalette } from './features/commandPalette/CommandPalette';
 import { GlobalSearch } from './features/globalSearch/GlobalSearch';
 import { HelpModal } from './features/help/HelpModal';
@@ -51,13 +52,21 @@ export default function App(): JSX.Element {
   const sidebarCollapsed = useUI((s) => s.sidebarCollapsed);
   const toggleSidebar = useUI((s) => s.toggleSidebar);
 
-  // Navigate to Tasks › Today when the user clicks a due-task notification.
+  // A due-task notification click lands on Summary (it shows overdue + due
+  // today with quick actions). Users who opted out of Summary-on-launch get
+  // the pre-Summary behaviour: Tasks › Today.
+  const { settings } = useSettings();
+  const summaryOnLaunch = settings?.['summary.openOnLaunch'] ?? true;
   useEffect(() => {
     return window.api.notify.onTaskDue(() => {
-      setMode('tasks');
-      setTaskScope({ kind: 'today' });
+      if (summaryOnLaunch) {
+        setMode('summary');
+      } else {
+        setMode('tasks');
+        setTaskScope({ kind: 'today' });
+      }
     });
-  }, [setMode, setTaskScope]);
+  }, [setMode, setTaskScope, summaryOnLaunch]);
 
   // Global shortcuts — ⌘K, ⌘/, ?, ⌘,
   useEffect(() => {
@@ -126,7 +135,8 @@ export default function App(): JSX.Element {
       <ThemeWatcher />
       <TopBar />
       <div className="flex min-h-0 flex-1">
-        {!sidebarCollapsed && (
+        {/* Summary is deliberately full-width — it has no sidebar. */}
+        {!sidebarCollapsed && mode !== 'summary' && (
           <aside
             aria-label={
               mode === 'notes'
@@ -155,7 +165,9 @@ export default function App(): JSX.Element {
           </aside>
         )}
         <main id="main-content" className="min-w-0 flex-1 overflow-hidden" tabIndex={-1}>
-          {mode === 'notes' ? (
+          {mode === 'summary' ? (
+            <SummaryPane />
+          ) : mode === 'notes' ? (
             <NotesMainPane />
           ) : mode === 'tasks' ? (
             <TaskList />
@@ -199,6 +211,7 @@ function SettingsInitializer(): null {
   const { settings } = useSettings();
   const setMatrixPrefs = useUI((s) => s.setMatrixPrefs);
   const setTaskScope = useUI((s) => s.setTaskScope);
+  const setMode = useUI((s) => s.setMode);
   const appliedRef = useRef(false);
 
   useEffect(() => {
@@ -209,7 +222,10 @@ function SettingsInitializer(): null {
       importanceCutoff: settings['matrix.importanceCutoff'],
     });
     setTaskScope({ kind: settings['tasks.defaultScope'] });
-  }, [settings, setMatrixPrefs, setTaskScope]);
+    // The store's initial mode is 'summary'; users who turned the landing
+    // page off get the pre-Summary default (Notes) as soon as settings load.
+    if (!settings['summary.openOnLaunch']) setMode('notes');
+  }, [settings, setMatrixPrefs, setTaskScope, setMode]);
 
   return null;
 }
@@ -237,6 +253,9 @@ function TopBar(): JSX.Element {
       >
         <span aria-hidden="true">{sidebarCollapsed ? '⇥' : '⇤'}</span>
       </button>
+      <ModeButton active={mode === 'summary'} onClick={() => setMode('summary')}>
+        Summary
+      </ModeButton>
       <ModeButton active={mode === 'notes'} onClick={() => setMode('notes')}>
         Notes
       </ModeButton>

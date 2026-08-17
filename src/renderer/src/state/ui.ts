@@ -16,7 +16,7 @@ import type { NotesFolderScope } from '../features/notes/queries';
  * modes doesn't clobber the other side's state.
  */
 
-export type Mode = 'notes' | 'tasks' | 'matrix' | 'daily' | 'draw';
+export type Mode = 'summary' | 'notes' | 'tasks' | 'matrix' | 'daily' | 'draw';
 
 /**
  * The scope a Tasks-mode view is showing.
@@ -124,7 +124,9 @@ interface UIState {
 }
 
 export const useUI = create<UIState>((set) => ({
-  mode: 'notes',
+  // Summary is the landing mode. SettingsInitializer switches to 'notes' on
+  // first load if the user has turned `summary.openOnLaunch` off.
+  mode: 'summary',
   setMode: (m) => set({ mode: m }),
 
   notesFolderScope: { kind: 'all' },

@@ -86,6 +86,12 @@ export const NoteListInput = z.object({
    * (mirrors the daily-notes default) so it stays text-only.
    */
   drawingsOnly: z.boolean().optional(),
+  /**
+   * Return only notes updated at or after this UTC instant. Used by the
+   * Summary "since last session" card. Combines with the kind filters above
+   * (so by default it means "regular notes edited since X").
+   */
+  updatedAfter: ISO_8601.optional(),
 });
 export type NoteListInput = z.infer<typeof NoteListInput>;
 

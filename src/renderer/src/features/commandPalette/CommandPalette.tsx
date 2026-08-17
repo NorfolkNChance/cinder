@@ -121,6 +121,17 @@ export function CommandPalette(): JSX.Element | null {
 
     // ── Navigation ──
     cmds.push({
+      id: 'nav:summary',
+      group: 'Navigation',
+      label: 'Summary',
+      hint: 'Daily overview',
+      icon: '☀️',
+      execute: () => {
+        setMode('summary');
+        close();
+      },
+    });
+    cmds.push({
       id: 'nav:notes',
       group: 'Navigation',
       label: 'Notes',

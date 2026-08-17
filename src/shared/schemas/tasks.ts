@@ -131,6 +131,15 @@ export const TaskListInput = z.object({
   // By default we hide completed and soft-deleted; flip these to include them.
   includeCompleted: z.boolean().optional(),
   includeDeleted: z.boolean().optional(),
+  /**
+   * Return only tasks completed at or after this UTC instant. Implies the
+   * results are completed tasks, so the service skips the active-tasks
+   * default when this is set — no need to also pass includeCompleted.
+   * Used by the Summary "since last session" card.
+   */
+  completedAfter: ISO_8601.optional(),
+  /** Return only tasks created at or after this UTC instant. */
+  createdAfter: ISO_8601.optional(),
   limit: z.number().int().min(1).max(1000).optional(),
 });
 export type TaskListInput = z.infer<typeof TaskListInput>;

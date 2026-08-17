@@ -1,5 +1,5 @@
 import { v7 as uuidv7 } from 'uuid';
-import { and, desc, eq, isNotNull, isNull, ne, type SQL } from 'drizzle-orm';
+import { and, desc, eq, gte, isNotNull, isNull, ne, type SQL } from 'drizzle-orm';
 import { getDb } from '../db/index';
 import { getDrizzle } from '../db/drizzle';
 import { folders, notes } from '../db/schema';
@@ -170,6 +170,11 @@ export const notesService = {
     } else {
       conditions.push(isNull(notes.dailyDate));
       conditions.push(ne(notes.bodyType, 'excalidraw'));
+    }
+
+    // UTC ISO-8601 strings compare correctly lexicographically.
+    if (input.updatedAfter !== undefined) {
+      conditions.push(gte(notes.updatedAt, input.updatedAfter));
     }
 
     const where = conditions.length === 0 ? undefined : and(...conditions);

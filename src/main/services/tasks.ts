@@ -110,8 +110,22 @@ export const tasksService = {
     const conditions: SQL[] = [];
 
     // Soft-delete and completion filters default to hiding both.
+    // `completedAfter` implies the caller wants completed tasks, so it
+    // overrides the active-tasks default (a gte on completed_at can never
+    // match a NULL anyway — keeping the isNull would return nothing).
     if (!input.includeDeleted) conditions.push(isNull(tasks.deletedAt));
-    if (!input.includeCompleted) conditions.push(isNull(tasks.completedAt));
+    if (!input.includeCompleted && input.completedAfter === undefined) {
+      conditions.push(isNull(tasks.completedAt));
+    }
+
+    // "Since" predicates for the Summary catch-up card. Both timestamps are
+    // UTC ISO-8601 strings, so lexicographic gte is a correct time compare.
+    if (input.completedAfter !== undefined) {
+      conditions.push(gte(tasks.completedAt, input.completedAfter));
+    }
+    if (input.createdAfter !== undefined) {
+      conditions.push(gte(tasks.createdAt, input.createdAfter));
+    }
 
     // Triage filter: when triageOnly = true, show only triage tasks.
     // Otherwise (default), hide triage tasks from all normal views so they

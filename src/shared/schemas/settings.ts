@@ -72,6 +72,19 @@ const EditorSpellcheck = z.boolean();
 /** Markdown template applied to new daily notes. Empty string = blank note. */
 const DailyTemplate = z.string().max(50_000);
 
+// ── Summary ──────────────────────────────────────────────────────────────────
+
+/** Whether the app opens in Summary mode on launch. */
+const SummaryOpenOnLaunch = z.boolean();
+
+/**
+ * UTC ISO-8601 instant the previous session ended, written by the main
+ * process during `will-quit`. Empty string until the first quit. System-
+ * managed — not surfaced as an editable field in the Settings UI. The
+ * Summary "since last session" card diffs against this value.
+ */
+const SummaryLastSessionEndedAt = z.string().max(40);
+
 // ── Appearance ───────────────────────────────────────────────────────────────
 
 /** UI colour scheme preference. */
@@ -99,6 +112,8 @@ export const AppSettingsSchema = z.object({
   'matrix.importanceCutoff': MatrixImportanceCutoff,
   'tasks.defaultScope': DefaultTaskScope,
   'tasks.showCompleted': ShowCompleted,
+  'summary.openOnLaunch': SummaryOpenOnLaunch,
+  'summary.lastSessionEndedAt': SummaryLastSessionEndedAt,
   'editor.spellcheck': EditorSpellcheck,
   'daily.template': DailyTemplate,
   'appearance.theme': AppearanceTheme,
@@ -120,6 +135,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
   'matrix.importanceCutoff': 2,
   'tasks.defaultScope': 'inbox',
   'tasks.showCompleted': false,
+  // Summary is the landing page by default — it's the "what needs me" view.
+  'summary.openOnLaunch': true,
+  'summary.lastSessionEndedAt': '',
   'editor.spellcheck': true,
   'daily.template': '',
   'appearance.theme': 'auto',

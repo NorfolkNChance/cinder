@@ -80,6 +80,7 @@ export function SettingsModal(): JSX.Element | null {
           <SidebarItem label="Connectors" icon="🔌" />
           <SidebarItem label="Matrix" icon="🔲" />
           <SidebarItem label="Tasks" icon="✅" />
+          <SidebarItem label="Summary" icon="☀️" />
         </nav>
 
         {/* Content */}
@@ -119,6 +120,8 @@ export function SettingsModal(): JSX.Element | null {
                 <MatrixSection settings={settings} set={setWithSync} />
                 <div className="my-6 border-t border-gray-200 dark:border-gray-800" />
                 <TasksSection settings={settings} set={setWithSync} />
+                <div className="my-6 border-t border-gray-200 dark:border-gray-800" />
+                <SummarySection settings={settings} set={setWithSync} />
               </>
             )}
           </div>
@@ -586,6 +589,43 @@ function TasksSection({
           <span
             className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
               settings['tasks.showCompleted'] ? 'translate-x-4' : 'translate-x-0'
+            }`}
+          />
+        </button>
+      </Field>
+    </section>
+  );
+}
+
+// ── Summary section ───────────────────────────────────────────────────────────
+
+function SummarySection({
+  settings,
+  set,
+}: {
+  settings: AppSettings;
+  set: SetFn;
+}): JSX.Element {
+  const openOnLaunch = settings['summary.openOnLaunch'];
+  return (
+    <section>
+      <SectionHeading icon="☀️" title="Summary" />
+
+      <Field
+        label="Open Summary on launch"
+        description="Land on the Summary overview when the app starts, and when you click a due-task notification. When off, the app opens in Notes and notifications go to Tasks › Today."
+      >
+        <button
+          role="switch"
+          aria-checked={openOnLaunch}
+          onClick={() => set('summary.openOnLaunch', !openOnLaunch)}
+          className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900 ${
+            openOnLaunch ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-700'
+          }`}
+        >
+          <span
+            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+              openOnLaunch ? 'translate-x-4' : 'translate-x-0'
             }`}
           />
         </button>

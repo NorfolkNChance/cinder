@@ -34,6 +34,9 @@ test('export inlines drawing:// and attachment:// images as data URIs', async ()
     await page.waitForFunction(() => Boolean((window as Window & { api?: unknown }).api), null, { timeout: 30_000 });
     await page.waitForFunction(() => (document.getElementById('root')?.childElementCount ?? 0) > 0, null, { timeout: 30_000 });
 
+    // The app lands on Summary (full-width, no sidebar) — switch to Notes first.
+    await page.getByRole('button', { name: 'Notes', exact: true }).click();
+
     // A note to export into.
     await page.getByRole('button', { name: '+ New', exact: true }).click();
     await page.waitForSelector('#tiptap-editor-content');
