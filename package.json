@@ -75,7 +75,7 @@
     "chrono-node": "^2.9.1",
     "clsx": "^2.1.1",
     "drizzle-kit": "^0.31.10",
-    "electron": "^43.1.0",
+    "electron": "^43.4.1",
     "electron-builder": "26.15.3",
     "electron-vite": "^5.0.0",
     "eslint": "^10.6.0",
