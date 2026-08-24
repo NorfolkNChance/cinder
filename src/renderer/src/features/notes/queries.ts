@@ -4,6 +4,7 @@ import { useUI } from '../../state/ui';
 import type {
   Note,
   NoteCreateInput,
+  NoteRevision,
   NoteUpdateInput,
 } from '../../../../shared/schemas/notes';
 
@@ -148,6 +149,43 @@ export function useDeleteNote(): ReturnType<
       void qc.invalidateQueries({ queryKey: queryKeys.notes.all });
     },
     onError: (err) => reportNoteError('Failed to delete note', err),
+  });
+}
+
+// ── Revision history ─────────────────────────────────────────────────────────
+
+/**
+ * A note's revision snapshots, newest first. Only fetched while the History
+ * panel is open (`enabled`) — there's no reason to hold every note's history
+ * in cache while the editor is just showing the current body.
+ */
+export function useNoteRevisions(
+  noteId: string,
+  enabled: boolean,
+): ReturnType<typeof useQuery<readonly NoteRevision[]>> {
+  return useQuery({
+    queryKey: queryKeys.notes.revisions(noteId),
+    queryFn: () => window.api.notes.listRevisions({ noteId }),
+    enabled,
+  });
+}
+
+export function useRestoreRevision(): ReturnType<
+  typeof useMutation<Note | null, Error, { noteId: string; revisionId: string }>
+> {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ noteId, revisionId }) =>
+      window.api.notes.restoreRevision({ noteId, revisionId }),
+    onSuccess: (note, vars) => {
+      if (note) {
+        qc.setQueryData(queryKeys.notes.detail(vars.noteId), note);
+      }
+      // The restore itself may have cut a new "before restore" checkpoint,
+      // so the revisions list can change too.
+      void qc.invalidateQueries({ queryKey: queryKeys.notes.all });
+    },
+    onError: (err) => reportNoteError('Failed to restore version', err),
   });
 }
 

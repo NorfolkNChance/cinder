@@ -1,8 +1,18 @@
 import { v7 as uuidv7 } from 'uuid';
-import { and, desc, eq, gte, isNotNull, isNull, ne, type SQL } from 'drizzle-orm';
+import {
+  and,
+  desc,
+  eq,
+  gte,
+  isNotNull,
+  isNull,
+  ne,
+  notInArray,
+  type SQL,
+} from 'drizzle-orm';
 import { getDb } from '../db/index';
 import { getDrizzle } from '../db/drizzle';
-import { folders, notes } from '../db/schema';
+import { folders, notes, noteRevisions } from '../db/schema';
 import { settingsService } from './settings';
 import { deleteAttachmentsDir } from './attachments';
 import type {
@@ -11,6 +21,8 @@ import type {
   NoteGetOrCreateDailyInput,
   NoteListDeletedInput,
   NoteListInput,
+  NoteRestoreRevisionInput,
+  NoteRevision,
   NoteSearchInput,
   NoteUpdateInput,
 } from '../../shared/schemas/notes';
@@ -105,6 +117,101 @@ async function getById(id: string): Promise<Note | null> {
   return (rows[0] as Note | undefined) ?? null;
 }
 
+/**
+ * Delete the oldest revisions for a note beyond `retentionCount`, keeping
+ * the most recent ones. Called after every insert so the table never grows
+ * unbounded (docs/specs/note-history.md §4).
+ */
+async function trimRevisions(noteId: string, retentionCount: number): Promise<void> {
+  const db = getDrizzle();
+  const all = await db
+    .select({ id: noteRevisions.id })
+    .from(noteRevisions)
+    .where(eq(noteRevisions.noteId, noteId))
+    .orderBy(desc(noteRevisions.createdAt));
+  if (all.length <= retentionCount) return;
+  const keepIds = all.slice(0, retentionCount).map((r) => r.id);
+  await db
+    .delete(noteRevisions)
+    .where(
+      and(eq(noteRevisions.noteId, noteId), notInArray(noteRevisions.id, keepIds)),
+    );
+}
+
+/**
+ * Pure coalescing decision for revision capture (docs/specs/note-history.md
+ * §4): given the most recent revision (or null if there isn't one yet) and
+ * the note's current body, should a new revision be cut?
+ *
+ *   - no prior revision → always capture (seeds history from the first edit)
+ *   - the prior revision is younger than `minIntervalMinutes` → never
+ *     (keeps continuous typing from flooding the table)
+ *   - otherwise → only if the body actually changed since that revision
+ *     (a break where nothing changed shouldn't produce a duplicate)
+ *
+ * Extracted as a pure function (no DB access) so the policy is unit-tested
+ * directly — see notes.test.ts.
+ */
+export function shouldCaptureRevision(
+  lastRevision: { body: string; createdAt: string } | null,
+  currentBody: string,
+  minIntervalMinutes: number,
+  now: Date = new Date(),
+): boolean {
+  if (lastRevision === null) return true;
+  const minIntervalMs = minIntervalMinutes * 60_000;
+  const age = now.getTime() - new Date(lastRevision.createdAt).getTime();
+  if (age < minIntervalMs) return false;
+  return lastRevision.body !== currentBody;
+}
+
+/**
+ * Snapshot `note`'s current (pre-edit) title+body into `note_revisions`,
+ * subject to `shouldCaptureRevision` — see that function for the coalescing
+ * policy. Also skipped entirely for daily notes and non-markdown body types
+ * (§6 — history is scoped to regular notes only in Phase A), and when
+ * history is disabled in settings.
+ *
+ * Called from `update()` (before applying a body-changing patch) and from
+ * `restoreRevision()` (before overwriting with the target revision) — both
+ * callers pass the note's state as it stood immediately before the write.
+ */
+async function maybeCaptureRevision(note: Note): Promise<void> {
+  if (note.dailyDate !== null || note.bodyType !== 'markdown') return;
+
+  const settings = await settingsService.getAll();
+  if (!settings['notes.history.enabled']) return;
+
+  const db = getDrizzle();
+  const last = await db
+    .select()
+    .from(noteRevisions)
+    .where(eq(noteRevisions.noteId, note.id))
+    .orderBy(desc(noteRevisions.createdAt))
+    .limit(1);
+  const lastRevision = (last[0] as NoteRevision | undefined) ?? null;
+
+  if (
+    !shouldCaptureRevision(
+      lastRevision,
+      note.body,
+      settings['notes.history.minIntervalMinutes'],
+    )
+  ) {
+    return;
+  }
+
+  await db.insert(noteRevisions).values({
+    id: uuidv7(),
+    noteId: note.id,
+    title: note.title,
+    body: note.body,
+    createdAt: nowIso(),
+  });
+
+  await trimRevisions(note.id, settings['notes.history.retentionCount']);
+}
+
 export const notesService = {
   async create(input: NoteCreateInput): Promise<Note> {
     const db = getDrizzle();
@@ -192,6 +299,14 @@ export const notesService = {
 
   async update(input: NoteUpdateInput): Promise<Note | null> {
     const db = getDrizzle();
+
+    // Snapshot the pre-edit state before a body-changing patch is applied,
+    // subject to maybeCaptureRevision's coalescing policy. Must read the
+    // existing row before the write below overwrites it.
+    if ('body' in input.patch && input.patch.body !== undefined) {
+      const existing = await getById(input.id);
+      if (existing) await maybeCaptureRevision(existing);
+    }
 
     // Always bump updated_at so the patch is observable even when the body
     // diff is empty — important for the auto-save "touch" pattern.
@@ -396,6 +511,52 @@ export const notesService = {
         },
       );
     });
+  },
+
+  /** A note's revision snapshots, newest first. */
+  async listRevisions(noteId: string): Promise<readonly NoteRevision[]> {
+    const db = getDrizzle();
+    const rows = await db
+      .select()
+      .from(noteRevisions)
+      .where(eq(noteRevisions.noteId, noteId))
+      .orderBy(desc(noteRevisions.createdAt));
+    return rows as NoteRevision[];
+  },
+
+  /**
+   * Restore a note's title+body to an earlier revision. Non-destructive:
+   * the current state is snapshotted first via maybeCaptureRevision (same
+   * coalescing check as a normal update), so restoring is itself
+   * reversible. Returns null if the note or the revision (scoped to that
+   * note) doesn't exist.
+   */
+  async restoreRevision(input: NoteRestoreRevisionInput): Promise<Note | null> {
+    const db = getDrizzle();
+    const note = await getById(input.noteId);
+    if (!note) return null;
+
+    const revisionRows = await db
+      .select()
+      .from(noteRevisions)
+      .where(
+        and(
+          eq(noteRevisions.id, input.revisionId),
+          eq(noteRevisions.noteId, input.noteId),
+        ),
+      )
+      .limit(1);
+    const revision = revisionRows[0] as NoteRevision | undefined;
+    if (!revision) return null;
+
+    await maybeCaptureRevision(note);
+
+    await db
+      .update(notes)
+      .set({ title: revision.title, body: revision.body, updatedAt: nowIso() })
+      .where(eq(notes.id, input.noteId));
+
+    return getById(input.noteId);
   },
 } as const;
 

@@ -16,7 +16,9 @@ import {
   NOTES_HARD_DELETE,
   NOTES_LIST,
   NOTES_LIST_DELETED,
+  NOTES_LIST_REVISIONS,
   NOTES_RESTORE,
+  NOTES_RESTORE_REVISION,
   NOTES_SEARCH,
   NOTES_UPDATE,
   PROJECTS_ARCHIVE,
@@ -89,7 +91,10 @@ import type {
   NoteHardDeleteInput,
   NoteListDeletedInput,
   NoteListInput,
+  NoteListRevisionsInput,
   NoteRestoreInput,
+  NoteRestoreRevisionInput,
+  NoteRevision,
   NoteSearchInput,
   NoteUpdateInput,
 } from '../shared/schemas/notes';
@@ -225,6 +230,10 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke(NOTES_RESTORE, input),
     hardDelete: (input: NoteHardDeleteInput): Promise<void> =>
       ipcRenderer.invoke(NOTES_HARD_DELETE, input),
+    listRevisions: (input: NoteListRevisionsInput): Promise<readonly NoteRevision[]> =>
+      ipcRenderer.invoke(NOTES_LIST_REVISIONS, input),
+    restoreRevision: (input: NoteRestoreRevisionInput): Promise<Note | null> =>
+      ipcRenderer.invoke(NOTES_RESTORE_REVISION, input),
   },
   attachments: {
     save: (input: AttachmentSaveInput): Promise<AttachmentSaveResult> =>

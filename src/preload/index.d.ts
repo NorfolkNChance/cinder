@@ -8,7 +8,10 @@ import type {
   NoteHardDeleteInput,
   NoteListDeletedInput,
   NoteListInput,
+  NoteListRevisionsInput,
   NoteRestoreInput,
+  NoteRestoreRevisionInput,
+  NoteRevision,
   NoteSearchInput,
   NoteUpdateInput,
 } from '../shared/schemas/notes';
@@ -135,6 +138,12 @@ declare global {
         listDeleted: (input: NoteListDeletedInput) => Promise<readonly Note[]>;
         restore: (input: NoteRestoreInput) => Promise<Note | null>;
         hardDelete: (input: NoteHardDeleteInput) => Promise<void>;
+        listRevisions: (
+          input: NoteListRevisionsInput,
+        ) => Promise<readonly NoteRevision[]>;
+        restoreRevision: (
+          input: NoteRestoreRevisionInput,
+        ) => Promise<Note | null>;
       };
       attachments: {
         save: (input: AttachmentSaveInput) => Promise<AttachmentSaveResult>;

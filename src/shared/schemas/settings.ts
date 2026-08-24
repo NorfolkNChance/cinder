@@ -72,6 +72,21 @@ const EditorSpellcheck = z.boolean();
 /** Markdown template applied to new daily notes. Empty string = blank note. */
 const DailyTemplate = z.string().max(50_000);
 
+// ── Note History ─────────────────────────────────────────────────────────────
+
+/** Whether revision snapshots are captured for regular notes. */
+const HistoryEnabled = z.boolean();
+
+/** Revisions kept per note; oldest are trimmed beyond this cap. */
+const HistoryRetentionCount = z.number().int().min(1).max(500);
+
+/**
+ * Minimum age (minutes) the most recent revision must reach before a new
+ * one is cut. Coalesces continuous editing into periodic checkpoints
+ * instead of one revision per autosave — see docs/specs/note-history.md §4.
+ */
+const HistoryMinIntervalMinutes = z.number().int().min(1).max(1440);
+
 // ── Summary ──────────────────────────────────────────────────────────────────
 
 /** Whether the app opens in Summary mode on launch. */
@@ -116,6 +131,9 @@ export const AppSettingsSchema = z.object({
   'summary.lastSessionEndedAt': SummaryLastSessionEndedAt,
   'editor.spellcheck': EditorSpellcheck,
   'daily.template': DailyTemplate,
+  'notes.history.enabled': HistoryEnabled,
+  'notes.history.retentionCount': HistoryRetentionCount,
+  'notes.history.minIntervalMinutes': HistoryMinIntervalMinutes,
   'appearance.theme': AppearanceTheme,
   'notifications.enabled': NotificationsEnabled,
   'backup.autoOnQuit': BackupAutoOnQuit,
@@ -140,6 +158,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
   'summary.lastSessionEndedAt': '',
   'editor.spellcheck': true,
   'daily.template': '',
+  'notes.history.enabled': true,
+  'notes.history.retentionCount': 50,
+  'notes.history.minIntervalMinutes': 10,
   'appearance.theme': 'auto',
   'notifications.enabled': true,
   'backup.autoOnQuit': true,

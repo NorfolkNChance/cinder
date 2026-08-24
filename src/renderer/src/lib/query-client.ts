@@ -33,6 +33,8 @@ export const queryKeys = {
     all: ['notes'] as const,
     list: () => [...queryKeys.notes.all, 'list'] as const,
     detail: (id: string) => [...queryKeys.notes.all, 'detail', id] as const,
+    revisions: (id: string) =>
+      [...queryKeys.notes.all, 'revisions', id] as const,
   },
   projects: {
     all: ['projects'] as const,

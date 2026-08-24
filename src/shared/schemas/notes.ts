@@ -164,3 +164,31 @@ export const NoteSearchInput = z.object({
   limit: z.number().int().min(1).max(200).optional(),
 });
 export type NoteSearchInput = z.infer<typeof NoteSearchInput>;
+
+// ── Revision history (docs/specs/note-history.md) ───────────────────────────
+
+/** A single coalesced snapshot of a note's title+body. */
+export const NoteRevision = z.object({
+  id: z.string().uuid(),
+  noteId: NoteId,
+  title: z.string(),
+  body: z.string(),
+  createdAt: ISO_8601,
+});
+export type NoteRevision = z.infer<typeof NoteRevision>;
+
+export const NoteListRevisionsInput = z.object({
+  noteId: NoteId,
+});
+export type NoteListRevisionsInput = z.infer<typeof NoteListRevisionsInput>;
+
+/**
+ * Restore a note's title+body to an earlier revision. Non-destructive: the
+ * service snapshots the note's current state first (subject to the same
+ * coalescing check as a normal update), so restoring is itself reversible.
+ */
+export const NoteRestoreRevisionInput = z.object({
+  noteId: NoteId,
+  revisionId: z.string().uuid(),
+});
+export type NoteRestoreRevisionInput = z.infer<typeof NoteRestoreRevisionInput>;

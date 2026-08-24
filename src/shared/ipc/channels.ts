@@ -33,6 +33,10 @@ export const NOTES_LIST_DELETED = 'notes:listDeleted' as const;
 export const NOTES_RESTORE = 'notes:restore' as const;
 /** Permanently delete a trashed note and its attachments. Irreversible. */
 export const NOTES_HARD_DELETE = 'notes:hardDelete' as const;
+/** List a note's revision snapshots, newest first. */
+export const NOTES_LIST_REVISIONS = 'notes:listRevisions' as const;
+/** Restore a note's title+body to an earlier revision (non-destructive). */
+export const NOTES_RESTORE_REVISION = 'notes:restoreRevision' as const;
 
 // ── Note ↔ Task links ─────────────────────────────────────────────────────────
 export const LINKS_CREATE = 'links:create' as const;

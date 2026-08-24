@@ -65,6 +65,7 @@ Full architectural spec: [`../ARCHITECTURE.md`](../ARCHITECTURE.md) — read it 
 | + | Trash + scheduled purge — soft-deleted notes/tasks surface in a Trash modal (🗑 in both sidebars, ⌘K → "Open Trash") with Restore / Delete forever / Empty Trash; `notes:listDeleted\|restore\|hardDelete` + `tasks:...` IPC; note hardDelete removes the attachment dir; purge job (`services/purge.ts`) hard-deletes items older than `trash.retentionDays` (default 30, opt-out via `trash.autoPurgeEnabled`), 60 s after boot then every 12 h. See ADR-0015 |
 | + | Summary mode — sixth mode and default landing page: full-width daily dashboard (Do first via `classifyTask`, Overdue grouped by staleness + "Move all to today", Due today + tomorrow preview, inline Triage, "Since last session" via `summary.lastSessionEndedAt` stamped in `will-quit`); composed from existing list IPC (`completedAfter`/`createdAfter`/`updatedAfter` filters), no new IPC domain. See ADR-0017 |
 | + | Restore from backup + key import — main-process-only interactive flow (`services/restore.ts`, `restore:fromBackup` IPC): pick backup → decrypt with device key or exported key file → integrity + migration-compat validation → confirm with counts → pre-restore safety snapshot → swap + adopt key → relaunch. Reachable from Settings → Backup and from both boot-failure dialogs (unopenable DB, failed integrity check); Keychain-decrypt failure at boot offers "Import key file…". See ADR-0016 |
+| + | Note revision history — coalesced full-body checkpoints for regular Markdown notes (`note_revisions` table, migration 0014); a new revision is cut on `notes:update` only when the prior one is older than `notes.history.minIntervalMinutes` (default 10) and the body changed, so continuous typing doesn't flood the table. "History" button in the NoteEditor header opens `NoteHistoryModal` (list + read-only preview + non-destructive restore — restoring checkpoints the current state first). Settings → History controls enable/frequency/retention. Scoped to non-daily, `bodyType: 'markdown'` notes in Phase A. See ADR-0018 and `docs/specs/note-history.md` |
 
 ---
 
@@ -294,6 +295,57 @@ A user-curated many-to-many association in the `note_task_links` table (migratio
 - **No new `tasks` column** — the join-table approach deliberately avoids touching the `tasks` schema, so the raw-SQL column list in `tasks.ts` `listByFilter` needs no change.
 
 ---
+
+## Note revision history (ADR-0018)
+
+Periodic full-body checkpoints of a note's `title`+`body`, browsable and
+restorable from the note editor. See `docs/specs/note-history.md` for the
+full design and `docs/adr/0018-note-revision-history.md` for the decisions.
+
+- **Storage** — `note_revisions` table (migration `0014_note_revisions.sql`,
+  `noteRevisions` in `db/schema.ts`): `id`, `note_id` (CASCADE FK), `title`,
+  `body`, `created_at`. Full snapshots, not diffs — deliberately simple for a
+  local, single-user, already-encrypted DB.
+- **Capture is coalesced, not per-autosave.** `notesService.update()` calls
+  `maybeCaptureRevision(existing)` **before** applying a body-changing
+  patch, which snapshots the pre-edit state only if
+  `shouldCaptureRevision()` says yes: no prior revision yet, or the prior
+  one is older than `notes.history.minIntervalMinutes` (default 10) *and*
+  the body changed since it. `shouldCaptureRevision` is a pure function
+  (no DB access) specifically so the coalescing boundary conditions are
+  unit-tested directly — see `notes.test.ts`. **When touching this logic,
+  keep the pure/DB-touching split** rather than folding the decision back
+  into `maybeCaptureRevision`.
+- **Retention** — `trimRevisions()` deletes the oldest rows beyond
+  `notes.history.retentionCount` (default 50) after every insert. No
+  background job, unlike Trash's purge — trimming is cheap and per-note.
+- **Scope (Phase A): regular Markdown notes only.**
+  `maybeCaptureRevision` short-circuits when `note.dailyDate !== null` or
+  `note.bodyType !== 'markdown'`. The table itself doesn't encode note kind,
+  so widening scope later is a guard removal, not a migration.
+- **Restore is non-destructive.** `notesService.restoreRevision()` calls
+  `maybeCaptureRevision(note)` on the note's *current* state (subject to
+  the same coalescing check) before overwriting with the target revision's
+  title/body. Restoring twice inside one coalescing window does not
+  double-checkpoint — same policy everywhere, not relaxed for restore.
+- **The editor needs an explicit resync signal after a restore.**
+  `TipTapEditor` only reloads its ProseMirror document when `noteId`
+  changes (so a normal autosave round-trip never resets the cursor). A
+  restore changes the body without changing `noteId`, so
+  `NoteHistoryModal` calls `onRestored(note)` right before closing;
+  `NoteEditor` uses that to reset its local `draft` state and bump a
+  `restoreNonce`, passed as `TipTapEditor`'s React `key` to force a clean
+  remount. **Do not remove this `key` or make `restoreNonce` change on
+  anything other than an explicit restore** — bumping it on every save
+  would reintroduce the cursor-jump problem the `noteId`-only rehydrate
+  check exists to prevent.
+- **IPC** — `notes:listRevisions` / `notes:restoreRevision`, folded into the
+  existing `notes.ts` IPC file and service (not a new domain — tightly
+  coupled to notes, same precedent as Trash restore).
+- **Settings** — `notes.history.enabled` / `.retentionCount` /
+  `.minIntervalMinutes`, no migration (settings service backfills
+  defaults). Settings → History section, disables the frequency/retention
+  selects when the toggle is off.
 
 ## MCP Connector (ADR-0011)
 

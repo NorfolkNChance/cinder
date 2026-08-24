@@ -349,6 +349,38 @@ export const noteTaskLinks = sqliteTable(
 
 export type NoteTaskLink = typeof noteTaskLinks.$inferSelect;
 
+// ─── Note revisions ──────────────────────────────────────────────────────────
+
+/**
+ * note_revisions — coalesced full-body snapshots of a note's title+body
+ * (migration 0014, docs/specs/note-history.md).
+ *
+ * Not written on every autosave — `notesService.update()` only inserts a
+ * new row when the previous revision is older than
+ * `notes.history.minIntervalMinutes` and the body actually changed. This
+ * keeps the table a browsable set of checkpoints rather than a keystroke
+ * log. CASCADE on note delete; soft-deleted (trashed) notes keep their
+ * revisions until hard delete.
+ */
+export const noteRevisions = sqliteTable(
+  'note_revisions',
+  {
+    id: text('id').primaryKey(),
+    noteId: text('note_id')
+      .notNull()
+      .references(() => notes.id, { onDelete: 'cascade' }),
+    title: text('title').notNull(),
+    body: text('body').notNull(),
+    createdAt: text('created_at').notNull(),
+  },
+  (table) => ({
+    noteIdx: index('note_revisions_note_idx').on(table.noteId, table.createdAt),
+  }),
+);
+
+export type NoteRevision = typeof noteRevisions.$inferSelect;
+export type NewNoteRevision = typeof noteRevisions.$inferInsert;
+
 // ─── Saved filters ───────────────────────────────────────────────────────────
 
 /**

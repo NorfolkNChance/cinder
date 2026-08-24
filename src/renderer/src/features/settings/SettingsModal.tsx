@@ -77,6 +77,7 @@ export function SettingsModal(): JSX.Element | null {
           <SidebarItem label="Backup" icon="💾" />
           <SidebarItem label="Trash" icon="🗑" />
           <SidebarItem label="Daily Notes" icon="📅" />
+          <SidebarItem label="History" icon="🕓" />
           <SidebarItem label="Connectors" icon="🔌" />
           <SidebarItem label="Matrix" icon="🔲" />
           <SidebarItem label="Tasks" icon="✅" />
@@ -114,6 +115,8 @@ export function SettingsModal(): JSX.Element | null {
                 <TrashSection settings={settings} set={setWithSync} />
                 <div className="my-6 border-t border-gray-200 dark:border-gray-800" />
                 <DailyNotesSection settings={settings} set={setWithSync} />
+                <div className="my-6 border-t border-gray-200 dark:border-gray-800" />
+                <HistorySection settings={settings} set={setWithSync} />
                 <div className="my-6 border-t border-gray-200 dark:border-gray-800" />
                 <ConnectorsSection />
                 <div className="my-6 border-t border-gray-200 dark:border-gray-800" />
@@ -470,6 +473,91 @@ function DailyNotesSection({
         className="w-full resize-y rounded border border-gray-300 bg-white px-3 py-2 font-mono text-xs text-gray-800 placeholder-gray-400 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:placeholder-gray-600"
         aria-label="Daily note template"
       />
+    </section>
+  );
+}
+
+// ── History section ────────────────────────────────────────────────────────────
+
+function HistorySection({
+  settings,
+  set,
+}: {
+  settings: AppSettings;
+  set: SetFn;
+}): JSX.Element {
+  const enabled = settings['notes.history.enabled'];
+  const retentionCount = settings['notes.history.retentionCount'];
+  const minInterval = settings['notes.history.minIntervalMinutes'];
+
+  return (
+    <section>
+      <SectionHeading icon="🕓" title="History" />
+      <p className="mb-4 text-[12px] text-gray-500 dark:text-gray-500">
+        Cinder periodically checkpoints a note's earlier text so you can look
+        back and restore it from the note's History panel. Applies to
+        regular (non-daily, Markdown) notes only.
+      </p>
+
+      <Field
+        label="Keep version history"
+        description="Capture checkpoints as you edit regular notes. Turn off to stop capturing new ones — existing history is kept."
+      >
+        <button
+          role="switch"
+          aria-checked={enabled}
+          onClick={() => set('notes.history.enabled', !enabled)}
+          className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900 ${
+            enabled ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-700'
+          }`}
+        >
+          <span
+            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+              enabled ? 'translate-x-4' : 'translate-x-0'
+            }`}
+          />
+        </button>
+      </Field>
+
+      <Field
+        label="Checkpoint frequency"
+        description="Minimum time between checkpoints while you keep editing the same note."
+      >
+        <select
+          value={minInterval}
+          onChange={(e) =>
+            set('notes.history.minIntervalMinutes', Number(e.target.value))
+          }
+          disabled={!enabled}
+          className="rounded border border-gray-300 bg-gray-200 px-2 py-1 text-sm text-gray-800 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+          aria-label="Checkpoint frequency"
+        >
+          <option value={5}>Every 5 minutes</option>
+          <option value={10}>Every 10 minutes (default)</option>
+          <option value={30}>Every 30 minutes</option>
+          <option value={60}>Every hour</option>
+        </select>
+      </Field>
+
+      <Field
+        label="Versions kept per note"
+        description="Older checkpoints beyond this count are removed automatically."
+      >
+        <select
+          value={retentionCount}
+          onChange={(e) =>
+            set('notes.history.retentionCount', Number(e.target.value))
+          }
+          disabled={!enabled}
+          className="rounded border border-gray-300 bg-gray-200 px-2 py-1 text-sm text-gray-800 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+          aria-label="Versions kept per note"
+        >
+          <option value={20}>20</option>
+          <option value={50}>50 (default)</option>
+          <option value={100}>100</option>
+          <option value={200}>200</option>
+        </select>
+      </Field>
     </section>
   );
 }

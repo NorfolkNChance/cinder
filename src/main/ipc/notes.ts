@@ -9,7 +9,9 @@ import {
   NoteHardDeleteInput,
   NoteListDeletedInput,
   NoteListInput,
+  NoteListRevisionsInput,
   NoteRestoreInput,
+  NoteRestoreRevisionInput,
   NoteSearchInput,
   NoteUpdateInput,
 } from '../../shared/schemas/notes';
@@ -22,7 +24,9 @@ import {
   NOTES_HARD_DELETE,
   NOTES_LIST,
   NOTES_LIST_DELETED,
+  NOTES_LIST_REVISIONS,
   NOTES_RESTORE,
+  NOTES_RESTORE_REVISION,
   NOTES_SEARCH,
   NOTES_UPDATE,
 } from '../../shared/ipc/channels';
@@ -105,5 +109,17 @@ export function registerNotesHandlers(): void {
     assertMainFrame(event);
     const input = NoteHardDeleteInput.parse(raw);
     await notesService.hardDelete(input.id);
+  });
+
+  ipcMain.handle(NOTES_LIST_REVISIONS, async (event, raw) => {
+    assertMainFrame(event);
+    const input = NoteListRevisionsInput.parse(raw);
+    return notesService.listRevisions(input.noteId);
+  });
+
+  ipcMain.handle(NOTES_RESTORE_REVISION, async (event, raw) => {
+    assertMainFrame(event);
+    const input = NoteRestoreRevisionInput.parse(raw);
+    return notesService.restoreRevision(input);
   });
 }

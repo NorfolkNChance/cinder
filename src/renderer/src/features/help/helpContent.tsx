@@ -249,7 +249,7 @@ export const HELP_SECTIONS: HelpSection[] = [
     id: 'notes',
     title: 'Notes',
     icon: '📝',
-    keywords: ['markdown', 'editor', 'tiptap', 'prosemirror', 'write', 'new note', 'search', 'attach', 'image', 'import', 'spellcheck', 'spell check', 'spelling', 'wiki link', 'wiki links', 'internal link', 'wikilink', '\[\[', 'inter-note', 'table', 'tables', 'row', 'column', 'grid'],
+    keywords: ['markdown', 'editor', 'tiptap', 'prosemirror', 'write', 'new note', 'search', 'attach', 'image', 'import', 'spellcheck', 'spell check', 'spelling', 'wiki link', 'wiki links', 'internal link', 'wikilink', '\[\[', 'inter-note', 'table', 'tables', 'row', 'column', 'grid', 'history', 'version', 'versions', 'revision', 'revisions', 'checkpoint', 'restore', 'undo', 'previous version'],
     render: () => (
       <div>
         <H2>Notes</H2>
@@ -351,6 +351,27 @@ export const HELP_SECTIONS: HelpSection[] = [
           <Code>[[Title]]</Code> in the markdown body and rendered as styled
           spans in the editor. This means they work in exported <Code>.md</Code>{' '}
           files and survive import/export cycles.
+        </P>
+
+        <H3>Version history</H3>
+        <P>
+          Cinder periodically checkpoints a note's text as you edit it. Click{' '}
+          <strong className="text-gray-800 dark:text-gray-200">History</strong> in
+          the editor header to browse earlier versions and preview them
+          side by side with the current one.
+        </P>
+        <P>
+          Checkpoints are coalesced, not one per keystroke — a new one is
+          only captured after a few minutes of inactivity since the last
+          checkpoint (configurable in{' '}
+          <strong className="text-gray-800 dark:text-gray-200">Settings → History</strong>
+          ), so the list stays a handful of meaningful versions rather than
+          noise. Restoring an old version is non-destructive: your current
+          text is checkpointed first, so nothing is ever lost.
+        </P>
+        <P>
+          History currently applies to regular Markdown notes — not Daily
+          Notes, HTML imports, or drawings.
         </P>
 
         <H3>Spell checking</H3>

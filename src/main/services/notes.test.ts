@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildFtsQuery } from './notes';
+import { buildFtsQuery, shouldCaptureRevision } from './notes';
 
 /**
  * Unit tests for the FTS5 query sanitiser.
@@ -112,5 +112,47 @@ describe('buildFtsQuery', () => {
   it('phrase-quotes a token containing parens', () => {
     // FTS5 uses parens for grouping; raw parens would cause a parse error.
     expect(buildFtsQuery('foo)bar')).toBe('"foo)bar"');
+  });
+});
+
+/**
+ * Unit tests for the revision-capture coalescing policy
+ * (docs/specs/note-history.md §4).
+ *
+ * This is the load-bearing logic that keeps note history a handful of
+ * meaningful checkpoints instead of one row per 500 ms autosave — worth
+ * pinning precisely at the boundary conditions.
+ */
+describe('shouldCaptureRevision', () => {
+  const now = new Date('2026-08-24T12:00:00.000Z');
+
+  it('captures when there is no prior revision, regardless of body', () => {
+    expect(shouldCaptureRevision(null, 'anything', 10, now)).toBe(true);
+    expect(shouldCaptureRevision(null, '', 10, now)).toBe(true);
+  });
+
+  it('does not capture when the prior revision is younger than the interval', () => {
+    const last = { body: 'old', createdAt: '2026-08-24T11:55:00.000Z' }; // 5 min ago
+    expect(shouldCaptureRevision(last, 'new', 10, now)).toBe(false);
+  });
+
+  it('captures when the interval has elapsed and the body changed', () => {
+    const last = { body: 'old', createdAt: '2026-08-24T11:45:00.000Z' }; // 15 min ago
+    expect(shouldCaptureRevision(last, 'new', 10, now)).toBe(true);
+  });
+
+  it('does not capture when the interval has elapsed but the body is unchanged', () => {
+    const last = { body: 'same', createdAt: '2026-08-24T11:45:00.000Z' };
+    expect(shouldCaptureRevision(last, 'same', 10, now)).toBe(false);
+  });
+
+  it('captures at exactly the interval boundary (age < interval is the only block)', () => {
+    const last = { body: 'old', createdAt: '2026-08-24T11:50:00.000Z' }; // exactly 10 min ago
+    expect(shouldCaptureRevision(last, 'new', 10, now)).toBe(true);
+  });
+
+  it('does not capture one tick before the boundary', () => {
+    const last = { body: 'old', createdAt: '2026-08-24T11:50:00.001Z' }; // 9:59.999 ago
+    expect(shouldCaptureRevision(last, 'new', 10, now)).toBe(false);
   });
 });

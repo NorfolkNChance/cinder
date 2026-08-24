@@ -10,6 +10,8 @@ import { useUI } from '../../state/ui';
 import { ExportMenu } from '../export/ExportMenu';
 import { AddTriageTodo } from './AddTriageTodo';
 import { LinkedTasksPanel } from '../links/LinkPanels';
+import { NoteHistoryModal } from './NoteHistoryModal';
+import type { Note } from '../../../../shared/schemas/notes';
 
 // ── Folder selector ───────────────────────────────────────────────────────────
 
@@ -147,6 +149,12 @@ export function NoteEditor({ noteId }: NoteEditorProps): JSX.Element {
     dirty: false,
   });
   const initialisedForNoteId = useRef<string | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  // Bumped on a successful revision restore to force TipTapEditor to remount
+  // and rehydrate its content — it only reloads on a noteId change (by
+  // design, to avoid resetting the cursor on every autosave), which a
+  // restore doesn't produce on its own. See NoteHistoryModal's onRestored.
+  const [restoreNonce, setRestoreNonce] = useState(0);
 
   useEffect(() => {
     if (note === undefined || note === null) return;
@@ -180,6 +188,14 @@ export function NoteEditor({ noteId }: NoteEditorProps): JSX.Element {
   );
 
   const debouncedSave = useDebouncedCallback(save, AUTOSAVE_DELAY_MS);
+
+  // Restoring a revision changes the note's title/body without changing
+  // noteId — resync the local draft and bump restoreNonce so the editor
+  // remounts with the restored content instead of showing stale text.
+  const handleRestored = useCallback((restoredNote: Note) => {
+    setDraft({ title: restoredNote.title, body: restoredNote.body, dirty: false });
+    setRestoreNonce((n) => n + 1);
+  }, []);
 
   // Flush pending saves when the note changes or the editor unmounts.
   useEffect(() => {
@@ -293,6 +309,17 @@ export function NoteEditor({ noteId }: NoteEditorProps): JSX.Element {
               {draft.dirty ? 'Unsaved…' : 'Saved'}
             </span>
             <AddTriageTodo noteId={note.id} noteTitle={draft.title} />
+            {note.dailyDate === null && note.bodyType === 'markdown' && (
+              <button
+                onClick={() => setHistoryOpen(true)}
+                title="Version history"
+                aria-label="Version history"
+                className="flex items-center gap-1 rounded px-2 py-1 text-xs text-gray-500 hover:bg-gray-200 hover:text-gray-700 transition-colors dark:hover:bg-gray-800 dark:hover:text-gray-300"
+              >
+                <span aria-hidden="true">🕓</span>
+                <span>History</span>
+              </button>
+            )}
             <ExportMenu noteId={note.id} />
           </div>
         </div>
@@ -313,6 +340,7 @@ export function NoteEditor({ noteId }: NoteEditorProps): JSX.Element {
           />
         ) : (
           <TipTapEditor
+            key={restoreNonce}
             markdown={note.body}
             noteId={note.id}
             onChange={onBodyChange}
@@ -320,6 +348,13 @@ export function NoteEditor({ noteId }: NoteEditorProps): JSX.Element {
           />
         )}
       </div>
+      {historyOpen && (
+        <NoteHistoryModal
+          noteId={note.id}
+          onClose={() => setHistoryOpen(false)}
+          onRestored={handleRestored}
+        />
+      )}
     </div>
   );
 }

@@ -36,6 +36,7 @@ Most notes-and-todos products require you to send your content to someone else's
 - **Note ↔ task links** — link a note to related tasks (and vice versa) and jump between them in either direction
 - **Drag-and-drop import** — drop `.md`, `.markdown`, `.html`, or `.htm` files directly into the sidebar or the empty state; HTML is converted to Markdown automatically via Turndown
 - **Export** — export any note as a **self-contained** `.md` file (images, including live drawing embeds, are inlined as data URIs so the file is portable outside the app), or as **Word (`.docx`)** or **PDF**; export all notes to a folder in any of those formats, via a native Save dialog
+- **Version history** — periodic checkpoints of a note's text, captured automatically as you edit (coalesced so it's a handful of meaningful versions, not one per autosave); browse and restore from the **History** button in the editor header. Restoring is non-destructive — your current text is checkpointed too. Applies to regular Markdown notes; configure frequency and retention in Settings → History
 
 ### Daily Notes
 - **One note per calendar day**, auto-created on first access — no setup required

@@ -41,3 +41,4 @@ Status: Proposed | Accepted | Deprecated | Superseded by [NNNN](NNNN-...)
 | [0015](0015-trash-with-scheduled-purge.md) | Add a Trash view with restore, hard delete, and a scheduled purge | Accepted |
 | [0016](0016-restore-from-backup-with-key-import.md) | Restore from backup with key-file import, entirely in the main process | Accepted |
 | [0017](0017-summary-mode-composed-queries.md) | Build Summary mode as composed queries over existing list IPC | Accepted |
+| [0018](0018-note-revision-history.md) | Note revision history: coalesced snapshots, not diffs, non-destructive restore | Accepted |
