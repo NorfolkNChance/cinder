@@ -54,7 +54,7 @@
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@playwright/test": "^1.60.0",
     "@tanstack/react-query": "^5.101.0",
-    "@tiptap/core": "^3.27.1",
+    "@tiptap/core": "^3.30.4",
     "@tiptap/extension-image": "^3.27.1",
     "@tiptap/extension-placeholder": "^3.27.1",
     "@tiptap/extension-table": "^3.27.1",
